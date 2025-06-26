@@ -1,114 +1,94 @@
-# Welcome to your project
+# eSIM Marketplace Project
 
-A clean, modern React template with TypeScript, Vite, TailwindCSS, and ShadCN UI components. This template provides a solid foundation for building web applications with best practices in mind.
+A modern full-stack application with separate **frontend** (React, Vite, TailwindCSS, ShadCN UI) and **backend** (Node.js, Express, TypeORM, Supabase, Stripe) codebases.
 
 ## Tech Features
 
-- ⚡️ **Vite** - Lightning fast build tool
-- 🔥 **React 18** - Latest React features
-- 🧩 **TypeScript** - Type safety for better developer experience
-- 🎨 **TailwindCSS** - Utility-first CSS framework
-- 🧰 **ShadCN UI** - Accessible and customizable UI components
-- 📱 **Responsive Design** - Mobile-first approach
-- 🧭 **React Router** - Easy client-side routing
-- 🔄 **React Query** - Data fetching and state management
-- 🧪 **Form Handling** - React Hook Form with Zod validation
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ 
-- npm or yarn or pnpm
-
-### Installation
-
-1. Clone this repository:
-```bash
-git clone https://github.com/your-username/react-template-project.git
-cd react-template-project
-```
-
-2. Install dependencies:
-```bash
-npm install
-# or
-yarn
-# or
-pnpm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-```
-
-4. Open your browser and visit `http://localhost:5173`
+- ⚡️ **Vite** + **React 18** (frontend)
+- 🎨 **TailwindCSS** + **ShadCN UI**
+- 🧩 **TypeScript** everywhere
+- 🧭 **React Router**, **React Query**
+- 🔒 **Express**, **JWT**, **Supabase** (backend)
+- 💳 **Stripe** integration
+- 📧 **Nodemailer** for email
+- 🗄️ **PostgreSQL** via **TypeORM**
 
 ## Project Structure
 
 ```
-react-template-project/
-├── public/              # Static assets
-│   ├── components/      # Reusable components
-│   │   └── ui/          # UI components from ShadCN
-│   ├── hooks/           # Custom React hooks
-│   ├── lib/             # Utility functions and libraries
-│   ├── pages/           # Page components
-│   ├── App.tsx          # Main application component
-│   ├── index.css        # Global styles
-│   └── main.tsx         # Application entry point
-├── .gitignore
-├── package.json         # Project dependencies and scripts
-├── tailwind.config.ts   # TailwindCSS configuration
-├── tsconfig.json        # TypeScript configuration
-└── vite.config.ts       # Vite configuration
+project-root/
+├── frontend/           # React app (Vite, Tailwind, etc.)
+│   ├── public/
+│   ├── src/
+│   ├── ...configs
+│   └── .env           # Frontend environment variables
+│
+├── backend/            # Node.js/Express API
+│   ├── src/
+│   ├── ...configs
+│   └── .env           # Backend environment variables
+│
+├── README.md
+└── ...other root files
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm, yarn, or pnpm
+
+### 1. Install dependencies
+```bash
+cd frontend && npm install
+cd ../backend && npm install
+```
+
+### 2. Environment Variables
+- Copy `.env.example` to `.env` in both `frontend/` and `backend/` and fill in your secrets.
+- **Never commit `.env` files to version control!**
+
+### 3. Running the Apps
+#### Frontend (React)
+```bash
+cd frontend
+npm run dev
+# App runs at http://localhost:8080 (or as configured)
+```
+#### Backend (API)
+```bash
+cd backend
+npm run dev
+# API runs at http://localhost:5000 (or as configured)
 ```
 
 ## Customization
-
-- **Styling**: Modify `tailwind.config.ts` to customize your design tokens
-- **Components**: Add or modify components in the `src/components` directory
-- **Pages**: Create new pages in the `src/pages` directory
-- **Routing**: Update routes in `src/App.tsx`
-
-## Guest Checkout Flow
-
-- Guests can purchase eSIM packages without creating an account.
-- After purchase, a confirmation email is sent with a link to create an account and manage orders.
-- To convert a guest order to a user account, follow the signup link in the email and set your password.
-
-## UI/UX Polish
-
-- All user flows are tested for both success and failure cases.
-- All text, placeholders, and translations are complete and user-friendly.
-- Responsive design and accessibility are prioritized.
-
-## Code Quality & Linting
-
-- Run `npm run lint` to check for code quality issues.
-- Run `npm run lint:fix` to automatically fix lint errors.
-- ESLint and TypeScript are used to enforce best practices.
-- Enable stricter linting rules in `eslint.config.js` and `tsconfig.json` for production.
-
-## Contributing
-
-- Please follow best practices for code style and commit messages.
-- Write clear, maintainable code and add comments where necessary.
-- Test all features before submitting a pull request.
+- **Frontend:**
+  - Components: `frontend/src/components/`
+  - Pages: `frontend/src/pages/`
+  - Styling: `frontend/tailwind.config.ts`
+- **Backend:**
+  - API routes: `backend/src/routes/`
+  - Database: `backend/src/config/database.ts`
+  - Auth: `backend/src/utils/tokenUtils.ts`
 
 ## Building for Production
+- **Frontend:**
+  ```bash
+  cd frontend && npm run build
+  # Output in frontend/dist/
+  ```
+- **Backend:**
+  ```bash
+  cd backend && npm run build
+  # Output in backend/dist/
+  ```
 
-```bash
-npm run build
-# or
-yarn build
-# or
-pnpm build
-```
+## Linting & Code Quality
+- **Frontend:** `npm run lint` in `frontend/`
+- **Backend:** `npm run lint` in `backend/`
 
-The built files will be in the `dist` directory, ready to be deployed.
+## Notes
+- Place your `.env` files in the correct folder (`frontend/` or `backend/`).
+- Update all URLs and secrets for production.
+- For more details, see comments in the codebase.

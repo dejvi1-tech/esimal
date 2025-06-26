@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 interface EmailOptions {
   to: string;
   subject: string;
-  html: string;
+  html: string | (() => Promise<string>);
 }
 
 // Create a transporter using SMTP
@@ -20,9 +20,19 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (options: EmailOptions): Promise<void> => {
   try {
+    // Handle async HTML template functions
+    let htmlContent: string;
+    if (typeof options.html === 'function') {
+      htmlContent = await options.html();
+    } else {
+      htmlContent = options.html;
+    }
+
     const mailOptions = {
       from: process.env.SMTP_FROM,
-      ...options,
+      to: options.to,
+      subject: options.subject,
+      html: htmlContent,
     };
 
     await transporter.sendMail(mailOptions);

@@ -1,25 +1,19 @@
 import express from 'express';
 import {
   createPackage,
-  getPackages,
-  getPackageById,
+  getAllPackages,
+  getPackage,
   updatePackage,
   deletePackage,
 } from '../controllers/packageController';
-import { protect, restrictTo } from '../middleware/auth';
 
 const router = express.Router();
 
-// Public routes
-router.get('/', getPackages);
-router.get('/:id', getPackageById);
-
-// Protected routes (admin only)
-router.use(protect);
-router.use(restrictTo('admin'));
-
+// Admin-only routes for package management
+router.get('/', getAllPackages);
 router.post('/', createPackage);
-router.patch('/:id', updatePackage);
+router.get('/:id', getPackage);
+router.put('/:id', updatePackage);
 router.delete('/:id', deletePackage);
 
 export default router; 

@@ -1,0 +1,7 @@
+var e=Object.defineProperty,r=Object.getOwnPropertySymbols,t=Object.prototype.hasOwnProperty,o=Object.prototype.propertyIsEnumerable,a=(r,t,o)=>t in r?e(r,t,{enumerable:!0,configurable:!0,writable:!0,value:o}):r[t]=o;import{c as i,f as l}from"./index-DcjmXfUi.js";import{j as s}from"./ui-vendor-Cb7BQMVa.js";import{a as n}from"./react-vendor-gzvTUj6_.js";
+/**
+ * @license lucide-react v0.507.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const f=i("search",[["path",{d:"m21 21-4.34-4.34",key:"14j7rj"}],["circle",{cx:"11",cy:"11",r:"8",key:"4ej97u"}]]),c=n.forwardRef((e,i)=>{var n=e,{className:f,type:c}=n,d=((e,a)=>{var i={};for(var l in e)t.call(e,l)&&a.indexOf(l)<0&&(i[l]=e[l]);if(null!=e&&r)for(var l of r(e))a.indexOf(l)<0&&o.call(e,l)&&(i[l]=e[l]);return i})(n,["className","type"]);return s.jsx("input",((e,i)=>{for(var l in i||(i={}))t.call(i,l)&&a(e,l,i[l]);if(r)for(var l of r(i))o.call(i,l)&&a(e,l,i[l]);return e})({type:c,className:l("flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",f),ref:i},d))});c.displayName="Input";export{c as I,f as S};

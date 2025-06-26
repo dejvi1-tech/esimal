@@ -1,40 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
+import { BaseError, ValidationError, AuthenticationError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
 
-export class AppError extends Error {
-  statusCode: number;
-  status: string;
-  isOperational: boolean;
-
-  constructor(statusCode: number, message: string) {
-    super(message);
-    this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-    this.isOperational = true;
-
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
-
 export const errorHandler = (
-  err: Error | AppError,
+  err: Error | BaseError,
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      status: err.status,
+  logger.error('Error:', err);
+  // Also log to console for debugging
+  console.error('API Error:', err);
+  if (err && err.stack) {
+    console.error('Stack:', err.stack);
+  }
+
+  if (err instanceof ValidationError) {
+    return res.status(400).json({
+      status: 'error',
       message: err.message,
     });
   }
 
-  // Log unexpected errors
-  logger.error('Unexpected error:', err);
+  if (err instanceof AuthenticationError) {
+    return res.status(401).json({
+      status: 'error',
+      message: err.message,
+    });
+  }
 
-  // Send generic error for unexpected errors
+  if (err instanceof NotFoundError) {
+    return res.status(404).json({
+      status: 'error',
+      message: err.message,
+    });
+  }
+
+  // Default error
   return res.status(500).json({
     status: 'error',
-    message: 'Something went wrong',
+    message: 'Internal server error',
   });
 }; 

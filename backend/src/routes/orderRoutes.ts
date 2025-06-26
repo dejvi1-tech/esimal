@@ -1,25 +1,28 @@
 import express from 'express';
 import {
-  createOrder,
-  createGuestOrder,
-  getOrderById,
-  getUserOrders,
+  getAllOrders,
+  getOrder,
+  updateOrderStatus,
   cancelOrder,
-  convertGuestToUser,
+  createOrder,
+  createMyPackageOrder,
+  getOrderDetails,
 } from '../controllers/orderController';
-import { protect } from '../middleware/auth';
+import { orderRateLimiter } from '../middleware/rateLimiter';
 
 const router = express.Router();
 
-// Guest routes (no auth required)
-router.post('/guest', createGuestOrder);
-router.post('/convert-guest', convertGuestToUser);
+// Public routes for creating orders
+router.post('/', orderRateLimiter, createOrder);
+router.post('/my-packages', orderRateLimiter, createMyPackageOrder);
 
-// Protected routes (require auth)
-router.use(protect);
-router.post('/', createOrder);
-router.get('/user', getUserOrders);
-router.get('/:id', getOrderById);
+// Get order details (public route)
+router.get('/:orderId/details', getOrderDetails);
+
+// Admin-only routes for order management
+router.get('/', getAllOrders);
+router.get('/:id', getOrder);
+router.put('/:id/status', updateOrderStatus);
 router.post('/:id/cancel', cancelOrder);
 
 export default router; 

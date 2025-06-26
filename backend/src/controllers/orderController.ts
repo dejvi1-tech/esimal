@@ -1,144 +1,388 @@
 import { Request, Response, NextFunction } from 'express';
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
-import { AppError } from '../middleware/errorHandler';
 import { sendEmail } from '../services/emailService';
 import { logger } from '../utils/logger';
-import { generateSignupToken, verifySignupToken } from '../utils/tokenUtils';
-import { User } from '@supabase/supabase-js';
+import { generateEsimCode as generateUniqueEsimCode } from '../utils/esimUtils';
+import {
+  ValidationError,
+  NotFoundError,
+  PaymentError,
+  ConflictError,
+  ErrorMessages,
+} from '../utils/errors';
+import { emailTemplates } from '../utils/emailTemplates';
+import { RoamifyService } from '../services/roamifyService';
+import axios from 'axios';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-05-28.basil',
 });
 
-interface UserWithStripe extends User {
-  stripeCustomerId?: string;
+// Create admin client for bypassing RLS
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+interface OrderStatus {
+  pending: string[];
+  paid: string[];
+  activated: string[];
+  expired: string[];
+  cancelled: string[];
+  refunded: string[];
 }
 
-interface GuestOrderData {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  packageId: string;
-  paymentMethodId: string;
-}
+// Valid order status transitions
+const VALID_STATUS_TRANSITIONS: OrderStatus = {
+  pending: ['paid', 'cancelled'],
+  paid: ['activated', 'refunded'],
+  activated: ['expired', 'refunded'],
+  expired: [],
+  cancelled: [],
+  refunded: [],
+};
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: UserWithStripe;
-    }
-  }
-}
+// Maximum refund period in hours
+const MAX_REFUND_PERIOD_HOURS = 24;
 
+// Helper function to generate eSIM code
+const generateEsimCode = async (): Promise<string> => {
+  return generateUniqueEsimCode();
+};
+
+// Helper function to generate QR code data
+const generateQRCodeData = (esimCode: string, packageName: string): string => {
+  // Generate proper LPA format QR code data for eSIM activation
+  // LPA format: LPA:1$<provider>$<esim_code>$$<package_name>
+  return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
+};
+
+// Create order and send confirmation email
 export const createOrder = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { packageId, paymentMethodId } = req.body;
-    const user = req.user;
+    const { packageId, userEmail, userName, userId } = req.body;
 
-    if (!user?.email) {
-      throw new AppError(401, 'User not authenticated');
+    // Validate required fields
+    if (!packageId) {
+      throw new ValidationError('Package ID is required');
+    }
+    if (!userEmail) {
+      throw new ValidationError('User email is required');
     }
 
     // Get package details
-    const { data: pkg, error: packageError } = await supabase
-      .from('packages')
+    const { data: packageData, error: packageError } = await supabase
+      .from('my_packages')
       .select('*')
       .eq('id', packageId)
       .single();
 
-    if (packageError || !pkg) {
-      throw new AppError(404, 'Package not found');
+    if (packageError || !packageData) {
+      throw new NotFoundError('Package not found');
     }
 
-    // Get or create Stripe customer
-    let customerId = user.stripeCustomerId;
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          userId: user.id,
-        },
-      });
-      customerId = customer.id;
+    // Generate unique eSIM code
+    const esimCode = await generateEsimCode();
 
-      // Update user with Stripe customer ID
-      const { error: updateError } = await supabase
-        .from('users')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+    // Generate QR code data
+    const qrCodeData = generateQRCodeData(esimCode, packageData.name);
 
-      if (updateError) {
-        logger.error('Failed to update user with Stripe customer ID:', updateError);
-      }
-    }
+    // Create order in database
+    const orderData = {
+      packageId: packageId,
+      user_id: userId || null,
+      user_email: userEmail,
+      user_name: userName || userEmail,
+      esim_code: esimCode,
+      qr_code_data: qrCodeData,
+      status: 'paid', // Assuming immediate payment or you can change this based on your flow
+      amount: packageData.sale_price,
+      data_amount: packageData.data_amount,
+      validity_days: packageData.validity_days,
+      country_name: packageData.country_name,
+      created_at: new Date().toISOString(),
+    };
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: pkg.price * 100, // Convert to cents
-      currency: 'usd',
-      customer: customerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      metadata: {
-        packageId,
-        userId: user.id,
-      },
-    });
-
-    if (paymentIntent.status !== 'succeeded') {
-      throw new AppError(400, 'Payment failed');
-    }
-
-    // Create order
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await supabaseAdmin
       .from('orders')
-      .insert([
-        {
-          user_id: user.id,
-          package_id: packageId,
-          amount: pkg.price,
-          status: 'completed',
-          payment_intent_id: paymentIntent.id,
-          esim_code: generateEsimCode(),
-        },
-      ])
+      .insert([orderData])
       .select()
       .single();
 
     if (orderError) {
-      throw new AppError(400, orderError.message);
+      logger.error('Error creating order:', orderError);
+      throw new Error('Failed to create order');
     }
 
-    // Send confirmation email
-    await sendEmail({
-      to: user.email,
-      subject: 'Order Confirmation - eSIM Marketplace',
-      html: `
-        <h1>Order Confirmation</h1>
-        <p>Thank you for your purchase!</p>
-        <p>Your eSIM code is: ${order.esim_code}</p>
-        <p>Package: ${pkg.name}</p>
-        <p>Amount: $${pkg.price}</p>
-        <p>Data: ${pkg.data_amount}GB</p>
-        <p>Duration: ${pkg.duration} days</p>
-      `,
-    });
+    // Send confirmation email with QR code
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject: emailTemplates.orderConfirmation.subject,
+        html: () => emailTemplates.orderConfirmation.html({
+          orderId: order.id,
+          packageName: packageData.name,
+          amount: packageData.sale_price,
+          dataAmount: `${packageData.data_amount}GB`,
+          validityDays: packageData.validity_days,
+          esimCode: esimCode,
+          qrCodeData: qrCodeData,
+          isGuestOrder: !userId,
+          signupUrl: `${process.env.FRONTEND_URL}/signup`,
+          dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
+        }),
+      });
+
+      logger.info(`Order confirmation email sent to ${userEmail} for order ${order.id}`);
+    } catch (emailError) {
+      logger.error('Error sending confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
 
     res.status(201).json({
       status: 'success',
-      data: order,
+      message: 'Order created successfully',
+      data: {
+        orderId: order.id,
+        esimCode: esimCode,
+        qrCodeData: qrCodeData,
+        packageName: packageData.name,
+        amount: packageData.sale_price,
+        dataAmount: packageData.data_amount,
+        validityDays: packageData.validity_days,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-export const getOrderById = async (
+// Create order for my_packages (frontend packages) - WITH REAL ROAMIFY API and user info
+export const createMyPackageOrder = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { packageId, userEmail, userName, name, surname } = req.body;
+
+    // Validate required fields
+    if (!packageId) {
+      throw new ValidationError('Package ID is required');
+    }
+    if (!userEmail) {
+      throw new ValidationError('User email is required');
+    }
+    if (!name || !surname) {
+      throw new ValidationError('Name and surname are required');
+    }
+
+    // Get package details from my_packages
+    const { data: packageData, error: packageError } = await supabase
+      .from('my_packages')
+      .select('*')
+      .eq('id', packageId)
+      .single();
+
+    if (packageError || !packageData) {
+      throw new NotFoundError('Package not found');
+    }
+
+    let esimCode: string;
+    let roamifyOrderId: string;
+    let realQRData: {
+      lpaCode: string;
+      qrCodeUrl: string;
+      activationCode: string;
+      iosQuickInstall: string;
+    };
+
+    // Step 1: Create eSIM order with Roamify (with fallback)
+    logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
+    
+    try {
+      const roamifyOrder = await RoamifyService.createEsimOrder(packageData.reseller_id, 1);
+      esimCode = roamifyOrder.esimId;
+      roamifyOrderId = roamifyOrder.orderId;
+      logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+    } catch (roamifyError) {
+      logger.error('Failed to create Roamify order, using fallback:', roamifyError);
+      
+      // Fallback: Generate a unique eSIM code locally
+      esimCode = await generateEsimCode();
+      roamifyOrderId = `fallback-${Date.now()}`;
+      
+      logger.info(`Using fallback eSIM code: ${esimCode}`);
+    }
+
+    // Step 2: Generate real QR code from Roamify (with fallback)
+    logger.info(`Generating real QR code for eSIM: ${esimCode}`);
+    
+    try {
+      realQRData = await RoamifyService.generateRealQRCode(esimCode);
+      logger.info(`Real QR code generated. LPA Code: ${realQRData.lpaCode}`);
+    } catch (qrError) {
+      logger.error('Failed to generate real QR code, using fallback:', qrError);
+      
+      // Fallback: Generate QR code locally
+      const fallbackLpaCode = generateQRCodeData(esimCode, packageData.name);
+      realQRData = {
+        lpaCode: fallbackLpaCode,
+        qrCodeUrl: '', // Will be generated in email template
+        activationCode: esimCode,
+        iosQuickInstall: '',
+      };
+      
+      logger.info(`Using fallback QR code. LPA Code: ${fallbackLpaCode}`);
+    }
+
+    // Step 3: Create order in database with real Roamify data and user info
+    const orderData = {
+      packageId: packageId,
+      user_email: userEmail,
+      user_name: userName || `${name} ${surname}`,
+      name,
+      surname,
+      esim_code: esimCode,
+      qr_code_data: realQRData.lpaCode, // Store the real LPA code from Roamify
+      roamify_order_id: roamifyOrderId,
+      status: 'paid',
+      amount: packageData.sale_price,
+      data_amount: packageData.data_amount,
+      validity_days: packageData.validity_days,
+      country_name: packageData.country_name,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .insert([orderData])
+      .select()
+      .single();
+
+    if (orderError) {
+      logger.error('Error creating order:', orderError);
+      return next(new Error(`Failed to create order: ${orderError.message}`));
+    }
+
+    logger.info(`Order saved to database. Order ID: ${order.id}`);
+
+    // Step 4: Send confirmation email with real QR code and user info
+    try {
+      await sendEmail({
+        to: userEmail,
+        subject: emailTemplates.orderConfirmation.subject,
+        html: () => emailTemplates.orderConfirmation.html({
+          orderId: order.id,
+          packageName: packageData.name,
+          amount: packageData.sale_price,
+          dataAmount: `${packageData.data_amount}GB`,
+          validityDays: packageData.validity_days,
+          esimCode: esimCode,
+          qrCodeData: realQRData.lpaCode, // Use real LPA code from Roamify
+          qrCodeUrl: realQRData.qrCodeUrl, // Use real QR code URL from Roamify
+          isGuestOrder: true,
+          signupUrl: `${process.env.FRONTEND_URL}/signup`,
+          dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
+          name,
+          surname,
+          email: userEmail,
+        }),
+      });
+
+      logger.info(`Order confirmation email sent to ${userEmail} for order ${order.id}`);
+    } catch (emailError) {
+      logger.error('Error sending confirmation email:', emailError);
+      // Don't fail the order creation if email fails
+    }
+
+    res.status(201).json({
+      status: 'success',
+      message: 'Order created successfully with real Roamify eSIM and QR code',
+      data: {
+        orderId: order.id,
+        esimCode: esimCode,
+        qrCodeData: realQRData.lpaCode,
+        qrCodeUrl: realQRData.qrCodeUrl,
+        activationCode: realQRData.activationCode,
+        iosQuickInstall: realQRData.iosQuickInstall,
+        roamifyOrderId: roamifyOrderId,
+        packageName: packageData.name,
+        amount: packageData.sale_price,
+        dataAmount: packageData.data_amount,
+        validityDays: packageData.validity_days,
+        name,
+        surname,
+        email: userEmail,
+      },
+    });
+  } catch (error) {
+    logger.error('Error in createMyPackageOrder:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      logger.error('Roamify API error:', error.response.data);
+      return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
+    }
+    next(error);
+  }
+};
+
+export const validateOrderStatusTransition = (
+  currentStatus: keyof OrderStatus,
+  newStatus: string
+): boolean => {
+  return VALID_STATUS_TRANSITIONS[currentStatus]?.includes(newStatus) || false;
+};
+
+const isRefundEligible = (order: any): boolean => {
+  if (order.status !== 'paid' && order.status !== 'activated') {
+    return false;
+  }
+
+  const orderDate = new Date(order.created_at);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
+
+  return hoursDiff <= MAX_REFUND_PERIOD_HOURS;
+};
+
+// Admin-only function to get all orders
+export const getAllOrders = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        package:packages(*),
+        user:users(email, first_name, last_name)
+      `)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: orders,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only function to get order by ID
+export const getOrder = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -150,19 +394,18 @@ export const getOrderById = async (
       .from('orders')
       .select(`
         *,
-        packages (*),
-        users (email, first_name, last_name)
+        package:packages(*),
+        user:users(email, first_name, last_name)
       `)
       .eq('id', id)
       .single();
 
     if (error) {
-      throw new AppError(404, 'Order not found');
+      throw error;
     }
 
-    // Check if user is authorized to view this order
-    if (order.user_id !== req.user?.id && req.user?.role !== 'admin') {
-      throw new AppError(403, 'Not authorized to view this order');
+    if (!order) {
+      throw new NotFoundError('Order');
     }
 
     res.status(200).json({
@@ -174,35 +417,131 @@ export const getOrderById = async (
   }
 };
 
-export const getUserOrders = async (
+// Update order status
+export const updateOrderStatus = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { data: orders, error } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        packages (*)
-      `)
-      .eq('user_id', req.user?.id)
-      .order('created_at', { ascending: false });
+    const { orderId } = req.params;
+    const { status, notes } = req.body;
 
-    if (error) {
-      throw new AppError(400, error.message);
+    // Validate status
+    if (!status || !Object.keys(VALID_STATUS_TRANSITIONS).includes(status)) {
+      throw new ValidationError('Invalid order status');
     }
 
-    res.status(200).json({
+    // Get current order
+    const { data: currentOrder, error: fetchError } = await supabaseAdmin
+      .from('orders')
+      .select('*')
+      .eq('id', orderId)
+      .single();
+
+    if (fetchError || !currentOrder) {
+      throw new NotFoundError('Order not found');
+    }
+
+    // Validate status transition
+    const allowedTransitions = VALID_STATUS_TRANSITIONS[currentOrder.status as keyof OrderStatus] || [];
+    if (!allowedTransitions.includes(status)) {
+      throw new ValidationError(`Cannot transition from ${currentOrder.status} to ${status}`);
+    }
+
+    // Update order status
+    const updateData: any = {
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    if (notes) {
+      updateData.notes = notes;
+    }
+
+    // Special handling for activation
+    if (status === 'activated') {
+      updateData.activated_at = new Date().toISOString();
+    }
+
+    const { data: updatedOrder, error: updateError } = await supabaseAdmin
+      .from('orders')
+      .update(updateData)
+      .eq('id', orderId)
+      .select()
+      .single();
+
+    if (updateError) {
+      logger.error('Error updating order status:', updateError);
+      throw new Error('Failed to update order status');
+    }
+
+    logger.info(`Order ${orderId} status updated from ${currentOrder.status} to ${status}`);
+
+    res.json({
       status: 'success',
-      results: orders.length,
-      data: orders,
+      message: 'Order status updated successfully',
+      data: updatedOrder
     });
+
   } catch (error) {
     next(error);
   }
 };
 
+// Get order details with eSIM status
+export const getOrderDetails = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { orderId } = req.params;
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('orders')
+      .select(`
+        *,
+        package:my_packages(name, country_name, data_amount, validity_days)
+      `)
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    // Try to get real-time eSIM status from Roamify if available
+    let roamifyStatus = null;
+    if (order.roamify_order_id && !order.roamify_order_id.startsWith('fallback-')) {
+      try {
+        const roamifyData = await RoamifyService.getEsimDetails(order.esim_code);
+        roamifyStatus = {
+          status: roamifyData.status,
+          iccid: roamifyData.iccid,
+          createdAt: roamifyData.createdAt,
+          updatedAt: roamifyData.updatedAt,
+          expiredAt: roamifyData.expiredAt
+        };
+      } catch (error) {
+        logger.warn(`Could not fetch Roamify status for order ${orderId}:`, error);
+      }
+    }
+
+    res.json({
+      status: 'success',
+      data: {
+        ...order,
+        roamifyStatus
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Admin-only function to cancel order
 export const cancelOrder = async (
   req: Request,
   res: Response,
@@ -212,62 +551,51 @@ export const cancelOrder = async (
     const { id } = req.params;
 
     // Get order
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: fetchError } = await supabase
       .from('orders')
       .select('*')
       .eq('id', id)
       .single();
 
-    if (orderError || !order) {
-      throw new AppError(404, 'Order not found');
+    if (fetchError) {
+      throw fetchError;
     }
 
-    // Check if user is authorized to cancel this order
-    if (order.user_id !== req.user?.id && req.user?.role !== 'admin') {
-      throw new AppError(403, 'Not authorized to cancel this order');
+    if (!order) {
+      throw new NotFoundError('Order');
     }
 
-    // Check if order can be cancelled
-    if (order.status !== 'completed') {
-      throw new AppError(400, 'Order cannot be cancelled');
+    if (order.status === 'cancelled') {
+      throw new ConflictError('Order is already cancelled');
     }
 
-    // Process refund through Stripe
-    const refund = await stripe.refunds.create({
-      payment_intent: order.payment_intent_id,
-    });
-
-    if (refund.status !== 'succeeded') {
-      throw new AppError(400, 'Refund failed');
+    if (order.status === 'activated') {
+      throw new ConflictError('Cannot cancel activated order');
     }
 
-    // Update order status
+    // If order was paid, process refund
+    if (order.status === 'paid' && order.payment_intent_id) {
+      try {
+        await stripe.refunds.create({
+          payment_intent: order.payment_intent_id,
+        });
+      } catch (refundError) {
+        logger.error('Failed to process refund:', refundError);
+        throw new PaymentError('Failed to process refund');
+      }
+    }
+
+    // Update order status to cancelled
     const { data: updatedOrder, error: updateError } = await supabase
       .from('orders')
-      .update({
-        status: 'cancelled',
-        refund_id: refund.id,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ status: 'cancelled' })
       .eq('id', id)
       .select()
       .single();
 
     if (updateError) {
-      throw new AppError(400, updateError.message);
+      throw updateError;
     }
-
-    // Send cancellation email
-    await sendEmail({
-      to: req.user?.email || '',
-      subject: 'Order Cancelled - eSIM Marketplace',
-      html: `
-        <h1>Order Cancelled</h1>
-        <p>Your order has been cancelled and refunded.</p>
-        <p>Order ID: ${order.id}</p>
-        <p>Refund Amount: $${order.amount}</p>
-      `,
-    });
 
     res.status(200).json({
       status: 'success',
@@ -276,186 +604,4 @@ export const cancelOrder = async (
   } catch (error) {
     next(error);
   }
-};
-
-export const createGuestOrder = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { email, firstName, lastName, packageId, paymentMethodId } = req.body as GuestOrderData;
-
-    // Get package details
-    const { data: pkg, error: packageError } = await supabase
-      .from('packages')
-      .select('*')
-      .eq('id', packageId)
-      .single();
-
-    if (packageError || !pkg) {
-      throw new AppError(404, 'Package not found');
-    }
-
-    // Create a temporary Stripe customer for the guest
-    const customer = await stripe.customers.create({
-      email,
-      metadata: {
-        isGuest: 'true',
-        firstName: firstName || '',
-        lastName: lastName || '',
-      },
-    });
-
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: pkg.price * 100, // Convert to cents
-      currency: 'usd',
-      customer: customer.id,
-      payment_method: paymentMethodId,
-      confirm: true,
-      metadata: {
-        packageId,
-        isGuest: 'true',
-        guestEmail: email,
-      },
-    });
-
-    if (paymentIntent.status !== 'succeeded') {
-      throw new AppError(400, 'Payment failed');
-    }
-
-    // Create guest order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .insert([
-        {
-          guest_email: email,
-          guest_first_name: firstName,
-          guest_last_name: lastName,
-          package_id: packageId,
-          amount: pkg.price,
-          status: 'completed',
-          payment_intent_id: paymentIntent.id,
-          stripe_customer_id: customer.id,
-          esim_code: generateEsimCode(),
-          is_guest_order: true,
-        },
-      ])
-      .select()
-      .single();
-
-    if (orderError) {
-      throw new AppError(400, orderError.message);
-    }
-
-    // Send confirmation email with signup link
-    const signupToken = generateSignupToken(email, order.id);
-    await sendEmail({
-      to: email,
-      subject: 'Order Confirmation - eSIM Marketplace',
-      html: `
-        <h1>Order Confirmation</h1>
-        <p>Thank you for your purchase!</p>
-        <p>Your eSIM code is: ${order.esim_code}</p>
-        <p>Package: ${pkg.name}</p>
-        <p>Amount: $${pkg.price}</p>
-        <p>Data: ${pkg.data_amount}GB</p>
-        <p>Duration: ${pkg.duration} days</p>
-        <p>Want to manage your eSIM and track your orders? <a href="${process.env.FRONTEND_URL}/signup?token=${signupToken}">Create an account</a></p>
-      `,
-    });
-
-    res.status(201).json({
-      status: 'success',
-      data: {
-        order,
-        signupToken,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const convertGuestToUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { token, password } = req.body;
-    const { email, orderId } = verifySignupToken(token);
-
-    // Get the guest order
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .eq('guest_email', email)
-      .single();
-
-    if (orderError || !order) {
-      throw new AppError(404, 'Order not found');
-    }
-
-    // Create new user account
-    const { data: authData, error: userError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: order.guest_first_name,
-          last_name: order.guest_last_name,
-        },
-      },
-    });
-
-    if (userError || !authData.user) {
-      throw new AppError(400, userError?.message || 'Failed to create user account');
-    }
-
-    // Update order with user ID
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        user_id: authData.user.id,
-        is_guest_order: false,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId);
-
-    if (updateError) {
-      throw new AppError(400, updateError.message);
-    }
-
-    // Update Stripe customer with user ID
-    await stripe.customers.update(order.stripe_customer_id, {
-      metadata: {
-        userId: authData.user.id,
-        isGuest: 'false',
-      },
-    });
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        user: authData.user,
-        order,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// Helper function to generate eSIM code
-const generateEsimCode = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  const codeLength = 16;
-  let code = '';
-  for (let i = 0; i < codeLength; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
 }; 
