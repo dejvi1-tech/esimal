@@ -64,14 +64,15 @@ export class RoamifyService {
       try {
         return await apiCall();
       } catch (error: unknown) {
-        if (axios.isAxiosError(error)) {
-          console.error(error.response?.data || error.message);
-          lastError = error as Error;
-        } else if (error instanceof Error) {
-          console.error(error.message);
-          lastError = error;
+        const err = error as any;
+        if (isAxiosError(err)) {
+          console.error(err.response?.data || err.message);
+          lastError = err as Error;
+        } else if (err instanceof Error) {
+          console.error(err.message);
+          lastError = err;
         } else {
-          console.error(String(error));
+          console.error(String(err));
           lastError = new Error('Unknown error');
         }
         
@@ -81,8 +82,8 @@ export class RoamifyService {
         }
 
         // Don't retry on 4xx errors (client errors)
-        if (axios.isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
-          logger.error(`${operation} failed with client error (${error.response.status}):`, error.response.data);
+        if (isAxiosError(err) && err.response && err.response.status >= 400 && err.response.status < 500) {
+          logger.error(`${operation} failed with client error (${err.response.status}):`, err.response.data);
           throw lastError;
         }
 

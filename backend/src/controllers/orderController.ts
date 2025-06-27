@@ -148,12 +148,13 @@ export const createOrder = async (
       },
     });
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error(error.response?.data || error.message);
-    } else if (error instanceof Error) {
-      console.error(error.message);
+    const err = error as any;
+    if (isAxiosError(err)) {
+      console.error(err.response?.data || err.message);
+    } else if (err instanceof Error) {
+      console.error(err.message);
     } else {
-      console.error(String(error));
+      console.error(String(err));
     }
     next(error);
   }
@@ -319,12 +320,13 @@ export const createMyPackageOrder = async (
       },
     });
   } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.error(error.response?.data || error.message);
-    } else if (error instanceof Error) {
-      console.error(error.message);
+    const err = error as any;
+    if (isAxiosError(err)) {
+      console.error(err.response?.data || err.message);
+    } else if (err instanceof Error) {
+      console.error(err.message);
     } else {
-      console.error(String(error));
+      console.error(String(err));
     }
     next(error);
   }
