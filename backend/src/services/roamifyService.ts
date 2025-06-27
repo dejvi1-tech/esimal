@@ -65,13 +65,13 @@ export class RoamifyService {
         return await apiCall();
       } catch (error: unknown) {
         if (axios.isAxiosError(error)) {
-          console.error("Axios error:", error.response?.data || error.message);
+          console.error(error.response?.data || error.message);
           lastError = error as Error;
         } else if (error instanceof Error) {
-          console.error("Generic error:", error.message);
+          console.error(error.message);
           lastError = error;
         } else {
-          console.error("Unknown error:", String(error));
+          console.error(String(error));
           lastError = new Error('Unknown error');
         }
         

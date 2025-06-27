@@ -147,7 +147,14 @@ export const createOrder = async (
         validityDays: packageData.validity_days,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error(error.response?.data || error.message);
+    } else if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.error(String(error));
+    }
     next(error);
   }
 };
@@ -313,11 +320,11 @@ export const createMyPackageOrder = async (
     });
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
-      console.error("Axios error:", error.response?.data || error.message);
+      console.error(error.response?.data || error.message);
     } else if (error instanceof Error) {
-      console.error("Generic error:", error.message);
+      console.error(error.message);
     } else {
-      console.error("Unknown error:", String(error));
+      console.error(String(error));
     }
     next(error);
   }
