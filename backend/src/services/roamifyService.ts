@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 import { logger } from '../utils/logger';
 
 export interface RoamifyEsimData {
@@ -63,7 +63,13 @@ export class RoamifyService {
       try {
         return await apiCall();
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error('Unknown error');
+        if (isAxiosError(error)) {
+          lastError = error;
+        } else if (error instanceof Error) {
+          lastError = error;
+        } else {
+          lastError = new Error('Unknown error');
+        }
         
         if (attempt === maxRetries) {
           logger.error(`Failed ${operation} after ${maxRetries} attempts:`, lastError.message);
@@ -71,7 +77,7 @@ export class RoamifyService {
         }
 
         // Don't retry on 4xx errors (client errors)
-        if (axios.isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
+        if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
           logger.error(`${operation} failed with client error (${error.response.status}):`, error.response.data);
           throw lastError;
         }
@@ -150,7 +156,7 @@ export class RoamifyService {
         }
       );
 
-      return response.data;
+      return response.data as RoamifyEsimData;
     }, `eSIM details fetch for ${esimId}`);
   }
 
@@ -184,18 +190,16 @@ export class RoamifyService {
         }
       );
 
-      if (!response.data || !response.data.data) {
+      const data = response.data as { data?: any };
+      if (!data || !data.data) {
         throw new Error('No response from Roamify API');
       }
-
-      const result = response.data.data;
+      const result = data.data;
       const esimItem = result.items && result.items[0];
       const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
-
       if (!esimId) {
         throw new Error('No eSIM ID received from Roamify API');
       }
-
       logger.info(`eSIM order created successfully. Order ID: ${result.id}, eSIM ID: ${esimId}`);
 
       return {

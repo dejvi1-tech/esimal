@@ -28,47 +28,48 @@ async function testRoamifyAPI() {
     console.log('Status Text:', response.statusText);
     console.log('Headers:', JSON.stringify(response.headers, null, 2));
     
+    const data = response.data as any;
     console.log('\n=== RESPONSE DATA ===');
-    console.log('Type of response.data:', typeof response.data);
-    console.log('Is Array?', Array.isArray(response.data));
-    console.log('Keys in response.data:', Object.keys(response.data || {}));
+    console.log('Type of response.data:', typeof data);
+    console.log('Is Array?', Array.isArray(data));
+    console.log('Keys in response.data:', Object.keys(data || {}));
     
     console.log('\n=== FULL RESPONSE DATA ===');
     console.log(JSON.stringify(response.data, null, 2));
     
     // Check for common patterns
-    if (response.data && typeof response.data === 'object') {
+    if (data && typeof data === 'object') {
       console.log('\n=== CHECKING COMMON PATTERNS ===');
       
-      if (response.data.data) {
-        console.log('response.data.data type:', typeof response.data.data);
-        console.log('response.data.data is array:', Array.isArray(response.data.data));
-        if (Array.isArray(response.data.data)) {
-          console.log('response.data.data length:', response.data.data.length);
+      if (data.data) {
+        console.log('response.data.data type:', typeof data.data);
+        console.log('response.data.data is array:', Array.isArray(data.data));
+        if (Array.isArray(data.data)) {
+          console.log('response.data.data length:', data.data.length);
         }
       }
       
-      if (response.data.packages) {
-        console.log('response.data.packages type:', typeof response.data.packages);
-        console.log('response.data.packages is array:', Array.isArray(response.data.packages));
-        if (Array.isArray(response.data.packages)) {
-          console.log('response.data.packages length:', response.data.packages.length);
+      if (data.packages) {
+        console.log('response.data.packages type:', typeof data.packages);
+        console.log('response.data.packages is array:', Array.isArray(data.packages));
+        if (Array.isArray(data.packages)) {
+          console.log('response.data.packages length:', data.packages.length);
         }
       }
       
-      if (response.data.items) {
-        console.log('response.data.items type:', typeof response.data.items);
-        console.log('response.data.items is array:', Array.isArray(response.data.items));
-        if (Array.isArray(response.data.items)) {
-          console.log('response.data.items length:', response.data.items.length);
+      if (data.items) {
+        console.log('response.data.items type:', typeof data.items);
+        console.log('response.data.items is array:', Array.isArray(data.items));
+        if (Array.isArray(data.items)) {
+          console.log('response.data.items length:', data.items.length);
         }
       }
       
-      if (response.data.results) {
-        console.log('response.data.results type:', typeof response.data.results);
-        console.log('response.data.results is array:', Array.isArray(response.data.results));
-        if (Array.isArray(response.data.results)) {
-          console.log('response.data.results length:', response.data.results.length);
+      if (data.results) {
+        console.log('response.data.results type:', typeof data.results);
+        console.log('response.data.results is array:', Array.isArray(data.results));
+        if (Array.isArray(data.results)) {
+          console.log('response.data.results length:', data.results.length);
         }
       }
     }

@@ -18,7 +18,7 @@ import { Request, Response, NextFunction, RequestHandler } from 'express';
 import axios from 'axios';
 import { supabase } from './config/supabase';
 import { createClient } from '@supabase/supabase-js';
-import { RoamifyService } from './services/RoamifyService';
+import { RoamifyService } from './services/roamifyService';
 import { AnalyticsService } from './utils/analytics';
 
 // Load environment variables

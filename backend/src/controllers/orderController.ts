@@ -14,7 +14,7 @@ import {
 } from '../utils/errors';
 import { emailTemplates } from '../utils/emailTemplates';
 import { RoamifyService } from '../services/roamifyService';
-import axios from 'axios';
+import axios, { isAxiosError } from 'axios';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-05-28.basil',
@@ -47,11 +47,6 @@ const VALID_STATUS_TRANSITIONS: OrderStatus = {
 
 // Maximum refund period in hours
 const MAX_REFUND_PERIOD_HOURS = 24;
-
-// Helper function to generate eSIM code
-const generateEsimCode = async (): Promise<string> => {
-  return generateUniqueEsimCode();
-};
 
 // Create order and send confirmation email
 export const createOrder = async (
@@ -119,7 +114,7 @@ export const createOrder = async (
       await sendEmail({
         to: userEmail,
         subject: emailTemplates.orderConfirmation.subject,
-        html: () => emailTemplates.orderConfirmation.html({
+        html: async () => emailTemplates.orderConfirmation.html({
           orderId: order.id,
           packageName: packageData.name,
           amount: packageData.sale_price,
@@ -272,7 +267,7 @@ export const createMyPackageOrder = async (
       await sendEmail({
         to: userEmail,
         subject: emailTemplates.orderConfirmation.subject,
-        html: () => emailTemplates.orderConfirmation.html({
+        html: async () => emailTemplates.orderConfirmation.html({
           orderId: order.id,
           packageName: packageData.name,
           amount: packageData.sale_price,
@@ -318,11 +313,14 @@ export const createMyPackageOrder = async (
     });
   } catch (error) {
     logger.error('Error in createMyPackageOrder:', error);
-    if (axios.isAxiosError(error) && error.response) {
+    if (isAxiosError(error) && error.response) {
       logger.error('Roamify API error:', error.response.data);
       return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
+    } else if (error instanceof Error) {
+      next(error);
+    } else {
+      next(new Error('Unknown error occurred'));
     }
-    next(error);
   }
 };
 

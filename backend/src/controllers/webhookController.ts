@@ -100,7 +100,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         await sendEmail({
           to: paymentIntent.metadata.userEmail,
           subject: emailTemplates.paymentSuccess.subject,
-          html: () => emailTemplates.paymentSuccess.html({
+          html: async () => emailTemplates.paymentSuccess.html({
             orderId: order.id,
             amount: paymentIntent.amount / 100,
             packageName: paymentIntent.metadata.packageName || 'eSIM Package',
@@ -140,7 +140,7 @@ async function handlePaymentIntentFailed(paymentIntent: any) {
         await sendEmail({
           to: paymentIntent.metadata.userEmail,
           subject: emailTemplates.paymentFailed.subject,
-          html: () => emailTemplates.paymentFailed.html({
+          html: async () => emailTemplates.paymentFailed.html({
             amount: paymentIntent.amount / 100,
             packageName: paymentIntent.metadata.packageName || 'eSIM Package',
             failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
@@ -179,7 +179,7 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
         await sendEmail({
           to: paymentIntent.metadata.userEmail,
           subject: emailTemplates.paymentCanceled.subject,
-          html: () => emailTemplates.paymentCanceled.html({
+          html: async () => emailTemplates.paymentCanceled.html({
             amount: paymentIntent.amount / 100,
             packageName: paymentIntent.metadata.packageName || 'eSIM Package',
             retryUrl: `${process.env.FRONTEND_URL}/checkout?retry=true`,
@@ -290,7 +290,7 @@ async function handleCheckoutSessionCompleted(session: any) {
         await sendEmail({
           to: customerEmail,
           subject: emailTemplates.orderConfirmation.subject,
-          html: () => emailTemplates.orderConfirmation.html({
+          html: async () => emailTemplates.orderConfirmation.html({
             orderId: order.id,
             packageName: packageData.name,
             amount: amount,
@@ -346,7 +346,7 @@ async function handleChargeRefunded(charge: any) {
         await sendEmail({
           to: order.user_email,
           subject: emailTemplates.refundProcessed.subject,
-          html: () => emailTemplates.refundProcessed.html({
+          html: async () => emailTemplates.refundProcessed.html({
             amount: charge.amount_refunded / 100,
             refundId: charge.refunds?.data[0]?.id,
             orderId: order.packageId,
