@@ -314,27 +314,24 @@ export const searchPackages = async (
       return;
     }
 
-    let query = supabase
+    // Query packages by country name (case-insensitive)
+    const { data: packages, error } = await supabase
       .from('my_packages')
       .select('*')
-      .ilike('country_name', `%${country}%`);
-
-    // Add language filter if provided
-    if (lang) {
-      query = query.eq('language', lang);
-    }
-
-    const { data: packages, error } = await query.order('sale_price', { ascending: true });
+      .ilike('country_name', `%${country}%`)
+      .order('sale_price', { ascending: true });
 
     if (error) {
+      console.error('Database error:', error);
       throw error;
     }
 
     res.status(200).json({
       status: 'success',
-      data: packages,
+      data: packages || [],
     });
   } catch (error) {
+    console.error('Search packages error:', error);
     next(error);
   }
 }; 
