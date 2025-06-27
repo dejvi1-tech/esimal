@@ -27,6 +27,7 @@ config();
 
 // Create Express app
 const app = express();
+app.set('trust proxy', true);
 
 // Enable CORS for frontend
 app.use(cors({
