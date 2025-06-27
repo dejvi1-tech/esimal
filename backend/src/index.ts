@@ -20,6 +20,7 @@ import { supabase } from './config/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { RoamifyService } from './services/roamifyService';
 import { AnalyticsService } from './utils/analytics';
+import { asyncHandler } from './utils/asyncHandler';
 
 // Load environment variables
 config();
@@ -149,7 +150,7 @@ app.use('/api/stripe', stripeRoutes);
 app.post('/api/webhooks/stripe', handleStripeWebhook);
 
 // Get Packages for Frontend (Only Visible)
-app.get('/api/frontend-packages', (async (req: Request, res: Response) => {
+app.get('/api/frontend-packages', asyncHandler(async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabase
       .from('my_packages')
@@ -162,10 +163,10 @@ app.get('/api/frontend-packages', (async (req: Request, res: Response) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch packages' });
   }
-}) as RequestHandler);
+}));
 
 // Get All Roamify Packages for Admin Panel (with pagination to get all packages)
-app.get('/api/admin/all-roamify-packages', ipWhitelist, (async (req: Request, res: Response) => {
+app.get('/api/admin/all-roamify-packages', ipWhitelist, asyncHandler(async (req: Request, res: Response) => {
   try {
     res.set('Cache-Control', 'no-store');
     
@@ -251,10 +252,10 @@ app.get('/api/admin/all-roamify-packages', ipWhitelist, (async (req: Request, re
     console.error('Error in all-roamify-packages endpoint:', error);
     res.status(500).json({ error: 'Failed to fetch Roamify packages' });
   }
-}) as RequestHandler);
+}));
 
 // Get My Packages for Admin Panel
-app.get('/api/admin/my-packages', ipWhitelist, (async (req: Request, res: Response) => {
+app.get('/api/admin/my-packages', ipWhitelist, asyncHandler(async (req: Request, res: Response) => {
   try {
     res.set('Cache-Control', 'no-store');
     // Fetch all packages from the my_packages table using service role to bypass RLS
@@ -268,10 +269,10 @@ app.get('/api/admin/my-packages', ipWhitelist, (async (req: Request, res: Respon
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch my packages' });
   }
-}) as RequestHandler);
+}));
 
 // Save Package to My Packages (Admin only)
-app.post('/api/admin/save-package', ipWhitelist, (async (req: Request, res: Response) => {
+app.post('/api/admin/save-package', ipWhitelist, asyncHandler(async (req: Request, res: Response) => {
   try {
     const packageData = req.body;
     
@@ -314,10 +315,10 @@ app.post('/api/admin/save-package', ipWhitelist, (async (req: Request, res: Resp
   } catch (error) {
     res.status(500).json({ error: 'Failed to save package' });
   }
-}) as RequestHandler);
+}));
 
 // Save Package with Most Popular Settings (Admin only)
-app.post('/api/save-package', ipWhitelist, (async (req: Request, res: Response) => {
+app.post('/api/save-package', ipWhitelist, asyncHandler(async (req: Request, res: Response) => {
   try {
     const packageData = req.body;
     
@@ -370,7 +371,7 @@ app.post('/api/save-package', ipWhitelist, (async (req: Request, res: Response) 
   } catch (error) {
     res.status(500).json({ error: 'Failed to save package' });
   }
-}) as RequestHandler);
+}));
 
 // Update Package in My Packages (Admin only)
 app.put('/api/admin/update-package/:id', ipWhitelist, (async (req: Request, res: Response) => {

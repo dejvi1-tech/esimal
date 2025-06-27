@@ -70,6 +70,6 @@ export const generateQRCodeData = (esimCode: string, packageName: string): strin
 /**
  * Type guard for AxiosError
  */
-export function isAxiosError(error: any): error is import('axios').AxiosError {
+export function isAxiosError(error: any): boolean {
   return error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError === true;
 } 
