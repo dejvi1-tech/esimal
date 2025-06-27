@@ -63,7 +63,7 @@ export class RoamifyService {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await apiCall();
-      } catch (error) {
+      } catch (error: unknown) {
         if (isAxiosError(error)) {
           lastError = error as Error;
         } else if (error instanceof Error) {

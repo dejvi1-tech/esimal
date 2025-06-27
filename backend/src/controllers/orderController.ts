@@ -311,7 +311,7 @@ export const createMyPackageOrder = async (
         email: userEmail,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
     logger.error('Error in createMyPackageOrder:', String(error));
     if (isAxiosError(error) && error.response) {
       logger.error('Roamify API error:', error.response.data);
@@ -320,7 +320,7 @@ export const createMyPackageOrder = async (
       logger.error('Error:', error.message);
       next(error);
     } else {
-      logger.error('Unknown error:', String(error));
+      logger.error('Unknown error:', error);
       next(new Error('Unknown error occurred'));
     }
   }
