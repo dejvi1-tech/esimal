@@ -115,11 +115,11 @@ async function syncPackages() {
         console.log('Response status:', response.status);
         // Handle the actual Roamify API response structure
         let packages = [];
-        // The API returns { status: 'success', data: { packages: [...] } }
-        if (response.data && response.data.status === 'success' && response.data.data && response.data.data.packages && Array.isArray(response.data.data.packages)) {
+        const data = response.data;
+        if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
             console.log('Found packages array in response.data.data.packages');
             // Extract individual packages from country objects
-            for (const country of response.data.data.packages) {
+            for (const country of data.data.packages) {
                 if (country.packages && Array.isArray(country.packages)) {
                     console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
                     // Add country info to each package using separate fields
@@ -133,9 +133,9 @@ async function syncPackages() {
             }
         }
         else {
-            console.error('Unexpected API response structure. Available keys:', Object.keys(response.data || {}));
-            if (response.data && response.data.data) {
-                console.error('Data keys:', Object.keys(response.data.data));
+            console.error('Unexpected API response structure. Available keys:', Object.keys(data || {}));
+            if (data && data.data) {
+                console.error('Data keys:', Object.keys(data.data));
             }
             throw new Error('Invalid API response structure - no packages array found');
         }

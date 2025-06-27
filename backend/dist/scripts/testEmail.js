@@ -83,7 +83,7 @@ const testEmailSending = async (config, testEmail) => {
         await (0, emailService_1.sendEmail)({
             to: testEmail,
             subject: emailTemplates_1.emailTemplates.orderConfirmation.subject,
-            html: emailTemplates_1.emailTemplates.orderConfirmation.html({
+            html: async () => emailTemplates_1.emailTemplates.orderConfirmation.html({
                 orderId: 'TEST-ORDER-123',
                 packageName: 'Test Package - 1GB/7 Days',
                 amount: 9.99,
@@ -106,7 +106,7 @@ const testEmailSending = async (config, testEmail) => {
         await (0, emailService_1.sendEmail)({
             to: testEmail,
             subject: emailTemplates_1.emailTemplates.passwordReset.subject,
-            html: emailTemplates_1.emailTemplates.passwordReset.html({
+            html: async () => emailTemplates_1.emailTemplates.passwordReset.html({
                 resetUrl: 'http://localhost:3000/reset-password?token=test-token-123',
             }),
         });
@@ -121,7 +121,7 @@ const testEmailSending = async (config, testEmail) => {
         await (0, emailService_1.sendEmail)({
             to: testEmail,
             subject: emailTemplates_1.emailTemplates.accountVerification.subject,
-            html: emailTemplates_1.emailTemplates.accountVerification.html({
+            html: async () => emailTemplates_1.emailTemplates.accountVerification.html({
                 verificationUrl: 'http://localhost:3000/verify-email?token=test-token-123',
             }),
         });
@@ -136,7 +136,7 @@ const testEmailSending = async (config, testEmail) => {
         await (0, emailService_1.sendEmail)({
             to: testEmail,
             subject: emailTemplates_1.emailTemplates.accountCreated.subject,
-            html: emailTemplates_1.emailTemplates.accountCreated.html({
+            html: async () => emailTemplates_1.emailTemplates.accountCreated.html({
                 email: testEmail,
                 firstName: 'Test',
                 lastName: 'User',

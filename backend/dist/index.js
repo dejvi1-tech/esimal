@@ -20,15 +20,16 @@ const webhookController_1 = require("./controllers/webhookController");
 const ipWhitelist_1 = require("./middleware/ipWhitelist");
 const supabase_1 = require("./config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
-const RoamifyService_1 = require("./services/RoamifyService");
+const roamifyService_1 = require("./services/roamifyService");
 const analytics_1 = require("./utils/analytics");
+const asyncHandler_1 = require("./utils/asyncHandler");
 // Load environment variables
 (0, dotenv_1.config)();
 // Create Express app
 const app = (0, express_1.default)();
 // Enable CORS for frontend
 app.use((0, cors_1.default)({
-    origin: 'http://localhost:8080',
+    origin: ['https://esimfly.al', 'http://localhost:8080'],
     credentials: true
 }));
 // Security middleware
@@ -81,7 +82,7 @@ app.get('/health/full', async (req, res) => {
         }
         // Check Roamify API
         try {
-            const roamifyHealthy = await RoamifyService_1.RoamifyService.checkApiHealth();
+            const roamifyHealthy = await roamifyService_1.RoamifyService.checkApiHealth();
             healthStatus.services.roamify = roamifyHealthy ? 'healthy' : 'unhealthy';
         }
         catch (error) {
@@ -130,9 +131,11 @@ app.use('/api/admin/account', ipWhitelist_1.ipWhitelist, accountRoutes_1.default
 app.use('/api/orders', orderRoutes_1.default);
 app.use('/api/stripe', stripeRoutes_1.default);
 // Stripe webhook endpoint (no rate limiting, raw body needed)
-app.post('/api/webhooks/stripe', webhookController_1.handleStripeWebhook);
+app.post('/api/webhooks/stripe', (req, res, next) => {
+    (0, webhookController_1.handleStripeWebhook)(req, res, next).catch(next);
+});
 // Get Packages for Frontend (Only Visible)
-app.get('/api/frontend-packages', (async (req, res) => {
+app.get('/api/frontend-packages', (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const { data, error } = await supabase_1.supabase
             .from('my_packages')
@@ -148,7 +151,7 @@ app.get('/api/frontend-packages', (async (req, res) => {
     }
 }));
 // Get All Roamify Packages for Admin Panel (with pagination to get all packages)
-app.get('/api/admin/all-roamify-packages', ipWhitelist_1.ipWhitelist, (async (req, res) => {
+app.get('/api/admin/all-roamify-packages', ipWhitelist_1.ipWhitelist, (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         res.set('Cache-Control', 'no-store');
         console.log('Fetching all Roamify packages with pagination...');
@@ -225,7 +228,7 @@ app.get('/api/admin/all-roamify-packages', ipWhitelist_1.ipWhitelist, (async (re
     }
 }));
 // Get My Packages for Admin Panel
-app.get('/api/admin/my-packages', ipWhitelist_1.ipWhitelist, (async (req, res) => {
+app.get('/api/admin/my-packages', ipWhitelist_1.ipWhitelist, (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         res.set('Cache-Control', 'no-store');
         // Fetch all packages from the my_packages table using service role to bypass RLS
@@ -242,7 +245,7 @@ app.get('/api/admin/my-packages', ipWhitelist_1.ipWhitelist, (async (req, res) =
     }
 }));
 // Save Package to My Packages (Admin only)
-app.post('/api/admin/save-package', ipWhitelist_1.ipWhitelist, (async (req, res) => {
+app.post('/api/admin/save-package', ipWhitelist_1.ipWhitelist, (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const packageData = req.body;
         // Validate required fields
@@ -284,7 +287,7 @@ app.post('/api/admin/save-package', ipWhitelist_1.ipWhitelist, (async (req, res)
     }
 }));
 // Save Package with Most Popular Settings (Admin only)
-app.post('/api/save-package', ipWhitelist_1.ipWhitelist, (async (req, res) => {
+app.post('/api/save-package', ipWhitelist_1.ipWhitelist, (0, asyncHandler_1.asyncHandler)(async (req, res) => {
     try {
         const packageData = req.body;
         // Validate required fields

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoamifyService = void 0;
 const axios_1 = __importDefault(require("axios"));
 const logger_1 = require("../utils/logger");
+const esimUtils_1 = require("../utils/esimUtils");
 class RoamifyService {
     /**
      * Retry wrapper for API calls
@@ -17,17 +18,29 @@ class RoamifyService {
                 return await apiCall();
             }
             catch (error) {
-                lastError = error instanceof Error ? error : new Error('Unknown error');
+                const err = error;
+                if ((0, esimUtils_1.isAxiosError)(err)) {
+                    console.error(err.response?.data || err.message);
+                    lastError = err;
+                }
+                else if (err instanceof Error) {
+                    console.error(err.message);
+                    lastError = err;
+                }
+                else {
+                    console.error(String(err));
+                    lastError = new Error('Unknown error');
+                }
                 if (attempt === maxRetries) {
-                    logger_1.logger.error(`Failed ${operation} after ${maxRetries} attempts:`, lastError.message);
+                    logger_1.logger.error(`Failed ${operation} after ${maxRetries} attempts:`, lastError.message || String(lastError));
                     throw lastError;
                 }
                 // Don't retry on 4xx errors (client errors)
-                if (axios_1.default.isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
-                    logger_1.logger.error(`${operation} failed with client error (${error.response.status}):`, error.response.data);
+                if ((0, esimUtils_1.isAxiosError)(err) && err.response && err.response.status >= 400 && err.response.status < 500) {
+                    logger_1.logger.error(`${operation} failed with client error (${err.response.status}):`, err.response.data);
                     throw lastError;
                 }
-                logger_1.logger.warn(`${operation} attempt ${attempt} failed, retrying in ${this.retryDelay}ms:`, lastError.message);
+                logger_1.logger.warn(`${operation} attempt ${attempt} failed, retrying in ${this.retryDelay}ms:`, lastError.message || String(lastError));
                 await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
             }
         }
@@ -102,10 +115,11 @@ class RoamifyService {
                 },
                 timeout: 30000, // 30 second timeout
             });
-            if (!response.data || !response.data.data) {
+            const data = response.data;
+            if (!data || !data.data) {
                 throw new Error('No response from Roamify API');
             }
-            const result = response.data.data;
+            const result = data.data;
             const esimItem = result.items && result.items[0];
             const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
             if (!esimId) {

@@ -13,7 +13,6 @@ const esimUtils_1 = require("../utils/esimUtils");
 const errors_1 = require("../utils/errors");
 const emailTemplates_1 = require("../utils/emailTemplates");
 const roamifyService_1 = require("../services/roamifyService");
-const axios_1 = __importDefault(require("axios"));
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2025-05-28.basil',
 });
@@ -30,16 +29,6 @@ const VALID_STATUS_TRANSITIONS = {
 };
 // Maximum refund period in hours
 const MAX_REFUND_PERIOD_HOURS = 24;
-// Helper function to generate eSIM code
-const generateEsimCode = async () => {
-    return (0, esimUtils_1.generateEsimCode)();
-};
-// Helper function to generate QR code data
-const generateQRCodeData = (esimCode, packageName) => {
-    // Generate proper LPA format QR code data for eSIM activation
-    // LPA format: LPA:1$<provider>$<esim_code>$$<package_name>
-    return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
-};
 // Create order and send confirmation email
 const createOrder = async (req, res, next) => {
     try {
@@ -61,9 +50,9 @@ const createOrder = async (req, res, next) => {
             throw new errors_1.NotFoundError('Package not found');
         }
         // Generate unique eSIM code
-        const esimCode = await generateEsimCode();
+        const esimCode = await (0, esimUtils_1.generateEsimCode)();
         // Generate QR code data
-        const qrCodeData = generateQRCodeData(esimCode, packageData.name);
+        const qrCodeData = (0, esimUtils_1.generateQRCodeData)(esimCode, packageData.name);
         // Create order in database
         const orderData = {
             packageId: packageId,
@@ -93,7 +82,7 @@ const createOrder = async (req, res, next) => {
             await (0, emailService_1.sendEmail)({
                 to: userEmail,
                 subject: emailTemplates_1.emailTemplates.orderConfirmation.subject,
-                html: () => emailTemplates_1.emailTemplates.orderConfirmation.html({
+                html: async () => emailTemplates_1.emailTemplates.orderConfirmation.html({
                     orderId: order.id,
                     packageName: packageData.name,
                     amount: packageData.sale_price,
@@ -127,6 +116,16 @@ const createOrder = async (req, res, next) => {
         });
     }
     catch (error) {
+        const err = error;
+        if ((0, esimUtils_1.isAxiosError)(err)) {
+            console.error(err.response?.data || err.message);
+        }
+        else if (err instanceof Error) {
+            console.error(err.message);
+        }
+        else {
+            console.error(String(err));
+        }
         next(error);
     }
 };
@@ -168,7 +167,7 @@ const createMyPackageOrder = async (req, res, next) => {
         catch (roamifyError) {
             logger_1.logger.error('Failed to create Roamify order, using fallback:', roamifyError);
             // Fallback: Generate a unique eSIM code locally
-            esimCode = await generateEsimCode();
+            esimCode = await (0, esimUtils_1.generateEsimCode)();
             roamifyOrderId = `fallback-${Date.now()}`;
             logger_1.logger.info(`Using fallback eSIM code: ${esimCode}`);
         }
@@ -181,7 +180,7 @@ const createMyPackageOrder = async (req, res, next) => {
         catch (qrError) {
             logger_1.logger.error('Failed to generate real QR code, using fallback:', qrError);
             // Fallback: Generate QR code locally
-            const fallbackLpaCode = generateQRCodeData(esimCode, packageData.name);
+            const fallbackLpaCode = (0, esimUtils_1.generateQRCodeData)(esimCode, packageData.name);
             realQRData = {
                 lpaCode: fallbackLpaCode,
                 qrCodeUrl: '', // Will be generated in email template
@@ -222,7 +221,7 @@ const createMyPackageOrder = async (req, res, next) => {
             await (0, emailService_1.sendEmail)({
                 to: userEmail,
                 subject: emailTemplates_1.emailTemplates.orderConfirmation.subject,
-                html: () => emailTemplates_1.emailTemplates.orderConfirmation.html({
+                html: async () => emailTemplates_1.emailTemplates.orderConfirmation.html({
                     orderId: order.id,
                     packageName: packageData.name,
                     amount: packageData.sale_price,
@@ -267,10 +266,15 @@ const createMyPackageOrder = async (req, res, next) => {
         });
     }
     catch (error) {
-        logger_1.logger.error('Error in createMyPackageOrder:', error);
-        if (axios_1.default.isAxiosError(error) && error.response) {
-            logger_1.logger.error('Roamify API error:', error.response.data);
-            return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
+        const err = error;
+        if ((0, esimUtils_1.isAxiosError)(err)) {
+            console.error(err.response?.data || err.message);
+        }
+        else if (err instanceof Error) {
+            console.error(err.message);
+        }
+        else {
+            console.error(String(err));
         }
         next(error);
     }

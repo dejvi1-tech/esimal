@@ -30,7 +30,7 @@ const app = express();
 
 // Enable CORS for frontend
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: ['https://esimfly.al', 'http://localhost:8080'],
   credentials: true
 }));
 

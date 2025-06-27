@@ -26,7 +26,7 @@ const FeaturedPackagesSection: React.FC = () => {
 
   const fetchFeaturedPackages = async () => {
     try {
-      const response = await fetch('/api/featured-packages');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/featured-packages`);
       if (response.ok) {
         const data = await response.json();
         setPackages(data);

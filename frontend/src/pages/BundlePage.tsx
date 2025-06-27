@@ -56,7 +56,7 @@ const BundlePage: React.FC = () => {
 
     setLoading(true);
     // Fetch packages for the country specified in bundleId
-    fetch(`/api/search-packages?country=${encodeURIComponent(bundleId)}&lang=${language}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(bundleId)}&lang=${language}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();

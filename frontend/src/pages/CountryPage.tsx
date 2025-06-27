@@ -57,7 +57,7 @@ const CountryPage: React.FC = () => {
     if (!code) return;
     setLoading(true);
     setError('');
-    fetch(`/api/search-packages?country=${encodeURIComponent(code)}&lang=${language}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(code)}&lang=${language}`)
       .then(res => res.json())
       .then((data: Package[]) => {
         const uniquePackages = data.filter((pkg, index, self) =>

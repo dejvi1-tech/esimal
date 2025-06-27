@@ -31,7 +31,7 @@ const MyPackagesSection: React.FC = () => {
 
   const fetchPackages = async () => {
     try {
-      const response = await fetch('/api/frontend-packages');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/frontend-packages`);
       if (response.ok) {
         const data = await response.json();
         setPackages(data);
@@ -53,7 +53,7 @@ const MyPackagesSection: React.FC = () => {
 
     setBuyingPackage(pkg.id);
     try {
-      const response = await fetch('/api/orders/my-packages', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/orders/my-packages`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

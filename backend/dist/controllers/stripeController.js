@@ -9,7 +9,7 @@ const supabase_1 = require("../config/supabase");
 const logger_1 = require("../utils/logger");
 const errors_1 = require("../utils/errors");
 const stripe_1 = __importDefault(require("stripe"));
-const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2022-11-15' });
+const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2025-05-28.basil' });
 /**
  * Create a payment intent for a package purchase
  */
@@ -311,7 +311,7 @@ const getCustomer = async (req, res, next) => {
     }
 };
 exports.getCustomer = getCustomer;
-const createCheckoutSession = async (req, res) => {
+const createCheckoutSession = async (req, res, next) => {
     const { packageId, email, name, surname } = req.body;
     // 1. Lookup package in Supabase
     const { data: pkg, error } = await supabase_1.supabase

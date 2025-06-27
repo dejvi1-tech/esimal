@@ -141,7 +141,7 @@ const AdminPanel: React.FC = () => {
   const fetchMyPackages = async () => {
     try {
       // Use the admin my-packages endpoint
-      const response = await fetch('/api/admin/my-packages');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/my-packages`);
 
       if (response.ok) {
         const data = await response.json();
@@ -157,7 +157,7 @@ const AdminPanel: React.FC = () => {
   const fetchMainPackages = async () => {
     try {
       // Use the admin packages endpoint
-      const response = await fetch('/api/admin/packages');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/packages`);
 
       if (response.ok) {
         const data = await response.json();
@@ -177,7 +177,7 @@ const AdminPanel: React.FC = () => {
       console.log('Fetching Roamify packages...');
       setRoamifyLoading(true);
       // Use the new admin endpoint for all Roamify packages
-      const response = await fetch('/api/admin/all-roamify-packages');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages`);
 
       if (response.ok) {
         const data = await response.json();
@@ -296,7 +296,7 @@ const AdminPanel: React.FC = () => {
         data_amount: pkg.data_amount / 1024 // Convert MB to GB for API
       };
 
-      const response = await fetch(`/api/admin/update-package/${pkg.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/update-package/${pkg.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -330,7 +330,7 @@ const AdminPanel: React.FC = () => {
 
     setDeletingPackage(packageId);
     try {
-      const response = await fetch(`/api/admin/delete-package/${packageId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/delete-package/${packageId}`, {
         method: 'DELETE'
       });
 
@@ -361,7 +361,7 @@ const AdminPanel: React.FC = () => {
         profit: 0
       };
 
-      const response = await fetch('/api/admin/save-package', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -438,7 +438,7 @@ const AdminPanel: React.FC = () => {
         homepage_order: 0
       };
 
-      const response = await fetch('/api/admin/save-package', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -496,7 +496,7 @@ const AdminPanel: React.FC = () => {
         homepage_order: 1
       };
 
-      const response = await fetch('/api/save-package', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/save-package`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

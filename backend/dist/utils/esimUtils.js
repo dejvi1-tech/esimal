@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validateEsimCode = exports.generateEsimCode = void 0;
+exports.generateQRCodeData = exports.validateEsimCode = exports.generateEsimCode = void 0;
+exports.isAxiosError = isAxiosError;
 const supabase_1 = require("../config/supabase");
 const logger_1 = require("./logger");
 /**
@@ -51,4 +52,18 @@ const validateEsimCode = (code) => {
     return esimCodeRegex.test(code);
 };
 exports.validateEsimCode = validateEsimCode;
+/**
+ * Generates LPA format QR code data for eSIM activation
+ * LPA format: LPA:1$<provider>$<esim_code>$$<package_name>
+ */
+const generateQRCodeData = (esimCode, packageName) => {
+    return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
+};
+exports.generateQRCodeData = generateQRCodeData;
+/**
+ * Type guard for AxiosError
+ */
+function isAxiosError(error) {
+    return error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError === true;
+}
 //# sourceMappingURL=esimUtils.js.map

@@ -9,7 +9,7 @@ const supabase_1 = require("../config/supabase");
 const logger_1 = require("../utils/logger");
 const emailService_1 = require("../services/emailService");
 const emailTemplates_1 = require("../utils/emailTemplates");
-const roamifyService_1 = __importDefault(require("../services/roamifyService"));
+const roamifyService_1 = require("../services/roamifyService");
 const esimUtils_1 = require("../utils/esimUtils");
 /**
  * Handle Stripe webhook events
@@ -94,7 +94,7 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
                 await (0, emailService_1.sendEmail)({
                     to: paymentIntent.metadata.userEmail,
                     subject: emailTemplates_1.emailTemplates.paymentSuccess.subject,
-                    html: () => emailTemplates_1.emailTemplates.paymentSuccess.html({
+                    html: async () => emailTemplates_1.emailTemplates.paymentSuccess.html({
                         orderId: order.id,
                         amount: paymentIntent.amount / 100,
                         packageName: paymentIntent.metadata.packageName || 'eSIM Package',
@@ -133,7 +133,7 @@ async function handlePaymentIntentFailed(paymentIntent) {
                 await (0, emailService_1.sendEmail)({
                     to: paymentIntent.metadata.userEmail,
                     subject: emailTemplates_1.emailTemplates.paymentFailed.subject,
-                    html: () => emailTemplates_1.emailTemplates.paymentFailed.html({
+                    html: async () => emailTemplates_1.emailTemplates.paymentFailed.html({
                         amount: paymentIntent.amount / 100,
                         packageName: paymentIntent.metadata.packageName || 'eSIM Package',
                         failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
@@ -171,7 +171,7 @@ async function handlePaymentIntentCanceled(paymentIntent) {
                 await (0, emailService_1.sendEmail)({
                     to: paymentIntent.metadata.userEmail,
                     subject: emailTemplates_1.emailTemplates.paymentCanceled.subject,
-                    html: () => emailTemplates_1.emailTemplates.paymentCanceled.html({
+                    html: async () => emailTemplates_1.emailTemplates.paymentCanceled.html({
                         amount: paymentIntent.amount / 100,
                         packageName: paymentIntent.metadata.packageName || 'eSIM Package',
                         retryUrl: `${process.env.FRONTEND_URL}/checkout?retry=true`,
@@ -213,11 +213,11 @@ async function handleCheckoutSessionCompleted(session) {
         let realQRData;
         try {
             logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
-            const roamifyOrder = await roamifyService_1.default.createEsimOrder(packageData.reseller_id, 1);
+            const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(packageData.reseller_id, 1);
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
             // Generate real QR code
-            realQRData = await roamifyService_1.default.generateRealQRCode(esimCode);
+            realQRData = await roamifyService_1.RoamifyService.generateRealQRCode(esimCode);
             logger_1.logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
         }
         catch (roamifyError) {
@@ -270,7 +270,7 @@ async function handleCheckoutSessionCompleted(session) {
                 await (0, emailService_1.sendEmail)({
                     to: customerEmail,
                     subject: emailTemplates_1.emailTemplates.orderConfirmation.subject,
-                    html: () => emailTemplates_1.emailTemplates.orderConfirmation.html({
+                    html: async () => emailTemplates_1.emailTemplates.orderConfirmation.html({
                         orderId: order.id,
                         packageName: packageData.name,
                         amount: amount,
@@ -324,10 +324,10 @@ async function handleChargeRefunded(charge) {
                 await (0, emailService_1.sendEmail)({
                     to: order.user_email,
                     subject: emailTemplates_1.emailTemplates.refundProcessed.subject,
-                    html: () => emailTemplates_1.emailTemplates.refundProcessed.html({
+                    html: async () => emailTemplates_1.emailTemplates.refundProcessed.html({
                         amount: charge.amount_refunded / 100,
                         refundId: charge.refunds?.data[0]?.id,
-                        orderId: order.id,
+                        orderId: order.packageId,
                     }),
                 });
                 logger_1.logger.info(`Refund email sent to ${order.user_email}`);
