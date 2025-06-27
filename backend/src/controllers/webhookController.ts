@@ -4,7 +4,7 @@ import { supabase } from '../config/supabase';
 import { logger } from '../utils/logger';
 import { sendEmail } from '../services/emailService';
 import { emailTemplates } from '../utils/emailTemplates';
-import RoamifyService from '../services/roamifyService';
+import { RoamifyService } from '../services/roamifyService';
 import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
 
 /**
@@ -349,7 +349,7 @@ async function handleChargeRefunded(charge: any) {
           html: () => emailTemplates.refundProcessed.html({
             amount: charge.amount_refunded / 100,
             refundId: charge.refunds?.data[0]?.id,
-            orderId: order.id,
+            orderId: order.packageId,
           }),
         });
         logger.info(`Refund email sent to ${order.user_email}`);

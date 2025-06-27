@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
 import { sendEmail } from '../services/emailService';
 import { logger } from '../utils/logger';
-import { generateEsimCode as generateUniqueEsimCode } from '../utils/esimUtils';
+import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
 import {
   ValidationError,
   NotFoundError,
@@ -51,13 +51,6 @@ const MAX_REFUND_PERIOD_HOURS = 24;
 // Helper function to generate eSIM code
 const generateEsimCode = async (): Promise<string> => {
   return generateUniqueEsimCode();
-};
-
-// Helper function to generate QR code data
-const generateQRCodeData = (esimCode: string, packageName: string): string => {
-  // Generate proper LPA format QR code data for eSIM activation
-  // LPA format: LPA:1$<provider>$<esim_code>$$<package_name>
-  return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
 };
 
 // Create order and send confirmation email

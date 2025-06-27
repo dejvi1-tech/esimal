@@ -1,46 +1,11 @@
-import { config } from 'dotenv';
-import { QRCodeService } from '../services/qrCodeService';
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.emailTemplates = void 0;
+const dotenv_1 = require("dotenv");
+const qrCodeService_1 = require("../services/qrCodeService");
 // Load environment variables
-config();
-
-interface EmailTemplateData {
-  orderId?: string;
-  packageName?: string;
-  amount?: number;
-  dataAmount?: string;
-  validityDays?: number;
-  esimCode?: string;
-  qrCodeData?: string;
-  isGuestOrder?: boolean;
-  signupUrl?: string;
-  dashboardUrl?: string;
-  resetUrl?: string;
-  verificationUrl?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  loginUrl?: string;
-  orderNumber?: string;
-  iccid?: string;
-  paymentUrl?: string;
-  isRefunded?: boolean;
-  qrCodeUrl?: string;
-  // Payment-related fields
-  paymentIntentId?: string;
-  failureReason?: string;
-  retryUrl?: string;
-  refundId?: string;
-  name?: string;
-  surname?: string;
-}
-
-interface EmailTemplate {
-  subject: string;
-  html: (data: EmailTemplateData) => string | Promise<string>;
-}
-
-const baseTemplate = (content: string) => `
+(0, dotenv_1.config)();
+const baseTemplate = (content) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -132,34 +97,30 @@ const baseTemplate = (content: string) => `
 </body>
 </html>
 `;
-
-export const emailTemplates: Record<string, EmailTemplate> = {
-  orderConfirmation: {
-    subject: 'Your eSIM is Ready! - Order Confirmation',
-    html: async (data: EmailTemplateData): Promise<string> => {
-      // Use the real LPA format QR code data from Roamify
-      const lpaData = data.qrCodeData || QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
-      
-      // Generate QR code as data URL for email embedding
-      let qrCodeDataUrl = '';
-      try {
-        // If we have a real QR code URL from Roamify, use it
-        if (data.qrCodeUrl) {
-          qrCodeDataUrl = data.qrCodeUrl;
-        } else {
-          // Fallback to generating our own QR code
-          qrCodeDataUrl = await QRCodeService.generateQRCodeDataURL(
-            data.esimCode || '', 
-            data.packageName || ''
-          );
-        }
-      } catch (error) {
-        console.error('Failed to generate QR code:', error);
-        // Fallback to external QR code service
-        qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
-      }
-      
-      return baseTemplate(`
+exports.emailTemplates = {
+    orderConfirmation: {
+        subject: 'Your eSIM is Ready! - Order Confirmation',
+        html: async (data) => {
+            // Use the real LPA format QR code data from Roamify
+            const lpaData = data.qrCodeData || qrCodeService_1.QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
+            // Generate QR code as data URL for email embedding
+            let qrCodeDataUrl = '';
+            try {
+                // If we have a real QR code URL from Roamify, use it
+                if (data.qrCodeUrl) {
+                    qrCodeDataUrl = data.qrCodeUrl;
+                }
+                else {
+                    // Fallback to generating our own QR code
+                    qrCodeDataUrl = await qrCodeService_1.QRCodeService.generateQRCodeDataURL(data.esimCode || '', data.packageName || '');
+                }
+            }
+            catch (error) {
+                console.error('Failed to generate QR code:', error);
+                // Fallback to external QR code service
+                qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
+            }
+            return baseTemplate(`
         <h2>🎉 Your eSIM is Ready!</h2>
         <p>Thank you for your order! Your eSIM package has been activated and is ready to use.</p>
         
@@ -212,13 +173,12 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
         <p><strong>Need help?</strong> Contact our support team if you have any questions about activating your eSIM.</p>
       `);
+        },
     },
-  },
-
-  // Payment Success Template
-  paymentSuccess: {
-    subject: 'Payment Successful - Your eSIM Order',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    // Payment Success Template
+    paymentSuccess: {
+        subject: 'Payment Successful - Your eSIM Order',
+        html: (data) => baseTemplate(`
       <h2>✅ Payment Successful!</h2>
       <p>Great news! Your payment has been processed successfully and your eSIM order is being prepared.</p>
       
@@ -238,12 +198,11 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       
       <a href="${data.dashboardUrl}" class="button">View Order Status</a>
     `),
-  },
-
-  // Payment Failed Template
-  paymentFailed: {
-    subject: 'Payment Failed - Action Required',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    // Payment Failed Template
+    paymentFailed: {
+        subject: 'Payment Failed - Action Required',
+        html: (data) => baseTemplate(`
       <h2>❌ Payment Failed</h2>
       <p>We're sorry, but your payment could not be processed. Here are the details:</p>
       
@@ -269,12 +228,11 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
       <p>If you continue to experience issues, please contact our support team for assistance.</p>
     `),
-  },
-
-  // Payment Canceled Template
-  paymentCanceled: {
-    subject: 'Payment Canceled - Your eSIM Order',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    // Payment Canceled Template
+    paymentCanceled: {
+        subject: 'Payment Canceled - Your eSIM Order',
+        html: (data) => baseTemplate(`
       <h2>🚫 Payment Canceled</h2>
       <p>Your payment was canceled. No charges have been made to your account.</p>
       
@@ -291,12 +249,11 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
       <p>If you have any questions or need assistance, please contact our support team.</p>
     `),
-  },
-
-  // Refund Processed Template
-  refundProcessed: {
-    subject: 'Refund Processed - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    // Refund Processed Template
+    refundProcessed: {
+        subject: 'Refund Processed - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>💰 Refund Processed</h2>
       <p>Your refund has been successfully processed and will be credited back to your original payment method.</p>
       
@@ -321,11 +278,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       
       <p>If you have any questions about your refund, please contact our support team.</p>
     `),
-  },
-
-  passwordReset: {
-    subject: 'Password Reset - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    passwordReset: {
+        subject: 'Password Reset - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>Password Reset Request</h2>
       <p>We received a request to reset your password. Click the button below to reset it:</p>
       
@@ -334,11 +290,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       <p>This link will expire in 1 hour.</p>
       <p>If you didn't request this, please ignore this email or contact support if you have concerns.</p>
     `),
-  },
-
-  accountVerification: {
-    subject: 'Verify Your Email - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    accountVerification: {
+        subject: 'Verify Your Email - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>Welcome to eSIM Marketplace!</h2>
       <p>Thank you for creating an account. Please verify your email address by clicking the button below:</p>
       
@@ -347,11 +302,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       <p>This link will expire in 24 hours.</p>
       <p>If you didn't create this account, please ignore this email.</p>
     `),
-  },
-
-  orderCancellation: {
-    subject: 'Order Cancelled - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    orderCancellation: {
+        subject: 'Order Cancelled - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>Order Cancellation Confirmation</h2>
       <p>Your order has been ${data.isRefunded ? 'cancelled and refunded' : 'cancelled'}.</p>
       
@@ -371,11 +325,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
       <p>If you have any questions, please contact our support team.</p>
     `),
-  },
-
-  accountCreated: {
-    subject: 'Account Created - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    accountCreated: {
+        subject: 'Account Created - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>Welcome to eSIM Marketplace!</h2>
       <p>Your account has been successfully created.</p>
       
@@ -388,11 +341,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       <p>You can now log in to your account and manage your eSIMs.</p>
       <a href="${data.loginUrl}" class="button">Log In</a>
     `),
-  },
-
-  topupOrderConfirmation: {
-    subject: 'Top-Up Order Confirmation - eSIM Marketplace',
-    html: (data: EmailTemplateData) => baseTemplate(`
+    },
+    topupOrderConfirmation: {
+        subject: 'Top-Up Order Confirmation - eSIM Marketplace',
+        html: (data) => baseTemplate(`
       <h2>Top-Up Order Confirmation</h2>
       <p>Thank you for your top-up order!</p>
       
@@ -411,5 +363,6 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
       <p>If you have any questions, please contact our support team.</p>
     `),
-  },
-}; 
+    },
+};
+//# sourceMappingURL=emailTemplates.js.map

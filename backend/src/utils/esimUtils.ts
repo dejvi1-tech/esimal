@@ -57,4 +57,12 @@ export const generateEsimCode = async (): Promise<string> => {
 export const validateEsimCode = (code: string): boolean => {
   const esimCodeRegex = /^ESIM-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/;
   return esimCodeRegex.test(code);
+};
+
+/**
+ * Generates LPA format QR code data for eSIM activation
+ * LPA format: LPA:1$<provider>$<esim_code>$$<package_name>
+ */
+export const generateQRCodeData = (esimCode: string, packageName: string): string => {
+  return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
 }; 
