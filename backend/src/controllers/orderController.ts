@@ -14,7 +14,7 @@ import {
 } from '../utils/errors';
 import { emailTemplates } from '../utils/emailTemplates';
 import { RoamifyService } from '../services/roamifyService';
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-05-28.basil',
@@ -313,7 +313,7 @@ export const createMyPackageOrder = async (
     });
   } catch (error) {
     logger.error('Error in createMyPackageOrder:', error);
-    if (isAxiosError(error) && error.response) {
+    if (axios.isAxiosError(error) && error.response) {
       logger.error('Roamify API error:', error.response.data);
       return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
     } else if (error instanceof Error) {

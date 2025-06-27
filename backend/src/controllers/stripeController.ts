@@ -380,7 +380,7 @@ export const getCustomer = async (
   }
 };
 
-export const createCheckoutSession = async (req, res) => {
+export const createCheckoutSession = async (req: Request, res: Response, next: NextFunction) => {
   const { packageId, email, name, surname } = req.body;
 
   // 1. Lookup package in Supabase

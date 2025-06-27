@@ -1,4 +1,4 @@
-import axios, { isAxiosError } from 'axios';
+import axios from 'axios';
 import { logger } from '../utils/logger';
 
 export interface RoamifyEsimData {
@@ -63,7 +63,7 @@ export class RoamifyService {
       try {
         return await apiCall();
       } catch (error) {
-        if (isAxiosError(error)) {
+        if (axios.isAxiosError(error)) {
           lastError = error;
         } else if (error instanceof Error) {
           lastError = error;
@@ -77,7 +77,7 @@ export class RoamifyService {
         }
 
         // Don't retry on 4xx errors (client errors)
-        if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
+        if (axios.isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
           logger.error(`${operation} failed with client error (${error.response.status}):`, error.response.data);
           throw lastError;
         }
