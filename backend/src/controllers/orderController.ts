@@ -312,17 +312,14 @@ export const createMyPackageOrder = async (
       },
     });
   } catch (error: unknown) {
-    logger.error('Error in createMyPackageOrder:', String(error));
-    if (isAxiosError(error) && error.response) {
-      logger.error('Roamify API error:', error.response.data);
-      return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
+    if (axios.isAxiosError(error)) {
+      console.error("Axios error:", error.response?.data || error.message);
     } else if (error instanceof Error) {
-      logger.error('Error:', error.message);
-      next(error);
+      console.error("Generic error:", error.message);
     } else {
-      logger.error('Unknown error:', error);
-      next(new Error('Unknown error occurred'));
+      console.error("Unknown error:", String(error));
     }
+    next(error);
   }
 };
 
