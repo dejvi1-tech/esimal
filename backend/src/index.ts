@@ -61,10 +61,24 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// All routes below (not re-pasted to save space)
-// ----------------------------------------------
-// [KEEP THE REST OF YOUR ROUTES EXACTLY AS YOU HAVE THEM]
-// ----------------------------------------------
+// Mount API routes
+app.use('/api/packages', packageRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/esims', esimRoutes);
+app.use('/api/account', accountRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/stripe', stripeRoutes);
+
+// Direct routes to match frontend URLs
+app.get('/api/get-section-packages', (req, res, next) => {
+  const controller = require('./controllers/packageController');
+  return controller.getSectionPackages(req, res, next);
+});
+
+app.get('/api/search-packages', (req, res, next) => {
+  const controller = require('./controllers/packageController');
+  return controller.searchPackages(req, res, next);
+});
 
 // 404 Handler
 app.use('*', (req: Request, res: Response) => {

@@ -295,4 +295,46 @@ export const getSectionPackages = async (
   } catch (error) {
     next(error);
   }
+};
+
+// Search packages by country and language
+export const searchPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { country, lang } = req.query;
+    
+    if (!country) {
+      res.status(400).json({ 
+        status: 'error', 
+        message: 'Country parameter is required' 
+      });
+      return;
+    }
+
+    let query = supabase
+      .from('my_packages')
+      .select('*')
+      .ilike('country_name', `%${country}%`);
+
+    // Add language filter if provided
+    if (lang) {
+      query = query.eq('language', lang);
+    }
+
+    const { data: packages, error } = await query.order('sale_price', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: packages,
+    });
+  } catch (error) {
+    next(error);
+  }
 }; 

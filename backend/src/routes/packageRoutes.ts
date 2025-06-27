@@ -6,6 +6,7 @@ import {
   updatePackage,
   deletePackage,
   getSectionPackages,
+  searchPackages,
 } from '../controllers/packageController';
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
 router.get('/', getAllPackages);
 router.post('/', createPackage);
 router.get('/get-section-packages', getSectionPackages);
+router.get('/search-packages', searchPackages);
 router.get('/:id', getPackage);
 router.put('/:id', updatePackage);
 router.delete('/:id', deletePackage);
