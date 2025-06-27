@@ -73,7 +73,7 @@ export class RoamifyService {
         }
         
         if (attempt === maxRetries) {
-          logger.error(`Failed ${operation} after ${maxRetries} attempts:`, lastError.message);
+          logger.error(`Failed ${operation} after ${maxRetries} attempts:`, lastError.message || String(lastError));
           throw lastError;
         }
 
@@ -83,7 +83,7 @@ export class RoamifyService {
           throw lastError;
         }
 
-        logger.warn(`${operation} attempt ${attempt} failed, retrying in ${this.retryDelay}ms:`, lastError.message);
+        logger.warn(`${operation} attempt ${attempt} failed, retrying in ${this.retryDelay}ms:`, lastError.message || String(lastError));
         await new Promise(resolve => setTimeout(resolve, this.retryDelay * attempt));
       }
     }

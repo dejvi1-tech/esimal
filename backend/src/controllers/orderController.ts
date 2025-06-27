@@ -312,7 +312,7 @@ export const createMyPackageOrder = async (
       },
     });
   } catch (error) {
-    logger.error('Error in createMyPackageOrder:', error);
+    logger.error('Error in createMyPackageOrder:', String(error));
     if (isAxiosError(error) && error.response) {
       logger.error('Roamify API error:', error.response.data);
       return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
