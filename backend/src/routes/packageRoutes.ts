@@ -5,6 +5,7 @@ import {
   getPackage,
   updatePackage,
   deletePackage,
+  getSectionPackages,
 } from '../controllers/packageController';
 
 const router = express.Router();
@@ -15,5 +16,6 @@ router.post('/', createPackage);
 router.get('/:id', getPackage);
 router.put('/:id', updatePackage);
 router.delete('/:id', deletePackage);
+router.get('/get-section-packages', getSectionPackages);
 
 export default router; 

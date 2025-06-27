@@ -259,4 +259,27 @@ export const getCountries = async (
   } catch (error) {
     next(error);
   }
+};
+
+// Get section packages (e.g., most popular)
+export const getSectionPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { slug } = req.query;
+    if (slug !== 'most-popular') {
+      return res.status(400).json({ status: 'error', message: 'Invalid section slug' });
+    }
+    const { data: packages, error } = await supabase
+      .from('my_packages')
+      .select('*')
+      .eq('show_on_frontend', true)
+      .order('homepage_order', { ascending: true });
+    if (error) throw error;
+    res.status(200).json({ status: 'success', data: packages });
+  } catch (error) {
+    next(error);
+  }
 }; 
