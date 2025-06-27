@@ -147,7 +147,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/stripe', stripeRoutes);
 
 // Stripe webhook endpoint (no rate limiting, raw body needed)
-app.post('/api/webhooks/stripe', handleStripeWebhook);
+app.post('/api/webhooks/stripe', (req: Request, res: Response, next: NextFunction) => {
+  handleStripeWebhook(req, res, next).catch(next);
+});
 
 // Get Packages for Frontend (Only Visible)
 app.get('/api/frontend-packages', asyncHandler(async (req: Request, res: Response) => {
