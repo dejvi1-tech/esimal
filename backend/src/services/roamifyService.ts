@@ -65,7 +65,7 @@ export class RoamifyService {
         return await apiCall();
       } catch (error) {
         if (isAxiosError(error)) {
-          lastError = error;
+          lastError = error as Error;
         } else if (error instanceof Error) {
           lastError = error;
         } else {

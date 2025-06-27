@@ -317,8 +317,10 @@ export const createMyPackageOrder = async (
       logger.error('Roamify API error:', error.response.data);
       return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
     } else if (error instanceof Error) {
+      logger.error('Error:', error.message);
       next(error);
     } else {
+      logger.error('Unknown error:', String(error));
       next(new Error('Unknown error occurred'));
     }
   }
