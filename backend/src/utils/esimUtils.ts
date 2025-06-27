@@ -65,4 +65,11 @@ export const validateEsimCode = (code: string): boolean => {
  */
 export const generateQRCodeData = (esimCode: string, packageName: string): string => {
   return `LPA:1$esimfly.al$${esimCode}$$${packageName}`;
-}; 
+};
+
+/**
+ * Type guard for AxiosError
+ */
+export function isAxiosError(error: any): error is import('axios').AxiosError {
+  return error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError === true;
+} 

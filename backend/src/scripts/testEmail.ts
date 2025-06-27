@@ -93,7 +93,7 @@ const testEmailSending = async (config: EmailConfig, testEmail: string): Promise
     await sendEmail({
       to: testEmail,
       subject: emailTemplates.orderConfirmation.subject,
-      html: emailTemplates.orderConfirmation.html({
+      html: async () => emailTemplates.orderConfirmation.html({
         orderId: 'TEST-ORDER-123',
         packageName: 'Test Package - 1GB/7 Days',
         amount: 9.99,
@@ -116,7 +116,7 @@ const testEmailSending = async (config: EmailConfig, testEmail: string): Promise
     await sendEmail({
       to: testEmail,
       subject: emailTemplates.passwordReset.subject,
-      html: emailTemplates.passwordReset.html({
+      html: async () => emailTemplates.passwordReset.html({
         resetUrl: 'http://localhost:3000/reset-password?token=test-token-123',
       }),
     });
@@ -131,7 +131,7 @@ const testEmailSending = async (config: EmailConfig, testEmail: string): Promise
     await sendEmail({
       to: testEmail,
       subject: emailTemplates.accountVerification.subject,
-      html: emailTemplates.accountVerification.html({
+      html: async () => emailTemplates.accountVerification.html({
         verificationUrl: 'http://localhost:3000/verify-email?token=test-token-123',
       }),
     });
@@ -146,7 +146,7 @@ const testEmailSending = async (config: EmailConfig, testEmail: string): Promise
     await sendEmail({
       to: testEmail,
       subject: emailTemplates.accountCreated.subject,
-      html: emailTemplates.accountCreated.html({
+      html: async () => emailTemplates.accountCreated.html({
         email: testEmail,
         firstName: 'Test',
         lastName: 'User',

@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
 import { sendEmail } from '../services/emailService';
 import { logger } from '../utils/logger';
-import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
+import { generateEsimCode, generateQRCodeData, isAxiosError } from '../utils/esimUtils';
 import {
   ValidationError,
   NotFoundError,
@@ -313,7 +313,7 @@ export const createMyPackageOrder = async (
     });
   } catch (error) {
     logger.error('Error in createMyPackageOrder:', error);
-    if (axios.isAxiosError(error) && error.response) {
+    if (isAxiosError(error) && error.response) {
       logger.error('Roamify API error:', error.response.data);
       return next(new Error(`Roamify API error: ${error.response.data?.message || error.response.statusText}`));
     } else if (error instanceof Error) {
