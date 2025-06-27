@@ -10,64 +10,62 @@ import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
 /**
  * Handle Stripe webhook events
  */
-export const handleStripeWebhook = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const sig = req.headers['stripe-signature'] as string;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+export const handleStripeWebhook = (req: Request, res: Response, next: NextFunction) => {
+  (async () => {
+    const sig = req.headers['stripe-signature'] as string;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-  if (!webhookSecret) {
-    logger.error('STRIPE_WEBHOOK_SECRET not configured');
-    return res.status(500).json({ error: 'Webhook secret not configured' });
-  }
-
-  let event: any;
-
-  try {
-    event = StripeService.constructWebhookEvent(req.body, sig, webhookSecret);
-  } catch (err: any) {
-    logger.error('Webhook signature verification failed:', err.message);
-    return res.status(400).json({ error: 'Invalid signature' });
-  }
-
-  try {
-    // Handle the event
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        await handlePaymentIntentSucceeded(event.data.object);
-        break;
-      case 'payment_intent.payment_failed':
-        await handlePaymentIntentFailed(event.data.object);
-        break;
-      case 'payment_intent.canceled':
-        await handlePaymentIntentCanceled(event.data.object);
-        break;
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object);
-        break;
-      case 'charge.refunded':
-        await handleChargeRefunded(event.data.object);
-        break;
-      case 'customer.subscription.created':
-        await handleSubscriptionCreated(event.data.object);
-        break;
-      case 'customer.subscription.updated':
-        await handleSubscriptionUpdated(event.data.object);
-        break;
-      case 'customer.subscription.deleted':
-        await handleSubscriptionDeleted(event.data.object);
-        break;
-      default:
-        logger.info(`Unhandled event type: ${event.type}`);
+    if (!webhookSecret) {
+      logger.error('STRIPE_WEBHOOK_SECRET not configured');
+      return res.status(500).json({ error: 'Webhook secret not configured' });
     }
 
-    res.json({ received: true });
-  } catch (error) {
-    logger.error('Error handling webhook:', error);
-    res.status(500).json({ error: 'Webhook handler failed' });
-  }
+    let event: any;
+
+    try {
+      event = StripeService.constructWebhookEvent(req.body, sig, webhookSecret);
+    } catch (err: any) {
+      logger.error('Webhook signature verification failed:', err.message);
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    try {
+      // Handle the event
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          await handlePaymentIntentSucceeded(event.data.object);
+          break;
+        case 'payment_intent.payment_failed':
+          await handlePaymentIntentFailed(event.data.object);
+          break;
+        case 'payment_intent.canceled':
+          await handlePaymentIntentCanceled(event.data.object);
+          break;
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event.data.object);
+          break;
+        case 'charge.refunded':
+          await handleChargeRefunded(event.data.object);
+          break;
+        case 'customer.subscription.created':
+          await handleSubscriptionCreated(event.data.object);
+          break;
+        case 'customer.subscription.updated':
+          await handleSubscriptionUpdated(event.data.object);
+          break;
+        case 'customer.subscription.deleted':
+          await handleSubscriptionDeleted(event.data.object);
+          break;
+        default:
+          logger.info(`Unhandled event type: ${event.type}`);
+      }
+
+      res.json({ received: true });
+    } catch (error) {
+      logger.error('Error handling webhook:', error);
+      res.status(500).json({ error: 'Webhook handler failed' });
+    }
+  })();
 };
 
 /**
