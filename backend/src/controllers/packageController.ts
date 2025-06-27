@@ -266,15 +266,16 @@ export const getSectionPackages = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     const { slug } = req.query;
     
     if (slug !== 'most-popular') {
-      return res.status(400).json({ 
+      res.status(400).json({ 
         status: 'error', 
         message: 'Invalid section slug' 
       });
+      return;
     }
 
     const { data: packages, error } = await supabase
