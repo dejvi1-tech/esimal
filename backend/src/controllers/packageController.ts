@@ -372,6 +372,85 @@ export const getAllRoamifyPackages = async (
     // Get pagination parameters
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 50;
+    
+    // Check if this is a request for all packages (limit > 1000)
+    if (limit > 1000) {
+      console.log('Large limit detected, fetching all packages without pagination...');
+      
+      // Get total count first
+      const { count: totalCount, error: countError } = await supabaseAdmin
+        .from('packages')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
+
+      if (countError) {
+        console.error('Error getting total count:', countError);
+        throw countError;
+      }
+
+      // Fetch all packages without pagination
+      const { data: packages, error } = await supabaseAdmin
+        .from('packages')
+        .select('*')
+        .eq('is_active', true)
+        .order('country_name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching packages from database:', error);
+        throw error;
+      }
+
+      console.log(`Found ${packages?.length || 0} packages in database (all packages)`);
+
+      // Map the packages to the expected format for frontend compatibility
+      const mappedPackages = (packages || []).map((pkg: any) => ({
+        id: pkg.id,
+        country: pkg.country_name,
+        region: pkg.region || 'Global',
+        description: `${pkg.data_amount} - ${pkg.validity_days} days`,
+        data: pkg.data_amount,
+        validity: `${pkg.validity_days} days`,
+        price: pkg.price,
+        // Add additional fields for backward compatibility
+        packageId: pkg.id,
+        package: pkg.name,
+        packageName: pkg.name,
+        name: pkg.name,
+        country_name: pkg.country_name,
+        country_code: pkg.country_code,
+        dataAmount: pkg.data_amount,
+        day: pkg.validity_days,
+        days: pkg.validity_days,
+        validity_days: pkg.validity_days,
+        base_price: pkg.price,
+        operator: pkg.operator,
+        features: pkg.features,
+        is_active: pkg.is_active,
+        created_at: pkg.created_at,
+        updated_at: pkg.updated_at
+      }));
+
+      // Log a sample package for debugging
+      if (mappedPackages.length > 0) {
+        console.log('Sample mapped package:', mappedPackages[0]);
+      }
+
+      return res.status(200).json({
+        status: 'success',
+        data: mappedPackages,
+        count: mappedPackages.length,
+        pagination: {
+          page: 1,
+          limit: mappedPackages.length,
+          totalCount,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false
+        }
+      });
+    }
+    
+    // Original pagination logic for normal requests
     const offset = (page - 1) * limit;
     
     // Get total count first
