@@ -61,6 +61,7 @@ const AdminPanel: React.FC = () => {
   const [mainPackages, setMainPackages] = useState<MainPackage[]>([]);
   const [roamifyPackages, setRoamifyPackages] = useState<RoamifyPackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mainLoading, setMainLoading] = useState(false);
   const [roamifyLoading, setRoamifyLoading] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -212,6 +213,8 @@ const AdminPanel: React.FC = () => {
     } catch (err) {
       console.error('Error fetching main packages:', err);
       setError('Failed to fetch main packages');
+    } finally {
+      setMainLoading(false);
     }
   };
 
@@ -231,7 +234,23 @@ const AdminPanel: React.FC = () => {
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
-        const data = await response.json();
+        const responseData = await response.json();
+        console.log('Raw Roamify response:', responseData);
+        
+        // Extract the actual packages array from the response
+        let data: RoamifyPackage[] = [];
+        if (responseData && typeof responseData === 'object') {
+          if (Array.isArray(responseData)) {
+            data = responseData;
+          } else if (responseData.data && Array.isArray(responseData.data)) {
+            data = responseData.data;
+          } else {
+            console.error('Unexpected response structure:', responseData);
+            setError('Invalid response format from server');
+            return;
+          }
+        }
+        
         console.log('Roamify packages received:', data.length);
         console.log('First package sample:', data[0]);
         
@@ -287,6 +306,17 @@ const AdminPanel: React.FC = () => {
 
   // Function to analyze packages for duplicates
   const analyzePackagesForDuplicates = (packages: RoamifyPackage[]) => {
+    // Defensive check to ensure packages is an array
+    if (!Array.isArray(packages)) {
+      console.error('analyzePackagesForDuplicates received non-array:', packages);
+      return {
+        totalPackages: 0,
+        duplicateIds: {},
+        duplicateCombinations: {},
+        hasDuplicates: false
+      };
+    }
+    
     const totalPackages = packages.length;
     const duplicateIds: { [id: string]: RoamifyPackage[] } = {};
     const duplicateCombinations: { [key: string]: RoamifyPackage[] } = {};
