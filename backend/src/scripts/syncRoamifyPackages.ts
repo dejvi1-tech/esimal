@@ -133,16 +133,45 @@ async function syncPackages() {
       if (data1 && data1.status === 'success' && data1.data && data1.data.packages && Array.isArray(data1.data.packages)) {
         console.log('Found packages array in response.data.data.packages');
         
-        // Extract individual packages from country objects
+        // Flatten all packages with correct mapping
         for (const country of data1.data.packages) {
           if (country.packages && Array.isArray(country.packages)) {
-            console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
-            const packagesWithCountry = country.packages.map((pkg: any) => ({
-              ...pkg,
-              country_name: country.countryName || country.country || 'Unknown',
-              country_code: country.countryCode || null
-            }));
-            packages = packages.concat(packagesWithCountry);
+            for (const pkg of country.packages) {
+              // Log the raw package for debugging
+              console.log('DEBUG PACKAGE SHAPE:', pkg);
+
+              // Extract fields with fallbacks
+              const mapped = {
+                id: pkg.packageId || pkg.id || null,
+                country: country.countryName || country.country || country.countryCode || 'unknown',
+                country_code: country.countryCode || 'unknown',
+                region: country.region || country.geography || 'unknown',
+                description: pkg.package || pkg.plan || pkg.activation || 'unknown',
+                price: pkg.price ?? 0,
+                data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
+                duration: pkg.day || pkg.days || pkg.validity || 'unknown',
+                validity: pkg.day || pkg.days || pkg.validity || 'unknown',
+                isUnlimited: pkg.isUnlimited || false,
+                features: {
+                  withSMS: pkg.withSMS,
+                  withCall: pkg.withCall,
+                  withHotspot: pkg.withHotspot,
+                  withDataRoaming: pkg.withDataRoaming,
+                  withDestinationInstall: pkg.withDestinationInstall,
+                  withUsageCheck: pkg.withUsageCheck,
+                  withThrottle: pkg.withThrottle,
+                  throttle: pkg.throttle,
+                },
+                notes: pkg.notes || [],
+              };
+
+              // Log missing critical fields
+              if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
+                console.warn('⚠️ Missing critical fields in package:', mapped);
+              }
+
+              packages.push(mapped);
+            }
           }
         }
         totalPackagesFound = packages.length;
@@ -173,15 +202,45 @@ async function syncPackages() {
         if (data2 && data2.status === 'success' && data2.data && data2.data.packages && Array.isArray(data2.data.packages)) {
           console.log('Found packages array in response.data.data.packages');
           
+          // Flatten all packages with correct mapping
           for (const country of data2.data.packages) {
             if (country.packages && Array.isArray(country.packages)) {
-              console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
-              const packagesWithCountry = country.packages.map((pkg: any) => ({
-                ...pkg,
-                country_name: country.countryName || country.country || 'Unknown',
-                country_code: country.countryCode || null
-              }));
-              packages = packages.concat(packagesWithCountry);
+              for (const pkg of country.packages) {
+                // Log the raw package for debugging
+                console.log('DEBUG PACKAGE SHAPE:', pkg);
+
+                // Extract fields with fallbacks
+                const mapped = {
+                  id: pkg.packageId || pkg.id || null,
+                  country: country.countryName || country.country || country.countryCode || 'unknown',
+                  country_code: country.countryCode || 'unknown',
+                  region: country.region || country.geography || 'unknown',
+                  description: pkg.package || pkg.plan || pkg.activation || 'unknown',
+                  price: pkg.price ?? 0,
+                  data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
+                  duration: pkg.day || pkg.days || pkg.validity || 'unknown',
+                  validity: pkg.day || pkg.days || pkg.validity || 'unknown',
+                  isUnlimited: pkg.isUnlimited || false,
+                  features: {
+                    withSMS: pkg.withSMS,
+                    withCall: pkg.withCall,
+                    withHotspot: pkg.withHotspot,
+                    withDataRoaming: pkg.withDataRoaming,
+                    withDestinationInstall: pkg.withDestinationInstall,
+                    withUsageCheck: pkg.withUsageCheck,
+                    withThrottle: pkg.withThrottle,
+                    throttle: pkg.throttle,
+                  },
+                  notes: pkg.notes || [],
+                };
+
+                // Log missing critical fields
+                if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
+                  console.warn('⚠️ Missing critical fields in package:', mapped);
+                }
+
+                packages.push(mapped);
+              }
             }
           }
           totalPackagesFound = packages.length;
@@ -228,12 +287,42 @@ async function syncPackages() {
             for (const country of data3.data.packages) {
               if (country.packages && Array.isArray(country.packages)) {
                 console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
-                const packagesWithCountry = country.packages.map((pkg: any) => ({
-                  ...pkg,
-                  country_name: country.countryName || country.country || 'Unknown',
-                  country_code: country.countryCode || null
-                }));
-                packages = packages.concat(packagesWithCountry);
+                for (const pkg of country.packages) {
+                  // Log the raw package for debugging
+                  console.log('DEBUG PACKAGE SHAPE:', pkg);
+
+                  // Extract fields with fallbacks
+                  const mapped = {
+                    id: pkg.packageId || pkg.id || null,
+                    country: country.countryName || country.country || country.countryCode || 'unknown',
+                    country_code: country.countryCode || 'unknown',
+                    region: country.region || country.geography || 'unknown',
+                    description: pkg.package || pkg.plan || pkg.activation || 'unknown',
+                    price: pkg.price ?? 0,
+                    data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
+                    duration: pkg.day || pkg.days || pkg.validity || 'unknown',
+                    validity: pkg.day || pkg.days || pkg.validity || 'unknown',
+                    isUnlimited: pkg.isUnlimited || false,
+                    features: {
+                      withSMS: pkg.withSMS,
+                      withCall: pkg.withCall,
+                      withHotspot: pkg.withHotspot,
+                      withDataRoaming: pkg.withDataRoaming,
+                      withDestinationInstall: pkg.withDestinationInstall,
+                      withUsageCheck: pkg.withUsageCheck,
+                      withThrottle: pkg.withThrottle,
+                      throttle: pkg.throttle,
+                    },
+                    notes: pkg.notes || [],
+                  };
+
+                  // Log missing critical fields
+                  if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
+                    console.warn('⚠️ Missing critical fields in package:', mapped);
+                  }
+
+                  packages.push(mapped);
+                }
                 pagePackages += country.packages.length;
               }
             }
@@ -288,42 +377,28 @@ async function syncPackages() {
       
       const batchData = batch.map(pkg => {
         try {
-          // Map data_amount to string as required by schema
-          let dataAmountStr = null;
-          if (pkg.isUnlimited) {
-            dataAmountStr = 'Unlimited';
-          } else if (pkg.dataAmount) {
-            // Convert MB to GB and format as required
-            const gbAmount = Math.round(pkg.dataAmount / 1024);
-            dataAmountStr = `${gbAmount}GB`;
-          }
-
-          // Validate country_code format
-          let countryCode = null;
-          if (pkg.country_code) {
-            countryCode = pkg.country_code.toUpperCase().slice(0, 2);
-          }
-
           // Only insert if we have all required fields
-          if (!pkg.package || !pkg.price || !dataAmountStr || !pkg.day || !countryCode || !pkg.country_name) {
-            console.log('Skipping package due to missing required fields:', pkg.package);
+          if (!pkg.id || !pkg.country || !pkg.price || !pkg.data || !pkg.duration) {
+            console.log('Skipping package due to missing required fields:', pkg);
             return null;
           }
 
           return {
-            id: uuidv4(),
-            name: pkg.package,
-            description: pkg.package || '',
+            id: pkg.id,
+            name: pkg.description || '',
+            description: pkg.description || '',
             price: pkg.price,
-            data_amount: dataAmountStr,
-            validity_days: pkg.day,
-            country_code: countryCode,
-            country_name: pkg.country_name,
+            data_amount: pkg.data,
+            validity_days: pkg.duration,
+            country_code: pkg.country_code,
+            country_name: pkg.country,
+            region: pkg.region,
             operator: 'Roamify',
             type: 'initial',
             is_active: true,
             features: pkg.features || null,
-            reseller_id: pkg.packageId || null,
+            reseller_id: pkg.id,
+            notes: pkg.notes || [],
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
@@ -337,7 +412,6 @@ async function syncPackages() {
       if (batchData.length > 0) {
         try {
           const { error } = await supabaseAdmin.from('packages').upsert(batchData, { onConflict: 'id' });
-          
           if (error) {
             console.error(`Error syncing batch:`, error);
             errorCount += batchData.length;
