@@ -169,40 +169,48 @@ const AdminPanel: React.FC = () => {
 
   const fetchMyPackages = async () => {
     try {
-      // Use the admin my-packages endpoint
-      const response = await fetch(`/api/admin/my-packages`, {
+      setLoading(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/my-packages`, {
         headers: getAuthHeaders(),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setMyPackages(data);
+        setMyPackages(data.data || data);
+        setTotalPages(1);
       } else {
         if (handleAuthError(response)) return;
+        const text = await response.text();
+        console.error('Failed to fetch my packages:', response.status, text);
         setError('Failed to fetch my packages');
       }
     } catch (err) {
+      console.error('Error fetching my packages:', err);
       setError('Failed to fetch my packages');
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchMainPackages = async () => {
     try {
-      // Use the admin packages endpoint
-      const response = await fetch(`/api/admin/packages`, {
+      setMainLoading(true);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/packages`, {
         headers: getAuthHeaders(),
       });
 
       if (response.ok) {
         const data = await response.json();
-        setMainPackages(data.data || []);
-        setTotalCount(data.data?.length || 0);
+        setMainPackages(data.data || data);
         setTotalPages(1);
       } else {
         if (handleAuthError(response)) return;
+        const text = await response.text();
+        console.error('Failed to fetch main packages:', response.status, text);
         setError('Failed to fetch main packages');
       }
     } catch (err) {
+      console.error('Error fetching main packages:', err);
       setError('Failed to fetch main packages');
     }
   };
@@ -211,10 +219,16 @@ const AdminPanel: React.FC = () => {
     try {
       console.log('Fetching Roamify packages...');
       setRoamifyLoading(true);
-      // Use the new admin endpoint for all Roamify packages
-      const response = await fetch(`/api/admin/all-roamify-packages`, {
+      
+      const fullUrl = `${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages`;
+      console.log('Fetching from URL:', fullUrl);
+      
+      const response = await fetch(fullUrl, {
         headers: getAuthHeaders(),
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (response.ok) {
         const data = await response.json();
@@ -258,8 +272,10 @@ const AdminPanel: React.FC = () => {
         setRoamifyPackages(data);
       } else {
         if (handleAuthError(response)) return;
+        const text = await response.text();
         console.error('Failed to fetch Roamify packages:', response.status, response.statusText);
-        setError('Failed to fetch Roamify packages');
+        console.error('Response text:', text);
+        setError(`Failed to fetch Roamify packages: ${response.status} - ${text.substring(0, 200)}`);
       }
     } catch (err) {
       console.error('Error fetching Roamify packages:', err);
@@ -334,7 +350,7 @@ const AdminPanel: React.FC = () => {
         data_amount: pkg.data_amount / 1024 // Convert MB to GB for API
       };
 
-      const response = await fetch(`/api/admin/update-package/${pkg.id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/update-package/${pkg.id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
@@ -350,6 +366,7 @@ const AdminPanel: React.FC = () => {
         setError(`Failed to save package: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
+      console.error('Error saving package:', err);
       setError('Failed to save package');
     } finally {
       setSaving(false);
@@ -367,7 +384,7 @@ const AdminPanel: React.FC = () => {
 
     setDeletingPackage(packageId);
     try {
-      const response = await fetch(`/api/admin/delete-package/${packageId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/delete-package/${packageId}`, {
         method: 'DELETE',
         headers: getAuthHeaders()
       });
@@ -377,9 +394,12 @@ const AdminPanel: React.FC = () => {
         setError(''); // Clear any previous errors
       } else {
         if (handleAuthError(response)) return;
+        const text = await response.text();
+        console.error('Failed to delete package:', response.status, text);
         setError('Failed to delete package');
       }
     } catch (err) {
+      console.error('Error deleting package:', err);
       setError('Failed to delete package');
     } finally {
       setDeletingPackage(null);
@@ -400,7 +420,7 @@ const AdminPanel: React.FC = () => {
         profit: 0
       };
 
-      const response = await fetch(`/api/admin/save-package`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
@@ -415,6 +435,7 @@ const AdminPanel: React.FC = () => {
         setError(`Failed to save package: ${errorData.error || 'Unknown error'}`);
       }
     } catch (err) {
+      console.error('Error saving to my packages:', err);
       setError('Failed to save package');
     } finally {
       setUpdating(null);
@@ -476,7 +497,7 @@ const AdminPanel: React.FC = () => {
         homepage_order: 0
       };
 
-      const response = await fetch(`/api/admin/save-package`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
@@ -496,6 +517,7 @@ const AdminPanel: React.FC = () => {
         setError(errorMessage);
       }
     } catch (err) {
+      console.error('Error saving Roamify package:', err);
       const errorMessage = 'Failed to save package';
       toast.error(errorMessage);
       setError(errorMessage);
@@ -533,7 +555,7 @@ const AdminPanel: React.FC = () => {
         homepage_order: 1
       };
 
-      const response = await fetch(`/api/save-package`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
@@ -551,6 +573,7 @@ const AdminPanel: React.FC = () => {
         setError(errorMessage);
       }
     } catch (err) {
+      console.error('Error saving as most popular:', err);
       const errorMessage = 'Failed to save package';
       toast.error(errorMessage);
       setError(errorMessage);
