@@ -21,7 +21,7 @@ export const createPaymentIntent = async (
   next: NextFunction
 ) => {
   try {
-    const { amount, currency, email, packageId } = req.body;
+    const { amount, currency, email, packageId, name, surname, phone, country } = req.body;
 
     // Validate required fields
     if (!amount || amount <= 0) {
@@ -87,6 +87,10 @@ export const createPaymentIntent = async (
         packageName: packageData.name,
         packageDataAmount: packageData.data_amount.toString(),
         packageValidityDays: packageData.validity_days.toString(),
+        name: name || '',
+        surname: surname || '',
+        phone: phone || '',
+        country: country || '',
       },
       description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.validity_days} days`,
       automatic_payment_methods: {
@@ -96,6 +100,42 @@ export const createPaymentIntent = async (
 
     logger.info(`Payment intent created successfully: ${paymentIntent.id} for customer: ${customer.id}`);
 
+    // Create order in database
+    const orderData = {
+      packageId: packageId,
+      user_email: email,
+      user_name: name && surname ? `${name} ${surname}` : name || surname || '',
+      name: name || '',
+      surname: surname || '',
+      phone: phone || '',
+      country: country || '',
+      status: 'pending',
+      amount: amount,
+      data_amount: packageData.data_amount,
+      validity_days: packageData.validity_days,
+      country_name: packageData.country_name,
+      stripe_payment_intent_id: paymentIntent.id,
+      stripe_customer_id: customer.id,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert([orderData])
+      .select()
+      .single();
+
+    if (orderError) {
+      logger.error('Error creating order:', orderError);
+      // Don't fail the payment intent creation, but log the error
+      logger.warn('Payment intent created but order creation failed', { 
+        paymentIntentId: paymentIntent.id, 
+        error: orderError.message 
+      });
+    } else {
+      logger.info(`Order created successfully: ${order.id} for payment intent: ${paymentIntent.id}`);
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
@@ -104,6 +144,7 @@ export const createPaymentIntent = async (
         amount: paymentIntent.amount / 100,
         currency: paymentIntent.currency,
         customerId: customer.id,
+        orderId: order?.id,
       },
     });
   } catch (error) {

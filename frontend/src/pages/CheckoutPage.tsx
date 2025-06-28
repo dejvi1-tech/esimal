@@ -286,6 +286,10 @@ const CheckoutPage: React.FC = () => {
                   currency="eur"
                   email={email}
                   packageId={packageData.id}
+                  name={name}
+                  surname={surname}
+                  phone={phone}
+                  country={country}
                   onSuccess={handlePaymentSuccess}
                   onError={handlePaymentError}
                 />

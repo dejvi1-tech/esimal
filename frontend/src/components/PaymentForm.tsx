@@ -8,6 +8,10 @@ interface PaymentFormProps {
   currency: string;
   email: string;
   packageId: string;
+  name?: string;
+  surname?: string;
+  phone?: string;
+  country?: string;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
 }
@@ -30,6 +34,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   currency,
   email,
   packageId,
+  name,
+  surname,
+  phone,
+  country,
   onSuccess,
   onError,
 }) => {
@@ -42,11 +50,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   console.log('[DEBUG] PaymentForm rendered');
   console.log('[DEBUG] Stripe:', stripe);
   console.log('[DEBUG] Elements:', elements);
-  console.log('[DEBUG] Props:', { amount, currency, email, packageId });
+  console.log('[DEBUG] Props:', { amount, currency, email, packageId, name, surname, phone, country });
 
   const createPaymentIntent = async () => {
     console.log('[DEBUG] Creating payment intent...');
-    console.log('[DEBUG] Payment intent data:', { amount, currency, email, packageId });
+    console.log('[DEBUG] Payment intent data:', { amount, currency, email, packageId, name, surname, phone, country });
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-intent`, {
         method: 'POST',
@@ -58,6 +66,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           currency,
           email,
           packageId,
+          name,
+          surname,
+          phone,
+          country,
         }),
       });
 
