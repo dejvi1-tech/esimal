@@ -31,75 +31,48 @@ async function testPaginationSync() {
 
     console.log(`📦 Current packages in database: ${currentPackages?.length || 0}`);
 
-    // Step 2: Fetch from Roamify API with pagination
-    console.log('\n🌐 Step 2: Fetching from Roamify API with pagination...');
+    // Step 2: Fetch from Roamify API (no pagination needed)
+    console.log('\n🌐 Step 2: Fetching from Roamify API...');
     
-    let allPackages = [];
-    let page = 1;
-    const limit = 100; // Roamify API limit per page
+    const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages`, {
+      headers: {
+        Authorization: `Bearer ${roamifyApiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log(`Response status: ${response.status}`);
     
-    while (true) {
-      console.log(`Fetching page ${page} from Roamify API...`);
-      
-      const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages?page=${page}&limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${roamifyApiKey}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log(`Response status: ${response.status}`);
-      
-      if (!response.ok) {
-        throw new Error(`Roamify API responded with status: ${response.status}`);
-      }
-
-      const json = await response.json();
-      
-      // Check if we have the expected response structure
-      if (!json.data || !json.data.packages || json.data.packages.length === 0) {
-        console.log(`No more data on page ${page}, stopping pagination`);
-        break;
-      }
-
-      // Flatten all country packages and attach country info
-      const countryObjs = json.data.packages;
-      let pagePackages = 0;
-      for (const country of countryObjs) {
-        if (country.packages && Array.isArray(country.packages)) {
-          for (const pkg of country.packages) {
-            allPackages.push({
-              ...pkg,
-              countryName: country.countryName,
-              countryCode: country.countryCode,
-              region: country.region,
-              geography: country.geography
-            });
-            pagePackages++;
-          }
-        }
-      }
-      
-      console.log(`Page ${page}: Found ${pagePackages} packages (Total so far: ${allPackages.length})`);
-
-      // Check if we should continue to next page
-      if (pagePackages === 0) {
-        console.log(`No packages found on page ${page}, stopping pagination`);
-        break;
-      }
-
-      page++;
-      
-      // Safety check to prevent infinite loops
-      if (page > 200) {
-        console.log('Reached maximum page limit (200), stopping pagination');
-        break;
-      }
-
-      // Add a small delay to be respectful to the API
-      await new Promise(resolve => setTimeout(resolve, 100));
+    if (!response.ok) {
+      throw new Error(`Roamify API responded with status: ${response.status}`);
     }
 
+    const json = await response.json();
+    
+    // Check if we have the expected response structure
+    if (!json.data || !json.data.packages || json.data.packages.length === 0) {
+      console.log('No packages found in Roamify API response');
+      return;
+    }
+
+    // Flatten all country packages and attach country info
+    const countryObjs = json.data.packages;
+    let allPackages = [];
+    
+    for (const country of countryObjs) {
+      if (country.packages && Array.isArray(country.packages)) {
+        for (const pkg of country.packages) {
+          allPackages.push({
+            ...pkg,
+            countryName: country.countryName,
+            countryCode: country.countryCode,
+            region: country.region,
+            geography: country.geography
+          });
+        }
+      }
+    }
+    
     console.log(`📦 Total packages fetched from API: ${allPackages.length}`);
 
     if (allPackages.length === 0) {
@@ -231,7 +204,6 @@ async function testPaginationSync() {
     console.log(`✅ Successfully synced: ${successCount} packages`);
     console.log(`❌ Failed to sync: ${errorCount} packages`);
     console.log(`📦 Final packages in database: ${finalPackages?.length || 0}`);
-    console.log(`📄 Pages fetched: ${page - 1}`);
 
     if (finalPackages && finalPackages.length > 0) {
       console.log('\n📋 Sample synced package:');
