@@ -1,3 +1,4 @@
+{
   "card_number": "Card Number",
   "expiry": "Expiry",
   "cvc": "CVC",
@@ -13,6 +14,7 @@
   "phone_number": "Phone Number",
   "kosovo_only": "(Kosovo only)",
   "checkout": "Checkout",
+  "checkout_description": "Complete your purchase securely",
   "package_not_found": "Package Not Found",
   "selected_package_not_found": "Selected package not found.",
   "no_package_selected": "No Package Selected",
@@ -36,4 +38,5 @@
   "enter_email": "Enter email",
   "country": "Country",
   "days": "days",
-  "total": "Total" 
+  "total": "Total"
+} 

@@ -7,6 +7,8 @@ import { Helmet } from 'react-helmet-async';
 import { toast } from '@/hooks/use-toast';
 import { PaymentForm } from '@/components/PaymentForm';
 
+console.log('VITE_STRIPE_PUBLIC_KEY:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
 
 const countryList = [

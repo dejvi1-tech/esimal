@@ -1,3 +1,4 @@
+{
   "card_number": "Numri i kartës",
   "expiry": "Skadimi",
   "cvc": "CVC",
@@ -13,6 +14,7 @@
   "phone_number": "Numri i Telefonit",
   "kosovo_only": "(Të Kosovës që e keni)",
   "checkout": "Përfundo Porosinë",
+  "checkout_description": "Përfundo blerjen tënde në mënyrë të sigurt",
   "package_not_found": "Paketa nuk u gjet",
   "selected_package_not_found": "Paketa e zgjedhur nuk u gjet.",
   "no_package_selected": "Asnjë Paketë e Zgjedhur",
@@ -36,4 +38,5 @@
   "enter_email": "Shkruani email-in",
   "country": "Shteti",
   "days": "ditë",
-  "total": "Totali" 
+  "total": "Totali"
+} 
