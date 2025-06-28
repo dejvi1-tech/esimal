@@ -419,16 +419,32 @@ async function handleCheckoutSessionCompleted(session: any) {
     const customerEmail = session.customer_details?.email || session.customer_email;
     const amount = session.amount_total / 100;
 
-    // Get package details
-    const { data: packageData, error: packageError } = await supabase
+    // First, try to find package by UUID (id field)
+    let { data: packageData, error: packageError } = await supabase
       .from('my_packages')
       .select('*')
       .eq('id', packageId)
       .single();
 
+    // If not found by UUID, try to find by location_slug (slug)
     if (packageError || !packageData) {
-      logger.error('Package not found for checkout session:', packageId);
-      return;
+      logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+      
+      const { data: packageBySlug, error: slugError } = await supabase
+        .from('my_packages')
+        .select('*')
+        .eq('location_slug', packageId)
+        .single();
+
+      if (slugError || !packageBySlug) {
+        logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
+        return;
+      }
+
+      packageData = packageBySlug;
+      logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+    } else {
+      logger.info(`Package found by UUID: ${packageId}`);
     }
 
     // Step 1: Create real eSIM with Roamify API
@@ -463,7 +479,7 @@ async function handleCheckoutSessionCompleted(session: any) {
 
     // Step 2: Create order in database with real eSIM data
     const orderData = {
-      packageId: packageId,
+      package_id: packageData.id, // Use the actual UUID
       user_id: null,
       user_email: customerEmail,
       user_name: `${name || ''} ${surname || ''}`.trim() || customerEmail,

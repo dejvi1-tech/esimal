@@ -16,7 +16,7 @@ const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', {
  */
 const createPaymentIntent = async (req, res, next) => {
     try {
-        const { amount, currency, email, packageId } = req.body;
+        const { amount, currency, email, packageId, name, surname, phone, country } = req.body;
         // Validate required fields
         if (!amount || amount <= 0) {
             throw new errors_1.ValidationError('Valid amount is required');
@@ -31,16 +31,18 @@ const createPaymentIntent = async (req, res, next) => {
             throw new errors_1.ValidationError('Package ID is required');
         }
         logger_1.logger.info(`Creating payment intent for package ${packageId}, amount: ${amount} ${currency}, email: ${email}`);
-        // Get package details
+        // Get package details by id (slug)
         const { data: packageData, error: packageError } = await supabase_1.supabase
             .from('my_packages')
             .select('*')
-            .eq('id', packageId)
+            .eq('id', packageId) // packageId is the slug
             .single();
         if (packageError || !packageData) {
             logger_1.logger.error(`Package not found: ${packageId}`, packageError);
             throw new errors_1.NotFoundError('Package not found');
         }
+        // Use the actual UUID from the package data
+        const actualPackageId = packageData.id;
         // Create or retrieve Stripe customer
         let customer;
         try {
@@ -56,7 +58,7 @@ const createPaymentIntent = async (req, res, next) => {
                 customer = await stripe.customers.create({
                     email: email,
                     metadata: {
-                        packageId: packageId,
+                        packageId: actualPackageId,
                     },
                 });
                 logger_1.logger.info(`Created new customer: ${customer.id} for email: ${email}`);
@@ -73,10 +75,15 @@ const createPaymentIntent = async (req, res, next) => {
             customer: customer.id,
             metadata: {
                 email: email,
-                packageId: packageId,
+                packageId: actualPackageId,
+                packageSlug: packageId,
                 packageName: packageData.name,
                 packageDataAmount: packageData.data_amount.toString(),
                 packageValidityDays: packageData.validity_days.toString(),
+                name: name || '',
+                surname: surname || '',
+                phone: phone || '',
+                country: country || '',
             },
             description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.validity_days} days`,
             automatic_payment_methods: {
@@ -84,6 +91,31 @@ const createPaymentIntent = async (req, res, next) => {
             },
         });
         logger_1.logger.info(`Payment intent created successfully: ${paymentIntent.id} for customer: ${customer.id}`);
+        // Create order in database
+        const orderData = {
+            package_id: actualPackageId,
+            guest_email: email,
+            amount: amount,
+            status: 'pending',
+            payment_intent_id: paymentIntent.id,
+            created_at: new Date().toISOString(),
+        };
+        const { data: order, error: orderError } = await supabase_1.supabase
+            .from('orders')
+            .insert([orderData])
+            .select()
+            .single();
+        if (orderError) {
+            logger_1.logger.error('Error creating order:', orderError);
+            // Don't fail the payment intent creation, but log the error
+            logger_1.logger.warn('Payment intent created but order creation failed', {
+                paymentIntentId: paymentIntent.id,
+                error: orderError.message
+            });
+        }
+        else {
+            logger_1.logger.info(`Order created successfully: ${order.id} for payment intent: ${paymentIntent.id}`);
+        }
         res.status(200).json({
             status: 'success',
             data: {
@@ -92,6 +124,7 @@ const createPaymentIntent = async (req, res, next) => {
                 amount: paymentIntent.amount / 100,
                 currency: paymentIntent.currency,
                 customerId: customer.id,
+                orderId: order?.id,
             },
         });
     }

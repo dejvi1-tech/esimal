@@ -115,17 +115,38 @@ export const confirmPayment = async (
       const userEmail = metadata.userEmail;
       const userId = metadata.userId;
 
-      // Get package details
-      const { data: packageData } = await supabase
+      // First, try to find package by UUID (id field)
+      let { data: packageData, error: packageError } = await supabase
         .from('my_packages')
         .select('*')
         .eq('id', packageId)
         .single();
 
+      // If not found by UUID, try to find by location_slug (slug)
+      if (packageError || !packageData) {
+        logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+        
+        const { data: packageBySlug, error: slugError } = await supabase
+          .from('my_packages')
+          .select('*')
+          .eq('location_slug', packageId)
+          .single();
+
+        if (slugError || !packageBySlug) {
+          logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
+          throw new NotFoundError('Package not found');
+        }
+
+        packageData = packageBySlug;
+        logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+      } else {
+        logger.info(`Package found by UUID: ${packageId}`);
+      }
+
       if (packageData) {
         // Create order in database
         const orderData = {
-          packageId: packageId,
+          package_id: packageData.id, // Use the actual UUID
           user_id: userId === 'guest' ? null : userId,
           user_email: userEmail,
           user_name: metadata.userName || userEmail,
@@ -383,15 +404,32 @@ export const getCustomer = async (
 export const createCheckoutSession = async (req: Request, res: Response, next: NextFunction) => {
   const { packageId, email, name, surname } = req.body;
 
-  // 1. Lookup package in Supabase
-  const { data: pkg, error } = await supabase
+  // 1. First, try to find package by UUID (id field)
+  let { data: pkg, error } = await supabase
     .from('my_packages')
     .select('*')
     .eq('id', packageId)
     .single();
 
+  // If not found by UUID, try to find by location_slug (slug)
   if (error || !pkg) {
-    return res.status(404).json({ error: 'Package not found' });
+    logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+    
+    const { data: packageBySlug, error: slugError } = await supabase
+      .from('my_packages')
+      .select('*')
+      .eq('location_slug', packageId)
+      .single();
+
+    if (slugError || !packageBySlug) {
+      logger.error(`Package not found by UUID or slug: ${packageId}`, { error, slugError });
+      return res.status(404).json({ error: 'Package not found' });
+    }
+
+    pkg = packageBySlug;
+    logger.info(`Package found by slug: ${packageId} -> UUID: ${pkg.id}`);
+  } else {
+    logger.info(`Package found by UUID: ${packageId}`);
   }
 
   // 2. Create Stripe Checkout Session
@@ -410,7 +448,8 @@ export const createCheckoutSession = async (req: Request, res: Response, next: N
       },
     ],
     metadata: {
-      packageId,
+      packageId: pkg.id, // Use the actual UUID
+      packageSlug: packageId,
       name,
       surname,
     },
