@@ -195,7 +195,7 @@ const AdminPanel: React.FC = () => {
       await Promise.all([
         fetchMyPackages(),
         fetchMainPackages(),
-        fetchRoamifyPackages(1, pageSize), // Use pagination
+        fetchRoamifyPackages(1, 50000), // Fetch all packages in single request
         fetchAllCountries()
       ]);
     } catch (error) {
@@ -256,12 +256,12 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const fetchRoamifyPackages = async (page: number = 1, limit: number = 50) => {
+  const fetchRoamifyPackages = async (page: number = 1, limit: number = 50000) => {
     try {
-      console.log(`Fetching Roamify packages (page ${page}, limit ${limit})...`);
+      console.log(`Fetching ALL Roamify packages (single request with limit ${limit})...`);
       setRoamifyLoading(true);
       
-      const fullUrl = `${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages?page=${page}&limit=${limit}`;
+      const fullUrl = `${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages?page=1&limit=${limit}`;
       console.log('Fetching from URL:', fullUrl);
       
       const response = await fetch(fullUrl, {
@@ -1264,7 +1264,7 @@ const AdminPanel: React.FC = () => {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-700">
-                      <span className="font-medium">Total Packages:</span> {totalCount ? totalCount.toLocaleString() : roamifyPackages.length.toLocaleString()}
+                      <span className="font-medium">Total Packages Loaded:</span> {roamifyPackages.length.toLocaleString()}
                       {selectedRoamifyCountry && (
                         <span className="ml-4">
                           <span className="font-medium">Filtered:</span> {filteredRoamifyPackages.length.toLocaleString()} for {selectedRoamifyCountry}
@@ -1273,16 +1273,11 @@ const AdminPanel: React.FC = () => {
                     </div>
                     <div className="text-sm text-gray-600">
                       Showing {Math.min(roamifyVisibleCount, filteredRoamifyPackages.length).toLocaleString()} packages
-                      {totalCount && totalCount > roamifyPackages.length && (
-                        <span className="ml-2 text-blue-600">
-                          (Page {currentPage} of {totalPages})
-                        </span>
-                      )}
                     </div>
                   </div>
                   {/* Debug information */}
                   <div className="mt-2 text-xs text-gray-500">
-                    Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
+                    All packages loaded in single request - use country filter to see specific packages
                   </div>
                 </div>
                 
@@ -1402,63 +1397,6 @@ const AdminPanel: React.FC = () => {
                     Showing all {filteredRoamifyPackages.length} packages
                   </div>
                 )}
-                
-                {/* Pagination Controls for Roamify Packages */}
-                <div className="mt-6 flex justify-center items-center space-x-2">
-                  <div className="text-xs text-gray-500 mb-2">
-                    Pagination Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
-                    <br />
-                    Condition check: totalCount &gt; roamifyPackages.length = {totalCount} &gt; {roamifyPackages.length} = {totalCount > roamifyPackages.length ? 'true' : 'false'}
-                    <br />
-                    totalCount type: {typeof totalCount}, roamifyPackages.length type: {typeof roamifyPackages.length}
-                  </div>
-                  
-                  {totalCount && totalCount > roamifyPackages.length ? (
-                    <>
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage <= 1}
-                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Previous
-                      </button>
-                      
-                      <div className="flex space-x-1">
-                        {getPageNumbers().map((pageNum, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`px-3 py-2 rounded ${
-                              pageNum === currentPage
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                            }`}
-                          >
-                            {pageNum === '...' ? '...' : pageNum}
-                          </button>
-                        ))}
-                      </div>
-                      
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage >= totalPages}
-                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        Next
-                      </button>
-                      
-                      <div className="ml-4 text-sm text-gray-600">
-                        Page {currentPage} of {totalPages} ({totalCount.toLocaleString()} total packages)
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-sm text-gray-500">
-                      {!totalCount ? 'No totalCount available' : 
-                       totalCount <= roamifyPackages.length ? 'All packages loaded (no pagination needed)' : 
-                       'Pagination condition not met'}
-                    </div>
-                  )}
-                </div>
               </div>
             )}
           </div>
