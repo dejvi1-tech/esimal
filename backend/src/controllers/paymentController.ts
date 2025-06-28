@@ -39,17 +39,20 @@ export const createPaymentIntent = async (
 
     logger.info(`Creating payment intent for package ${packageId}, amount: ${amount} ${currency}, email: ${email}`);
 
-    // Get package details
+    // Get package details by id (slug)
     const { data: packageData, error: packageError } = await supabase
       .from('my_packages')
       .select('*')
-      .eq('id', packageId)
+      .eq('id', packageId) // packageId is the slug
       .single();
 
     if (packageError || !packageData) {
       logger.error(`Package not found: ${packageId}`, packageError);
       throw new NotFoundError('Package not found');
     }
+
+    // Use the actual UUID from the package data
+    const actualPackageId = packageData.id;
 
     // Create or retrieve Stripe customer
     let customer;
@@ -66,7 +69,7 @@ export const createPaymentIntent = async (
         customer = await stripe.customers.create({
           email: email,
           metadata: {
-            packageId: packageId,
+            packageId: actualPackageId,
           },
         });
         logger.info(`Created new customer: ${customer.id} for email: ${email}`);
@@ -83,7 +86,8 @@ export const createPaymentIntent = async (
       customer: customer.id,
       metadata: {
         email: email,
-        packageId: packageId,
+        packageId: actualPackageId,
+        packageSlug: packageId,
         packageName: packageData.name,
         packageDataAmount: packageData.data_amount.toString(),
         packageValidityDays: packageData.validity_days.toString(),
@@ -102,7 +106,7 @@ export const createPaymentIntent = async (
 
     // Create order in database
     const orderData = {
-      package_id: packageId,
+      package_id: actualPackageId,
       guest_email: email,
       amount: amount,
       status: 'pending',

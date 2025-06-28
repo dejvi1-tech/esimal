@@ -232,11 +232,27 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       .single();
 
     if (packageError || !packageData) {
-      logger.error('Package not found for eSIM delivery:', packageError, { packageId });
+      logger.error('Package not found for eSIM delivery:', packageError, { 
+        packageId,
+        orderId,
+        paymentIntentId: paymentIntent.id,
+        metadata: metadata
+      });
       throw new Error(`Package not found: ${packageId}`);
     }
 
     const resellerId = packageData.reseller_id;
+    
+    if (!resellerId) {
+      logger.error('Package found but no reseller_id:', { 
+        packageId,
+        packageName: packageData.name,
+        orderId,
+        paymentIntentId: paymentIntent.id
+      });
+      throw new Error(`No reseller_id found for package: ${packageId}`);
+    }
+    
     logger.info(`Found package data for eSIM delivery`, {
       orderId,
       packageId,
