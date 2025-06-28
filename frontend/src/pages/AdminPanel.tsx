@@ -77,11 +77,11 @@ const AdminPanel: React.FC = () => {
   const [pageSize] = useState(50); // Packages per page
   
   const [selectedRoamifyCountry, setSelectedRoamifyCountry] = useState('');
-  const roamifyCountries = Array.from(new Set(roamifyPackages.map(pkg => pkg.country).filter(Boolean))).sort();
+  const roamifyCountries = Array.from(new Set(roamifyPackages.map(pkg => pkg.country || pkg.country_name).filter(Boolean))).sort();
   
   // Remove the Europe & United States filter and just filter by selected country
   const filteredRoamifyPackages = selectedRoamifyCountry
-    ? roamifyPackages.filter(pkg => pkg.country === selectedRoamifyCountry)
+    ? roamifyPackages.filter(pkg => (pkg.country || pkg.country_name) === selectedRoamifyCountry)
     : roamifyPackages;
   
   const [editingMyPackage, setEditingMyPackage] = useState<Package | null>(null);
@@ -147,10 +147,31 @@ const AdminPanel: React.FC = () => {
 
   const fetchAllCountries = async () => {
     try {
-      // Since we removed the countries endpoint, we'll use a static list
-      const countryNames = europeanCountries.map(country => country.name.en);
-      setAllCountries(countryNames);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/package-countries`, {
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'success' && Array.isArray(data.data)) {
+          setAllCountries(data.data);
+          console.log(`Loaded ${data.data.length} countries from database`);
+        } else {
+          console.error('Invalid response format from package-countries endpoint');
+          // Fallback to static list
+          const countryNames = europeanCountries.map(country => country.name.en);
+          setAllCountries(countryNames);
+        }
+      } else {
+        if (handleAuthError(response)) return;
+        console.error('Failed to fetch countries from API');
+        // Fallback to static list
+        const countryNames = europeanCountries.map(country => country.name.en);
+        setAllCountries(countryNames);
+      }
     } catch (err) {
+      console.error('Error fetching countries:', err);
+      // Fallback to static list
       const countryNames = europeanCountries.map(country => country.name.en);
       setAllCountries(countryNames);
     }
@@ -344,7 +365,7 @@ const AdminPanel: React.FC = () => {
     // Check for duplicate combinations (country + data + days + price)
     const combinationCounts: { [key: string]: RoamifyPackage[] } = {};
     packages.forEach(pkg => {
-      const country = pkg.country || 'unknown';
+      const country = pkg.country || pkg.country_name || 'unknown';
       const data = pkg.data_amount || pkg.dataAmount || pkg.data || 'unknown';
       const days = pkg.validity_days || pkg.days || pkg.day || 'unknown';
       const price = pkg.base_price || pkg.price || 'unknown';
@@ -1037,7 +1058,7 @@ const AdminPanel: React.FC = () => {
                                     <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
                                     {packages.map((pkg, index) => (
                                       <div key={index} className="text-sm text-red-700 ml-4">
-                                        {index + 1}. {pkg.packageName || pkg.name || pkg.package} - {pkg.country} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
+                                        {index + 1}. {pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
                                       </div>
                                     ))}
                                   </div>
@@ -1174,7 +1195,7 @@ const AdminPanel: React.FC = () => {
                       
                       // Check if this package is a duplicate
                       const packageId = pkg.packageId || pkg.id || 'unknown';
-                      const country = pkg.country || 'unknown';
+                      const country = pkg.country || pkg.country_name || 'unknown';
                       const data = pkg.data_amount || pkg.dataAmount || pkg.data || 'unknown';
                       const days = pkg.validity_days || pkg.days || pkg.day || 'unknown';
                       const price = pkg.base_price || pkg.price || 'unknown';
@@ -1202,7 +1223,7 @@ const AdminPanel: React.FC = () => {
                             <div className="text-sm text-gray-500">ID: {pkg.packageId || pkg.id}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.country}</span>
+                            <span className="text-sm text-gray-900">{pkg.country || pkg.country_name}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-900">{pkg.country_code || 'N/A'}</span>

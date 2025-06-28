@@ -109,58 +109,146 @@ async function syncPackages() {
     console.log('Fetching packages from Roamify API...');
     console.log('Using API Key:', ROAMIFY_API_KEY.substring(0, 10) + '...');
     
-    // Try to fetch all packages by adding parameters that might help
-    const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
-      headers: {
-        Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      params: {
-        limit: 10000, // Try to get more packages
-        offset: 0,    // Start from the beginning
-        all: true     // Some APIs use this to get all data
-      },
-      timeout: 60000 // 60 second timeout for large responses
-    });
-
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-    console.log('Response data keys:', Object.keys(response.data || {}));
-
-    // Handle the actual Roamify API response structure
+    // Try multiple approaches to get all packages
     let packages: any[] = [];
+    let totalPackagesFound = 0;
     
-    const data = response.data as { status?: string; data?: { packages?: any[] } };
-    if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
-      console.log('Found packages array in response.data.data.packages');
-      
-      // Extract individual packages from country objects
-      for (const country of data.data.packages) {
-        if (country.packages && Array.isArray(country.packages)) {
-          console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
-          // Add country info to each package using separate fields
-          const packagesWithCountry = country.packages.map((pkg: any) => ({
-            ...pkg,
-            country_name: country.countryName || country.country || 'Unknown',
-            country_code: country.countryCode || null
-          }));
-          packages = packages.concat(packagesWithCountry);
+    // Approach 1: Try with high limit
+    try {
+      console.log('\n=== Approach 1: High limit ===');
+      const response1 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+        headers: {
+          Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        params: {
+          limit: 50000, // Very high limit
+          offset: 0
+        },
+        timeout: 120000 // 2 minute timeout
+      });
+
+      const data1 = response1.data as { status?: string; data?: { packages?: any[] } };
+      if (data1 && data1.status === 'success' && data1.data && data1.data.packages && Array.isArray(data1.data.packages)) {
+        console.log('Found packages array in response.data.data.packages');
+        
+        // Extract individual packages from country objects
+        for (const country of data1.data.packages) {
+          if (country.packages && Array.isArray(country.packages)) {
+            console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
+            const packagesWithCountry = country.packages.map((pkg: any) => ({
+              ...pkg,
+              country_name: country.countryName || country.country || 'Unknown',
+              country_code: country.countryCode || null
+            }));
+            packages = packages.concat(packagesWithCountry);
+          }
         }
+        totalPackagesFound = packages.length;
+        console.log(`Approach 1 found ${totalPackagesFound} packages`);
       }
-    } else {
-      console.error('Unexpected API response structure. Available keys:', Object.keys(data || {}));
-      if (data && data.data) {
-        console.error('Data keys:', Object.keys(data.data));
-      }
-      throw new Error('Invalid API response structure - no packages array found');
+    } catch (error) {
+      console.log('Approach 1 failed:', error.message);
     }
 
-    console.log(`Found ${packages.length} total packages from API`);
+    // Approach 2: Try without parameters (default behavior)
+    if (totalPackagesFound === 0) {
+      try {
+        console.log('\n=== Approach 2: No parameters ===');
+        const response2 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+          headers: {
+            Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 60000
+        });
 
-    if (packages.length === 0) {
-      console.log('No packages found in API response');
-      return;
+        const data2 = response2.data as { status?: string; data?: { packages?: any[] } };
+        if (data2 && data2.status === 'success' && data2.data && data2.data.packages && Array.isArray(data2.data.packages)) {
+          console.log('Found packages array in response.data.data.packages');
+          
+          for (const country of data2.data.packages) {
+            if (country.packages && Array.isArray(country.packages)) {
+              console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
+              const packagesWithCountry = country.packages.map((pkg: any) => ({
+                ...pkg,
+                country_name: country.countryName || country.country || 'Unknown',
+                country_code: country.countryCode || null
+              }));
+              packages = packages.concat(packagesWithCountry);
+            }
+          }
+          totalPackagesFound = packages.length;
+          console.log(`Approach 2 found ${totalPackagesFound} packages`);
+        }
+      } catch (error) {
+        console.log('Approach 2 failed:', error.message);
+      }
     }
+
+    // Approach 3: Try with pagination if we got some packages but not all
+    if (totalPackagesFound > 0 && totalPackagesFound < 5000) { // If we got some but not enough
+      try {
+        console.log('\n=== Approach 3: Pagination ===');
+        let offset = totalPackagesFound;
+        let hasMore = true;
+        let page = 1;
+        
+        while (hasMore && page <= 10) { // Limit to 10 pages to avoid infinite loop
+          console.log(`Fetching page ${page} with offset ${offset}...`);
+          
+          const response3 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+            headers: {
+              Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            params: {
+              limit: 1000,
+              offset: offset
+            },
+            timeout: 30000
+          });
+
+          const data3 = response3.data as { status?: string; data?: { packages?: any[] } };
+          if (data3 && data3.status === 'success' && data3.data && data3.data.packages && Array.isArray(data3.data.packages)) {
+            let pagePackages = 0;
+            for (const country of data3.data.packages) {
+              if (country.packages && Array.isArray(country.packages)) {
+                console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
+                const packagesWithCountry = country.packages.map((pkg: any) => ({
+                  ...pkg,
+                  country_name: country.countryName || country.country || 'Unknown',
+                  country_code: country.countryCode || null
+                }));
+                packages = packages.concat(packagesWithCountry);
+                pagePackages += country.packages.length;
+              }
+            }
+            
+            if (pagePackages === 0) {
+              hasMore = false;
+            } else {
+              offset += pagePackages;
+              page++;
+            }
+          } else {
+            hasMore = false;
+          }
+        }
+        
+        totalPackagesFound = packages.length;
+        console.log(`Approach 3 found ${totalPackagesFound} total packages`);
+      } catch (error) {
+        console.log('Approach 3 failed:', error.message);
+      }
+    }
+
+    if (totalPackagesFound === 0) {
+      console.error('No packages found from any approach');
+      throw new Error('Failed to fetch packages from Roamify API');
+    }
+
+    console.log(`\nTotal packages found: ${totalPackagesFound}`);
 
     // Deduplicate packages before processing
     packages = deduplicatePackages(packages);

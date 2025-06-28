@@ -376,6 +376,37 @@ export const getAllRoamifyPackages = async (
   }
 };
 
+// Secure admin endpoint: Get distinct countries from packages
+export const getPackageCountries = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Get distinct countries from packages table
+    const { data: countries, error } = await supabaseAdmin
+      .from('packages')
+      .select('country_name')
+      .neq('country_name', null)
+      .neq('country_name', '')
+      .order('country_name', { ascending: true });
+
+    if (error) throw error;
+
+    // Extract unique country names
+    const uniqueCountries = Array.from(new Set(countries?.map(c => c.country_name) || [])).filter(Boolean).sort();
+
+    res.status(200).json({
+      status: 'success',
+      data: uniqueCountries,
+      count: uniqueCountries.length
+    });
+  } catch (error) {
+    console.error('Error fetching package countries:', error);
+    next(error);
+  }
+};
+
 // Secure admin endpoint: Deduplicate packages
 export const deduplicatePackages = async (
   req: Request,
@@ -383,7 +414,7 @@ export const deduplicatePackages = async (
   next: NextFunction
 ) => {
   try {
-    // Get all packages
+    // Get all packages from the packages table (not my_packages)
     const { data: allPackages, error: fetchError } = await supabaseAdmin
       .from('packages')
       .select('*')
@@ -461,12 +492,24 @@ export const deduplicatePackages = async (
 
     // Remove duplicates from database
     if (packagesToDelete.length > 0) {
-      const { error: deleteError } = await supabaseAdmin
-        .from('packages')
-        .delete()
-        .in('id', packagesToDelete);
+      console.log(`Attempting to delete ${packagesToDelete.length} duplicate packages...`);
+      
+      // Delete in batches to avoid potential issues with large arrays
+      const batchSize = 100;
+      for (let i = 0; i < packagesToDelete.length; i += batchSize) {
+        const batch = packagesToDelete.slice(i, i + batchSize);
+        const { error: deleteError } = await supabaseAdmin
+          .from('packages')
+          .delete()
+          .in('id', batch);
 
-      if (deleteError) throw deleteError;
+        if (deleteError) {
+          console.error(`Error deleting batch ${Math.floor(i / batchSize) + 1}:`, deleteError);
+          throw deleteError;
+        }
+      }
+      
+      console.log(`Successfully deleted ${packagesToDelete.length} duplicate packages`);
     }
 
     console.log(`Deduplication completed: Removed ${packagesToDelete.length} duplicate packages`);
