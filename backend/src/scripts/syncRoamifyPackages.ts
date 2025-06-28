@@ -148,7 +148,11 @@ async function syncPackages() {
         console.log(`Approach 1 found ${totalPackagesFound} packages`);
       }
     } catch (error) {
-      console.log('Approach 1 failed:', error.message);
+      if (error instanceof Error) {
+        console.log('Approach 1 failed:', error.message);
+      } else {
+        console.log('Approach 1 failed with unknown error:', error);
+      }
     }
 
     // Approach 2: Try without parameters (default behavior)
@@ -182,7 +186,11 @@ async function syncPackages() {
           console.log(`Approach 2 found ${totalPackagesFound} packages`);
         }
       } catch (error) {
-        console.log('Approach 2 failed:', error.message);
+        if (error instanceof Error) {
+          console.log('Approach 2 failed:', error.message);
+        } else {
+          console.log('Approach 2 failed with unknown error:', error);
+        }
       }
     }
 
@@ -239,7 +247,11 @@ async function syncPackages() {
         totalPackagesFound = packages.length;
         console.log(`Approach 3 found ${totalPackagesFound} total packages`);
       } catch (error) {
-        console.log('Approach 3 failed:', error.message);
+        if (error instanceof Error) {
+          console.log('Approach 3 failed:', error.message);
+        } else {
+          console.log('Approach 3 failed with unknown error:', error);
+        }
       }
     }
 
