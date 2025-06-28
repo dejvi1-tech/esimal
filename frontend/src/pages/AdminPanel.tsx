@@ -1408,7 +1408,7 @@ const AdminPanel: React.FC = () => {
                   <div className="text-xs text-gray-500 mb-2">
                     Pagination Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
                     <br />
-                    Condition check: totalCount > roamifyPackages.length = {totalCount} > {roamifyPackages.length} = {totalCount > roamifyPackages.length}
+                    Condition check: totalCount &gt; roamifyPackages.length = {totalCount} &gt; {roamifyPackages.length} = {totalCount > roamifyPackages.length ? 'true' : 'false'}
                     <br />
                     totalCount type: {typeof totalCount}, roamifyPackages.length type: {typeof roamifyPackages.length}
                   </div>
