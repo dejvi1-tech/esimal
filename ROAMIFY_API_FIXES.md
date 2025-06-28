@@ -3,11 +3,21 @@
 ## Problem
 The sync function was calling the Roamify API with invalid pagination parameters (`page` and `limit`) causing a 400 error on page 1. Additionally, the frontend was only showing 50 packages instead of the total count of 11k+ packages.
 
-## Root Cause
-According to the [Roamify API documentation](https://docs.getroamify.com/), the `/api/esim/packages` endpoint:
-- Does NOT support pagination parameters (`page`, `limit`)
-- Returns ALL packages in a single response
-- Has a structure of `data.packages` containing an array of countries, each with their own packages
+## Root Cause Analysis
+There was confusion about what the Roamify API actually supports. Based on the error and testing, we need to determine:
+
+1. **Does `/api/esim/packages` support pagination parameters?**
+2. **What parameters are actually valid?**
+3. **What's the correct approach for fetching all packages?**
+
+## Investigation
+Created `backend/test_roamify_parameters.js` to test various parameter combinations:
+- No parameters
+- With `limit` parameter
+- With `page` and `limit`
+- With `offset` and `limit`
+- With `all` parameter
+- Alternative endpoint `/api/packages`
 
 ## Files Fixed
 
@@ -77,7 +87,8 @@ The Roamify API returns:
 ```
 
 ## Testing
-Created `backend/test_roamify_fix.js` to verify the API call works correctly.
+- Created `backend/test_roamify_fix.js` to verify the API call works correctly
+- Created `backend/test_roamify_parameters.js` to test parameter support
 
 ## Expected Results
 - ✅ No more 400 errors on API calls
@@ -94,8 +105,13 @@ Created `backend/test_roamify_fix.js` to verify the API call works correctly.
 - **Tab Navigation**: Updated to show correct total count
 
 ## Next Steps
-1. Deploy the fixes
-2. Test the sync function manually
-3. Monitor logs for successful package syncing
-4. Verify all packages are properly imported to database
-5. Test pagination controls in admin panel 
+1. **Run parameter test**: Execute `node backend/test_roamify_parameters.js` to determine supported parameters
+2. **Update sync function**: Based on test results, adjust the sync function if needed
+3. **Deploy the fixes**
+4. **Test the sync function manually**
+5. **Monitor logs for successful package syncing**
+6. **Verify all packages are properly imported to database**
+7. **Test pagination controls in admin panel**
+
+## Note
+The current fix assumes the Roamify API doesn't support pagination parameters for the sync endpoint. If the parameter test shows otherwise, we may need to adjust the approach accordingly. 
