@@ -109,14 +109,23 @@ async function syncPackages() {
     console.log('Fetching packages from Roamify API...');
     console.log('Using API Key:', ROAMIFY_API_KEY.substring(0, 10) + '...');
     
+    // Try to fetch all packages by adding parameters that might help
     const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
       headers: {
         Authorization: `Bearer ${ROAMIFY_API_KEY}`,
         'Content-Type': 'application/json',
       },
+      params: {
+        limit: 10000, // Try to get more packages
+        offset: 0,    // Start from the beginning
+        all: true     // Some APIs use this to get all data
+      },
+      timeout: 60000 // 60 second timeout for large responses
     });
 
     console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
+    console.log('Response data keys:', Object.keys(response.data || {}));
 
     // Handle the actual Roamify API response structure
     let packages: any[] = [];

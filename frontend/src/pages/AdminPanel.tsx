@@ -107,6 +107,9 @@ const AdminPanel: React.FC = () => {
     hasDuplicates: false
   });
 
+  // Add state for deduplication process
+  const [deduplicating, setDeduplicating] = useState(false);
+
   // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('admin_token');
@@ -659,6 +662,37 @@ const AdminPanel: React.FC = () => {
     return pages;
   };
 
+  const handleRemoveDuplicates = async () => {
+    if (!duplicateAnalysis.hasDuplicates) {
+      toast.info('No duplicates found to remove');
+      return;
+    }
+
+    setDeduplicating(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/deduplicate-packages`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`Successfully removed ${result.removedCount} duplicate packages`);
+        // Refresh the packages list
+        await fetchRoamifyPackages();
+      } else {
+        if (handleAuthError(response)) return;
+        const errorData = await response.json();
+        toast.error(`Failed to remove duplicates: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Error removing duplicates:', err);
+      toast.error('Failed to remove duplicates');
+    } finally {
+      setDeduplicating(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1075,12 +1109,40 @@ const AdminPanel: React.FC = () => {
                   onChange={(e) => setSelectedRoamifyCountry(e.target.value)}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
-                  <option value="">All Countries ({roamifyPackages.length})</option>
+                  <option value="">All Countries ({roamifyCountries.length})</option>
                   {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
                     <option key={country} value={country}>{country}</option>
                   ))}
                 </select>
               </div>
+
+              {/* Remove Duplicates Button */}
+              {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
+                <div className="mt-4">
+                  <button
+                    onClick={handleRemoveDuplicates}
+                    disabled={deduplicating}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {deduplicating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Removing Duplicates...
+                      </>
+                    ) : (
+                      <>
+                        🗑️ Remove Duplicates
+                        <span className="text-xs bg-red-700 px-2 py-1 rounded">
+                          {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
+                        </span>
+                      </>
+                    )}
+                  </button>
+                  <p className="mt-1 text-sm text-gray-600">
+                    This will remove duplicate packages based on ID and combination matches
+                  </p>
+                </div>
+              )}
             </div>
             
             {roamifyLoading ? (

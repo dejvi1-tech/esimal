@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { getAllPackages, getMyPackages, getAllRoamifyPackages } from '../controllers/packageController';
+import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages } from '../controllers/packageController';
 import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 
 router.get('/test', (req, res) => {
@@ -17,5 +17,6 @@ router.post('/logout', adminLogoutHandler);
 router.get('/my-packages', requireAdminAuth, getMyPackages);
 router.get('/packages', requireAdminAuth, getAllPackages);
 router.get('/all-roamify-packages', requireAdminAuth, getAllRoamifyPackages);
+router.post('/deduplicate-packages', requireAdminAuth, deduplicatePackages);
 
 export default router; 
