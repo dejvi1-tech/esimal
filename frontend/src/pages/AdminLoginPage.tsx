@@ -9,17 +9,26 @@ const AdminLoginPage: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const API_URL = import.meta.env.VITE_API_URL || '';
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     const requestBody = { username, password };
+    const url = `${API_URL}/api/admin/login`;
+
     console.log('🔐 Frontend login attempt');
-    console.log('📝 Request body:', requestBody);
+    console.log('➡️ Request:', {
+      method: 'POST',
+      url,
+      body: requestBody,
+      headers: { 'Content-Type': 'application/json' }
+    });
 
     try {
-      const response = await fetch(`/api/admin/login`, {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
