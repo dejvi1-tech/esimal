@@ -7,19 +7,12 @@ router.get('/test', (req, res) => {
   res.json({ ok: true });
 });
 
-// Admin login route
+// Admin login route (unprotected)
 router.post('/login', adminLoginHandler);
 
-// Protect all admin data routes
-router.use(requireAdminAuth);
-
-// /api/admin/my-packages
-router.get('/my-packages', getMyPackages);
-
-// /api/admin/packages
-router.get('/packages', getAllPackages);
-
-// /api/admin/all-roamify-packages
-router.get('/all-roamify-packages', getAllRoamifyPackages);
+// Protected admin routes - each route needs the middleware explicitly
+router.get('/my-packages', requireAdminAuth, getMyPackages);
+router.get('/packages', requireAdminAuth, getAllPackages);
+router.get('/all-roamify-packages', requireAdminAuth, getAllRoamifyPackages);
 
 export default router; 

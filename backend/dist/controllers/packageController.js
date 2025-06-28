@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
+exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const errors_1 = require("../utils/errors");
@@ -196,4 +196,91 @@ const getCountries = async (req, res, next) => {
     }
 };
 exports.getCountries = getCountries;
+// Get section packages (e.g., most popular)
+const getSectionPackages = async (req, res, next) => {
+    try {
+        const { slug } = req.query;
+        if (slug !== 'most-popular') {
+            res.status(400).json({
+                status: 'error',
+                message: 'Invalid section slug'
+            });
+            return;
+        }
+        const { data: packages, error } = await supabase_1.supabase
+            .from('my_packages')
+            .select('*')
+            .eq('show_on_frontend', true)
+            .order('homepage_order', { ascending: true });
+        if (error) {
+            throw error;
+        }
+        res.json(packages || []);
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getSectionPackages = getSectionPackages;
+// Search packages by country and language
+const searchPackages = async (req, res, next) => {
+    try {
+        const { country, lang } = req.query;
+        if (!country) {
+            res.status(400).json({
+                status: 'error',
+                message: 'Country parameter is required'
+            });
+            return;
+        }
+        // Query packages by country name (case-insensitive)
+        const { data: packages, error } = await supabase_1.supabase
+            .from('my_packages')
+            .select('*')
+            .ilike('country_name', `%${country}%`)
+            .order('sale_price', { ascending: true });
+        if (error) {
+            console.error('Database error:', error);
+            throw error;
+        }
+        res.json(packages || []);
+    }
+    catch (error) {
+        console.error('Search packages error:', error);
+        next(error);
+    }
+};
+exports.searchPackages = searchPackages;
+// Secure admin endpoint: Get all my_packages
+const getMyPackages = async (req, res, next) => {
+    try {
+        const { data: packages, error } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error)
+            throw error;
+        res.status(200).json({ status: 'success', data: packages });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getMyPackages = getMyPackages;
+// Secure admin endpoint: Get all Roamify packages
+const getAllRoamifyPackages = async (req, res, next) => {
+    try {
+        const { data: packages, error } = await supabaseAdmin
+            .from('packages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error)
+            throw error;
+        res.status(200).json({ status: 'success', data: packages });
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.getAllRoamifyPackages = getAllRoamifyPackages;
 //# sourceMappingURL=packageController.js.map

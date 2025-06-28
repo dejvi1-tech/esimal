@@ -14,57 +14,59 @@ const esimUtils_1 = require("../utils/esimUtils");
 /**
  * Handle Stripe webhook events
  */
-const handleStripeWebhook = async (req, res, next) => {
-    const sig = req.headers['stripe-signature'];
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-        logger_1.logger.error('STRIPE_WEBHOOK_SECRET not configured');
-        return res.status(500).json({ error: 'Webhook secret not configured' });
-    }
-    let event;
-    try {
-        event = stripeService_1.default.constructWebhookEvent(req.body, sig, webhookSecret);
-    }
-    catch (err) {
-        logger_1.logger.error('Webhook signature verification failed:', err.message);
-        return res.status(400).json({ error: 'Invalid signature' });
-    }
-    try {
-        // Handle the event
-        switch (event.type) {
-            case 'payment_intent.succeeded':
-                await handlePaymentIntentSucceeded(event.data.object);
-                break;
-            case 'payment_intent.payment_failed':
-                await handlePaymentIntentFailed(event.data.object);
-                break;
-            case 'payment_intent.canceled':
-                await handlePaymentIntentCanceled(event.data.object);
-                break;
-            case 'checkout.session.completed':
-                await handleCheckoutSessionCompleted(event.data.object);
-                break;
-            case 'charge.refunded':
-                await handleChargeRefunded(event.data.object);
-                break;
-            case 'customer.subscription.created':
-                await handleSubscriptionCreated(event.data.object);
-                break;
-            case 'customer.subscription.updated':
-                await handleSubscriptionUpdated(event.data.object);
-                break;
-            case 'customer.subscription.deleted':
-                await handleSubscriptionDeleted(event.data.object);
-                break;
-            default:
-                logger_1.logger.info(`Unhandled event type: ${event.type}`);
+const handleStripeWebhook = (req, res, next) => {
+    (async () => {
+        const sig = req.headers['stripe-signature'];
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            logger_1.logger.error('STRIPE_WEBHOOK_SECRET not configured');
+            return res.status(500).json({ error: 'Webhook secret not configured' });
         }
-        res.json({ received: true });
-    }
-    catch (error) {
-        logger_1.logger.error('Error handling webhook:', error);
-        res.status(500).json({ error: 'Webhook handler failed' });
-    }
+        let event;
+        try {
+            event = stripeService_1.default.constructWebhookEvent(req.body, sig, webhookSecret);
+        }
+        catch (err) {
+            logger_1.logger.error('Webhook signature verification failed:', err.message);
+            return res.status(400).json({ error: 'Invalid signature' });
+        }
+        try {
+            // Handle the event
+            switch (event.type) {
+                case 'payment_intent.succeeded':
+                    await handlePaymentIntentSucceeded(event.data.object);
+                    break;
+                case 'payment_intent.payment_failed':
+                    await handlePaymentIntentFailed(event.data.object);
+                    break;
+                case 'payment_intent.canceled':
+                    await handlePaymentIntentCanceled(event.data.object);
+                    break;
+                case 'checkout.session.completed':
+                    await handleCheckoutSessionCompleted(event.data.object);
+                    break;
+                case 'charge.refunded':
+                    await handleChargeRefunded(event.data.object);
+                    break;
+                case 'customer.subscription.created':
+                    await handleSubscriptionCreated(event.data.object);
+                    break;
+                case 'customer.subscription.updated':
+                    await handleSubscriptionUpdated(event.data.object);
+                    break;
+                case 'customer.subscription.deleted':
+                    await handleSubscriptionDeleted(event.data.object);
+                    break;
+                default:
+                    logger_1.logger.info(`Unhandled event type: ${event.type}`);
+            }
+            res.json({ received: true });
+        }
+        catch (error) {
+            logger_1.logger.error('Error handling webhook:', error);
+            res.status(500).json({ error: 'Webhook handler failed' });
+        }
+    })();
 };
 exports.handleStripeWebhook = handleStripeWebhook;
 /**
