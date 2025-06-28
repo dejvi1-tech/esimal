@@ -1269,6 +1269,10 @@ const AdminPanel: React.FC = () => {
                       )}
                     </div>
                   </div>
+                  {/* Debug information */}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
+                  </div>
                 </div>
                 
                 <table className="min-w-full divide-y divide-gray-200">
@@ -1389,45 +1393,57 @@ const AdminPanel: React.FC = () => {
                 )}
                 
                 {/* Pagination Controls for Roamify Packages */}
-                {totalCount && totalCount > roamifyPackages.length && (
-                  <div className="mt-6 flex justify-center items-center space-x-2">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage <= 1}
-                      className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Previous
-                    </button>
-                    
-                    <div className="flex space-x-1">
-                      {getPageNumbers().map((pageNum, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`px-3 py-2 rounded ${
-                            pageNum === currentPage
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                          }`}
-                        >
-                          {pageNum === '...' ? '...' : pageNum}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage >= totalPages}
-                      className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Next
-                    </button>
-                    
-                    <div className="ml-4 text-sm text-gray-600">
-                      Page {currentPage} of {totalPages} ({totalCount.toLocaleString()} total packages)
-                    </div>
+                <div className="mt-6 flex justify-center items-center space-x-2">
+                  <div className="text-xs text-gray-500 mb-2">
+                    Pagination Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
                   </div>
-                )}
+                  
+                  {totalCount && totalCount > roamifyPackages.length ? (
+                    <>
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage <= 1}
+                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Previous
+                      </button>
+                      
+                      <div className="flex space-x-1">
+                        {getPageNumbers().map((pageNum, index) => (
+                          <button
+                            key={index}
+                            onClick={() => handlePageChange(pageNum)}
+                            className={`px-3 py-2 rounded ${
+                              pageNum === currentPage
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                            }`}
+                          >
+                            {pageNum === '...' ? '...' : pageNum}
+                          </button>
+                        ))}
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage >= totalPages}
+                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                      </button>
+                      
+                      <div className="ml-4 text-sm text-gray-600">
+                        Page {currentPage} of {totalPages} ({totalCount.toLocaleString()} total packages)
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      {!totalCount ? 'No totalCount available' : 
+                       totalCount <= roamifyPackages.length ? 'All packages loaded (no pagination needed)' : 
+                       'Pagination condition not met'}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
