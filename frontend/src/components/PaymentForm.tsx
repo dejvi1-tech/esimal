@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { CardElement, useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -144,32 +144,34 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="bg-white rounded-xl shadow p-6">
         <h3 className="text-lg font-bold mb-6 text-gray-900">{t('payment_details')}</h3>
-        
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('card_number')}
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('card_number')}</label>
             <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
-              <CardElement
-                options={{ 
-                  style: stripeInputStyle, 
-                  placeholder: '1234 1234 1234 1234' 
-                }}
+              <CardNumberElement
+                options={{ style: stripeInputStyle }}
                 className="flex-1 bg-transparent outline-none text-lg"
               />
-              <span className="ml-2 flex gap-1">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" 
-                  alt="Visa" 
-                  className="h-5 w-8 object-contain" 
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('expiry')}</label>
+              <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
+                <CardExpiryElement
+                  options={{ style: stripeInputStyle }}
+                  className="flex-1 bg-transparent outline-none text-lg"
                 />
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png" 
-                  alt="Mastercard" 
-                  className="h-5 w-8 object-contain" 
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{t('cvc')}</label>
+              <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
+                <CardCvcElement
+                  options={{ style: stripeInputStyle }}
+                  className="flex-1 bg-transparent outline-none text-lg"
                 />
-              </span>
+              </div>
             </div>
           </div>
         </div>
