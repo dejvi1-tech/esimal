@@ -8,14 +8,16 @@ import {
   ConflictError,
   ErrorMessages,
 } from '../utils/errors';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 
-console.log('updatePackage controller loaded');
-
-// Create admin client for bypassing RLS
+// Create admin client for operations that need service role
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+console.log('updatePackage controller loaded');
 
 // Admin-only function to create package
 export const createPackage = async (
@@ -346,15 +348,12 @@ export const getAllRoamifyPackages = async (
   next: NextFunction
 ) => {
   try {
-    // Get all packages without any limit to ensure we get all 11,000+ packages
-    const { data: packages, error } = await supabaseAdmin
-      .from('packages')
-      .select('*')
-      .order('created_at', { ascending: false });
+    console.log('Fetching ALL packages from Roamify API...');
     
-    if (error) throw error;
+    // Fetch directly from Roamify API with proper pagination
+    const packages = await fetchAllRoamifyPackagesFromAPI();
     
-    console.log(`Retrieved ${packages?.length || 0} packages from database`);
+    console.log(`Retrieved ${packages?.length || 0} packages from Roamify API`);
     
     res.status(200).json({ 
       status: 'success', 
@@ -538,4 +537,209 @@ function calculateCompleteness(pkg: any): number {
   if (pkg.features) score += 1;
   
   return score;
-} 
+}
+
+// Function to fetch ALL packages from Roamify API with pagination
+async function fetchAllRoamifyPackagesFromAPI(): Promise<any[]> {
+  const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
+  
+  if (!ROAMIFY_API_KEY) {
+    throw new Error('ROAMIFY_API_KEY not configured');
+  }
+
+  console.log('Fetching ALL packages from Roamify API with pagination...');
+  
+  let allPackages: any[] = [];
+  let page = 1;
+  let hasMore = true;
+  let consecutiveEmptyPages = 0;
+  
+  while (hasMore && page <= 100) { // Allow up to 100 pages to get all packages
+    try {
+      console.log(`Fetching page ${page} from Roamify API...`);
+      
+      const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
+        headers: {
+          Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        params: {
+          limit: 10000, // Maximum per page
+          offset: (page - 1) * 10000, // Calculate offset
+          page: page
+        },
+        timeout: 60000 // 60 second timeout
+      });
+
+      const data = response.data as { status?: string; data?: { packages?: any[] } };
+      
+      if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
+        let pagePackages = 0;
+        
+        // Extract individual packages from country objects
+        for (const country of data.data.packages) {
+          if (country.packages && Array.isArray(country.packages)) {
+            console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
+            const packagesWithCountry = country.packages.map((pkg: any) => ({
+              ...pkg,
+              country_name: country.countryName || country.country || 'Unknown',
+              country_code: country.countryCode || null
+            }));
+            allPackages = allPackages.concat(packagesWithCountry);
+            pagePackages += country.packages.length;
+          }
+        }
+        
+        if (pagePackages === 0) {
+          consecutiveEmptyPages++;
+          if (consecutiveEmptyPages >= 3) {
+            console.log('Stopping pagination after 3 consecutive empty pages');
+            hasMore = false;
+          }
+        } else {
+          consecutiveEmptyPages = 0; // Reset counter
+          console.log(`Page ${page}: Found ${pagePackages} packages, total so far: ${allPackages.length}`);
+        }
+        
+        page++;
+      } else {
+        console.log('No valid data in response, stopping pagination');
+        hasMore = false;
+      }
+    } catch (error) {
+      console.error(`Error fetching page ${page}:`, error);
+      hasMore = false;
+    }
+  }
+  
+  console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
+  return allPackages;
+}
+
+// Secure admin endpoint: Sync packages from Roamify API to database
+export const syncRoamifyPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log('Starting Roamify packages sync...');
+    
+    // Fetch all packages from Roamify API
+    const packages = await fetchAllRoamifyPackagesFromAPI();
+    
+    if (packages.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'No packages found from Roamify API',
+        syncedCount: 0
+      });
+    }
+    
+    console.log(`Fetched ${packages.length} packages from Roamify API, syncing to database...`);
+    
+    // Clear existing packages
+    const { error: deleteError } = await supabaseAdmin
+      .from('packages')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except dummy record
+    
+    if (deleteError) {
+      console.error('Error clearing packages table:', deleteError);
+      throw deleteError;
+    }
+    
+    console.log('Cleared existing packages from database');
+    
+    // Process packages in batches for better performance
+    const batchSize = 50;
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < packages.length; i += batchSize) {
+      const batch = packages.slice(i, i + batchSize);
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(packages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, packages.length)} of ${packages.length})`);
+      
+      const batchData = batch.map(pkg => {
+        try {
+          // Map data_amount to string as required by schema
+          let dataAmountStr = null;
+          if (pkg.isUnlimited) {
+            dataAmountStr = 'Unlimited';
+          } else if (pkg.dataAmount) {
+            // Convert MB to GB and format as required
+            const gbAmount = Math.round(pkg.dataAmount / 1024);
+            dataAmountStr = `${gbAmount}GB`;
+          }
+
+          // Validate country_code format
+          let countryCode = null;
+          if (pkg.country_code) {
+            countryCode = pkg.country_code.toUpperCase().slice(0, 2);
+          }
+
+          // Only insert if we have all required fields
+          if (!pkg.package || !pkg.price || !dataAmountStr || !pkg.day || !countryCode || !pkg.country_name) {
+            console.log('Skipping package due to missing required fields:', pkg.package);
+            return null;
+          }
+
+          return {
+            id: uuidv4(),
+            name: pkg.package,
+            description: pkg.package || '',
+            price: pkg.price,
+            data_amount: dataAmountStr,
+            validity_days: pkg.day,
+            country_code: countryCode,
+            country_name: pkg.country_name,
+            operator: 'Roamify',
+            type: 'initial',
+            is_active: true,
+            features: pkg.features || null,
+            reseller_id: pkg.packageId || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        } catch (error) {
+          console.error(`Error processing package:`, error);
+          console.error('Package data:', pkg);
+          return null;
+        }
+      }).filter(Boolean);
+
+      if (batchData.length > 0) {
+        try {
+          const { error } = await supabaseAdmin.from('packages').upsert(batchData, { onConflict: 'id' });
+          
+          if (error) {
+            console.error(`Error syncing batch:`, error);
+            errorCount += batchData.length;
+          } else {
+            successCount += batchData.length;
+            console.log(`✓ Successfully synced ${batchData.length} packages in this batch`);
+          }
+        } catch (error) {
+          console.error(`Error syncing batch:`, error);
+          errorCount += batchData.length;
+        }
+      }
+    }
+
+    console.log(`\nPackage sync completed!`);
+    console.log(`✓ Successfully synced: ${successCount} packages`);
+    console.log(`✗ Failed to sync: ${errorCount} packages`);
+    console.log(`Total processed: ${successCount + errorCount} packages`);
+
+    res.status(200).json({
+      status: 'success',
+      message: `Successfully synced ${successCount} packages from Roamify API`,
+      syncedCount: successCount,
+      errorCount: errorCount,
+      totalProcessed: successCount + errorCount
+    });
+  } catch (error) {
+    console.error('Error syncing Roamify packages:', error);
+    next(error);
+  }
+}; 

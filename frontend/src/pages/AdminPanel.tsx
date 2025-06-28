@@ -110,6 +110,9 @@ const AdminPanel: React.FC = () => {
   // Add state for deduplication process
   const [deduplicating, setDeduplicating] = useState(false);
 
+  // Add state for sync process
+  const [syncing, setSyncing] = useState(false);
+
   // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('admin_token');
@@ -714,6 +717,32 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleSyncRoamifyPackages = async () => {
+    setSyncing(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/sync-roamify-packages`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(`Successfully synced ${result.syncedCount} packages from Roamify API`);
+        // Refresh the packages list
+        await fetchRoamifyPackages();
+      } else {
+        if (handleAuthError(response)) return;
+        const errorData = await response.json();
+        toast.error(`Failed to sync packages: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Error syncing packages:', err);
+      toast.error('Failed to sync packages');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1164,6 +1193,29 @@ const AdminPanel: React.FC = () => {
                   </p>
                 </div>
               )}
+
+              {/* Sync Roamify Packages Button */}
+              <div className="mt-4">
+                <button
+                  onClick={handleSyncRoamifyPackages}
+                  disabled={syncing}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {syncing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Syncing from Roamify API...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Sync from Roamify API
+                    </>
+                  )}
+                </button>
+                <p className="mt-1 text-sm text-gray-600">
+                  This will fetch fresh data directly from Roamify API and sync to database
+                </p>
+              </div>
             </div>
             
             {roamifyLoading ? (
