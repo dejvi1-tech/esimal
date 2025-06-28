@@ -81,19 +81,38 @@ const CheckoutPage: React.FC = () => {
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [storedPackageId, setStoredPackageId] = useState<string | null>(null);
 
   // Accept both ?packageId=... and ?package=...
   const packageId = searchParams.get('packageId') || searchParams.get('package');
 
+  // Store packageId in state to prevent loss during payment process
+  useEffect(() => {
+    if (packageId && !storedPackageId) {
+      console.log('[DEBUG] Storing packageId:', packageId);
+      setStoredPackageId(packageId);
+      // Also store in localStorage as backup
+      localStorage.setItem('checkout_package_id', packageId);
+    }
+  }, [packageId, storedPackageId]);
+
+  // Use stored packageId if URL packageId is lost
+  const effectivePackageId = packageId || storedPackageId || localStorage.getItem('checkout_package_id');
+  
+  console.log('[DEBUG] CheckoutPage render - packageId:', packageId, 'storedPackageId:', storedPackageId, 'effectivePackageId:', effectivePackageId);
+
   useEffect(() => {
     const fetchPackageData = async () => {
       try {
+        console.log('[DEBUG] fetchPackageData called with packageId:', effectivePackageId);
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/frontend-packages?lang=${language}`);
         const packages = await response.json();
-        const packageItem = packages.find((pkg: PackageData) => pkg.id === packageId);
+        const packageItem = packages.find((pkg: PackageData) => pkg.id === effectivePackageId);
         if (packageItem) {
+          console.log('[DEBUG] Package found:', packageItem);
           setPackageData(packageItem);
         } else {
+          console.error('[DEBUG] Package not found for ID:', effectivePackageId);
           toast({
             title: t('package_not_found'),
             description: t('selected_package_not_found'),
@@ -112,11 +131,13 @@ const CheckoutPage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    if (packageId) fetchPackageData();
+    if (effectivePackageId) fetchPackageData();
     else setIsLoading(false);
-  }, [packageId, language, navigate, t]);
+  }, [effectivePackageId, language, navigate, t]);
 
   const handlePaymentSuccess = (paymentIntentId: string) => {
+    console.log('[DEBUG] Payment successful, cleaning up localStorage');
+    localStorage.removeItem('checkout_package_id');
     navigate('/checkout/success?payment_intent_id=' + paymentIntentId);
   };
 
@@ -142,6 +163,21 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('[DEBUG] Main form submit prevented - payment should be handled by PaymentForm');
+  };
+
+  // Cleanup localStorage on unmount
+  useEffect(() => {
+    return () => {
+      // Only cleanup if we're not navigating to success page
+      if (!window.location.pathname.includes('/checkout/success')) {
+        localStorage.removeItem('checkout_package_id');
+      }
+    };
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -150,7 +186,8 @@ const CheckoutPage: React.FC = () => {
     );
   }
 
-  if (!packageId) {
+  if (!effectivePackageId) {
+    console.error('[DEBUG] No effectivePackageId found - showing error page');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8 text-center">
@@ -211,7 +248,7 @@ const CheckoutPage: React.FC = () => {
           {/* Left: Form */}
           <div className="flex-1 bg-white rounded-xl shadow p-4 md:p-8 mb-4 md:mb-0">
             <h2 className="text-2xl font-bold mb-6 md:mb-8 text-gray-900">{t('checkout')}</h2>
-            <form className="space-y-4 md:space-y-6">
+            <form className="space-y-4 md:space-y-6" onSubmit={handleFormSubmit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('first_name')} *</label>

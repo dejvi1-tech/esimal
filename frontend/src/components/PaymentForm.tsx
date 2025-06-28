@@ -41,6 +41,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const createPaymentIntent = async () => {
     console.log('[DEBUG] Creating payment intent...');
+    console.log('[DEBUG] Payment intent data:', { amount, currency, email, packageId });
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-intent`, {
         method: 'POST',
@@ -56,6 +57,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       });
 
       console.log('[DEBUG] Payment intent response status:', response.status);
+      console.log('[DEBUG] Payment intent response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -67,8 +69,10 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       console.log('[DEBUG] Payment intent result:', result);
       
       if (result.status === 'success') {
+        console.log('[DEBUG] Payment intent created successfully, clientSecret received');
         return result.data.clientSecret;
       } else {
+        console.error('[DEBUG] Payment intent creation failed:', result);
         throw new Error(result.message || 'Failed to create payment intent');
       }
     } catch (error) {
