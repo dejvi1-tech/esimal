@@ -288,10 +288,7 @@ export const getSectionPackages = async (
       throw error;
     }
 
-    res.status(200).json({
-      status: 'success',
-      data: packages,
-    });
+    res.json(packages || []);
   } catch (error) {
     next(error);
   }
