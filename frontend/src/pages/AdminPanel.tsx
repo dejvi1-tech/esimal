@@ -811,7 +811,7 @@ const AdminPanel: React.FC = () => {
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Roamify Packages ({roamifyPackages.length})
+              Roamify Packages ({totalCount ? totalCount.toLocaleString() : roamifyPackages.length.toLocaleString()})
             </button>
           </nav>
         </div>
@@ -1253,7 +1253,7 @@ const AdminPanel: React.FC = () => {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-700">
-                      <span className="font-medium">Total Packages:</span> {roamifyPackages.length.toLocaleString()}
+                      <span className="font-medium">Total Packages:</span> {totalCount ? totalCount.toLocaleString() : roamifyPackages.length.toLocaleString()}
                       {selectedRoamifyCountry && (
                         <span className="ml-4">
                           <span className="font-medium">Filtered:</span> {filteredRoamifyPackages.length.toLocaleString()} for {selectedRoamifyCountry}
@@ -1262,6 +1262,11 @@ const AdminPanel: React.FC = () => {
                     </div>
                     <div className="text-sm text-gray-600">
                       Showing {Math.min(roamifyVisibleCount, filteredRoamifyPackages.length).toLocaleString()} packages
+                      {totalCount && totalCount > roamifyPackages.length && (
+                        <span className="ml-2 text-blue-600">
+                          (Page {currentPage} of {totalPages})
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1380,6 +1385,47 @@ const AdminPanel: React.FC = () => {
                 {filteredRoamifyPackages.length > 0 && roamifyVisibleCount >= filteredRoamifyPackages.length && (
                   <div className="text-center my-4 text-sm text-gray-600">
                     Showing all {filteredRoamifyPackages.length} packages
+                  </div>
+                )}
+                
+                {/* Pagination Controls for Roamify Packages */}
+                {totalCount && totalCount > roamifyPackages.length && (
+                  <div className="mt-6 flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage <= 1}
+                      className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    
+                    <div className="flex space-x-1">
+                      {getPageNumbers().map((pageNum, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`px-3 py-2 rounded ${
+                            pageNum === currentPage
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          }`}
+                        >
+                          {pageNum === '...' ? '...' : pageNum}
+                        </button>
+                      ))}
+                    </div>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage >= totalPages}
+                      className="px-3 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                    
+                    <div className="ml-4 text-sm text-gray-600">
+                      Page {currentPage} of {totalPages} ({totalCount.toLocaleString()} total packages)
+                    </div>
                   </div>
                 )}
               </div>
