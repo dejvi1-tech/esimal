@@ -9,6 +9,8 @@ import ReviewsPage from './pages/ReviewsPage';
 import SupportPage from './pages/SupportPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AdminPanel from './pages/AdminPanel';
+import AdminLoginPage from './pages/AdminLoginPage';
+import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import NotFound from './pages/NotFound';
 import CountryPage from './pages/CountryPage';
 import SearchPage from './pages/SearchPage';
@@ -34,7 +36,12 @@ function App() {
                 <Route path="/how-it-works" element={<HowItWorksPage />} />
                 <Route path="/reviews" element={<ReviewsPage />} />
                 <Route path="/support" element={<SupportPage />} />
-                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={
+                  <ProtectedAdminRoute>
+                    <AdminPanel />
+                  </ProtectedAdminRoute>
+                } />
                 <Route path="/country/:code" element={<CountryPage />} />
                 <Route path="/search" element={<SearchPage />} />
                 <Route path="/bundle/:bundleId" element={<BundlePage />} />

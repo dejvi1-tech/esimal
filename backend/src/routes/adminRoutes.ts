@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
 import { getAllPackages, getMyPackages, getAllRoamifyPackages } from '../controllers/packageController';
-import { requireAdminAuth, adminLoginHandler } from '../middleware/auth';
+import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 
 router.get('/test', (req, res) => {
   res.json({ ok: true });
@@ -9,6 +9,9 @@ router.get('/test', (req, res) => {
 
 // Admin login route (unprotected)
 router.post('/login', adminLoginHandler);
+
+// Admin logout route (unprotected)
+router.post('/logout', adminLogoutHandler);
 
 // Protected admin routes - each route needs the middleware explicitly
 router.get('/my-packages', requireAdminAuth, getMyPackages);

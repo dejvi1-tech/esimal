@@ -23,7 +23,13 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
     (req as any).admin = true;
     next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid or expired token' });
+    if (err instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ error: 'Token expired' });
+    } else if (err instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ error: 'Invalid token' });
+    } else {
+      res.status(401).json({ error: 'Invalid or expired token' });
+    }
     return;
   }
 }
@@ -33,9 +39,27 @@ export function adminLoginHandler(req: Request, res: Response, next: NextFunctio
   const { username, password } = req.body;
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
-    res.json({ token });
+    res.json({ 
+      success: true,
+      token,
+      message: 'Login successful'
+    });
     return;
   }
-  res.status(401).json({ error: 'Invalid credentials' });
+  res.status(401).json({ 
+    success: false,
+    error: 'Invalid credentials' 
+  });
   return;
+}
+
+// Route handler for logout (optional - for server-side session management)
+export function adminLogoutHandler(req: Request, res: Response, next: NextFunction): void {
+  // Since we're using JWT tokens stored in localStorage, 
+  // the actual logout happens on the client side
+  // This endpoint can be used for any server-side cleanup if needed
+  res.json({ 
+    success: true,
+    message: 'Logout successful' 
+  });
 } 

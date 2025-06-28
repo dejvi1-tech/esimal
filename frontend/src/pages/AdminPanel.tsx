@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { europeanCountries } from '../data/countries';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface Package {
   id: string;
@@ -55,6 +56,7 @@ interface RoamifyPackage {
 }
 
 const AdminPanel: React.FC = () => {
+  const navigate = useNavigate();
   const [myPackages, setMyPackages] = useState<Package[]>([]);
   const [mainPackages, setMainPackages] = useState<MainPackage[]>([]);
   const [roamifyPackages, setRoamifyPackages] = useState<RoamifyPackage[]>([]);
@@ -104,6 +106,33 @@ const AdminPanel: React.FC = () => {
     hasDuplicates: false
   });
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('admin_token');
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    };
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('admin_token');
+    toast.success('Logged out successfully');
+    navigate('/admin/login');
+  };
+
+  // Handle authentication errors
+  const handleAuthError = (response: Response) => {
+    if (response.status === 401) {
+      localStorage.removeItem('admin_token');
+      toast.error('Session expired. Please login again.');
+      navigate('/admin/login');
+      return true;
+    }
+    return false;
+  };
+
   useEffect(() => {
     fetchAllCountries();
   }, []);
@@ -141,12 +170,15 @@ const AdminPanel: React.FC = () => {
   const fetchMyPackages = async () => {
     try {
       // Use the admin my-packages endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/my-packages`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/my-packages`, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.ok) {
         const data = await response.json();
         setMyPackages(data);
       } else {
+        if (handleAuthError(response)) return;
         setError('Failed to fetch my packages');
       }
     } catch (err) {
@@ -157,7 +189,9 @@ const AdminPanel: React.FC = () => {
   const fetchMainPackages = async () => {
     try {
       // Use the admin packages endpoint
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/packages`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/packages`, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -165,6 +199,7 @@ const AdminPanel: React.FC = () => {
         setTotalCount(data.data?.length || 0);
         setTotalPages(1);
       } else {
+        if (handleAuthError(response)) return;
         setError('Failed to fetch main packages');
       }
     } catch (err) {
@@ -177,7 +212,9 @@ const AdminPanel: React.FC = () => {
       console.log('Fetching Roamify packages...');
       setRoamifyLoading(true);
       // Use the new admin endpoint for all Roamify packages
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages`, {
+        headers: getAuthHeaders(),
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -220,6 +257,7 @@ const AdminPanel: React.FC = () => {
         
         setRoamifyPackages(data);
       } else {
+        if (handleAuthError(response)) return;
         console.error('Failed to fetch Roamify packages:', response.status, response.statusText);
         setError('Failed to fetch Roamify packages');
       }
@@ -298,9 +336,7 @@ const AdminPanel: React.FC = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/update-package/${pkg.id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
       });
 
@@ -309,6 +345,7 @@ const AdminPanel: React.FC = () => {
         setEditingMyPackage(null);
         setError(''); // Clear any previous errors
       } else {
+        if (handleAuthError(response)) return;
         const errorData = await response.json();
         setError(`Failed to save package: ${errorData.error || 'Unknown error'}`);
       }
@@ -331,13 +368,15 @@ const AdminPanel: React.FC = () => {
     setDeletingPackage(packageId);
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/delete-package/${packageId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
 
       if (response.ok) {
         await fetchMyPackages();
         setError(''); // Clear any previous errors
       } else {
+        if (handleAuthError(response)) return;
         setError('Failed to delete package');
       }
     } catch (err) {
@@ -363,9 +402,7 @@ const AdminPanel: React.FC = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
       });
 
@@ -373,6 +410,7 @@ const AdminPanel: React.FC = () => {
         await fetchMyPackages();
         setError(''); // Clear any previous errors
       } else {
+        if (handleAuthError(response)) return;
         const errorData = await response.json();
         setError(`Failed to save package: ${errorData.error || 'Unknown error'}`);
       }
@@ -440,9 +478,7 @@ const AdminPanel: React.FC = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
       });
 
@@ -453,6 +489,7 @@ const AdminPanel: React.FC = () => {
           ? 'Package saved successfully! Use "Save as Most Popular" to show in Most Popular section.'
           : `Package saved successfully! It will appear on the ${country_name} page.`);
       } else {
+        if (handleAuthError(response)) return;
         const errorData = await response.json();
         const errorMessage = `Failed to save package: ${errorData.error || 'Unknown error'}`;
         toast.error(errorMessage);
@@ -498,9 +535,7 @@ const AdminPanel: React.FC = () => {
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/save-package`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(packageData)
       });
 
@@ -509,6 +544,7 @@ const AdminPanel: React.FC = () => {
         setError(''); // Clear any previous errors
         toast.success('Package saved to Most Popular section successfully!');
       } else {
+        if (handleAuthError(response)) return;
         const errorData = await response.json();
         const errorMessage = `Failed to save package: ${errorData.error || 'Unknown error'}`;
         toast.error(errorMessage);
@@ -579,6 +615,12 @@ const AdminPanel: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
             <p className="text-gray-600">eSIM Package Management</p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            Logout
+          </button>
         </div>
 
         {error && (
