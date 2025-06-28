@@ -10,6 +10,8 @@
   "apply_coupon": "Apply Coupon",
   "discount_coupon": "Discount Coupon",
   "if_any": "If any",
+  "invalid_coupon": "Invalid Coupon",
+  "please_try_another_coupon": "Please try another coupon.",
   "your_order": "Your Order",
   "phone_number": "Phone Number",
   "kosovo_only": "(Kosovo only)",

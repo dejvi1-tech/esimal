@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CardElement, useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js';
+import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -108,16 +108,22 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       } else {
         console.log('[DEBUG] Using existing clientSecret:', usedClientSecret);
       }
-      const cardElement = elements.getElement(CardElement);
-      if (!cardElement) {
-        console.error('[DEBUG] Card element not found');
-        toast({ title: 'Card Error', description: 'Card element not found', variant: 'destructive' });
-        throw new Error('Card element not found');
+      
+      // Get individual card elements
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      const cardExpiryElement = elements.getElement(CardExpiryElement);
+      const cardCvcElement = elements.getElement(CardCvcElement);
+      
+      if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+        console.error('[DEBUG] Card elements not found');
+        toast({ title: 'Card Error', description: 'Card elements not found', variant: 'destructive' });
+        throw new Error('Card elements not found');
       }
+      
       console.log('[DEBUG] Confirming card payment...');
       const { error, paymentIntent } = await stripe.confirmCardPayment(usedClientSecret, {
         payment_method: {
-          card: cardElement,
+          card: cardNumberElement,
           billing_details: { email: email },
         },
       });

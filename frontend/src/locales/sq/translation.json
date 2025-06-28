@@ -10,6 +10,8 @@
   "apply_coupon": "Apliko Kuponin",
   "discount_coupon": "Kupon Zbritje",
   "if_any": "(Nëse keni)",
+  "invalid_coupon": "Kupon i Pavlefshëm",
+  "please_try_another_coupon": "Ju lutem provoni një kupon tjetër.",
   "your_order": "Porosia Juaj",
   "phone_number": "Numri i Telefonit",
   "kosovo_only": "(Të Kosovës që e keni)",
