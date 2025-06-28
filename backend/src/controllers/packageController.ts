@@ -360,7 +360,7 @@ export const getMyPackages = async (
   }
 };
 
-// Secure admin endpoint: Get all Roamify packages
+// Secure admin endpoint: Get all Roamify packages with pagination
 export const getAllRoamifyPackages = async (
   req: Request,
   res: Response,
@@ -369,19 +369,36 @@ export const getAllRoamifyPackages = async (
   try {
     console.log('Fetching packages from database...');
     
-    // Get packages from the packages table
+    // Get pagination parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = (page - 1) * limit;
+    
+    // Get total count first
+    const { count: totalCount, error: countError } = await supabaseAdmin
+      .from('packages')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_active', true);
+
+    if (countError) {
+      console.error('Error getting total count:', countError);
+      throw countError;
+    }
+
+    // Get packages from the packages table with pagination
     const { data: packages, error } = await supabaseAdmin
       .from('packages')
       .select('*')
       .eq('is_active', true)
-      .order('country_name', { ascending: true });
+      .order('country_name', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Error fetching packages from database:', error);
       throw error;
     }
 
-    console.log(`Found ${packages?.length || 0} packages in database`);
+    console.log(`Found ${packages?.length || 0} packages in database (page ${page}, limit ${limit})`);
 
     // Map the packages to the expected format for frontend compatibility
     const mappedPackages = (packages || []).map((pkg: any) => ({
@@ -411,6 +428,11 @@ export const getAllRoamifyPackages = async (
       updated_at: pkg.updated_at
     }));
 
+    // Calculate pagination info
+    const totalPages = Math.ceil((totalCount || 0) / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
     // Log a sample package for debugging
     if (mappedPackages.length > 0) {
       console.log('Sample mapped package:', mappedPackages[0]);
@@ -420,6 +442,14 @@ export const getAllRoamifyPackages = async (
       status: 'success',
       data: mappedPackages,
       count: mappedPackages.length,
+      pagination: {
+        page,
+        limit,
+        totalCount,
+        totalPages,
+        hasNextPage,
+        hasPrevPage
+      }
     });
   } catch (error) {
     console.error('Error fetching Roamify packages:', error);
@@ -609,190 +639,219 @@ export const syncRoamifyPackages = async (
   try {
     console.log('Starting Roamify packages sync...');
     
-    // Fetch all packages from Roamify API using the correct endpoint
+    // Fetch all packages from Roamify API with pagination
     console.log('Fetching packages from Roamify API...');
     
-    try {
-      const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages`, {
-        headers: {
-          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log(`Response status: ${response.status}`);
+    let allPackages: any[] = [];
+    let page = 1;
+    const limit = 100; // Roamify API limit per page
+    
+    while (true) {
+      console.log(`Fetching page ${page} from Roamify API...`);
       
-      if (!response.ok) {
-        throw new Error(`Roamify API responded with status: ${response.status}`);
-      }
-
-      const json = await response.json() as { status?: string; data?: { packages?: any[] } };
-
-      // Debug: Log the raw response structure
-      console.log('=== RAW ROAMIFY API RESPONSE ===');
-      console.log('Response type:', typeof json);
-      console.log('Top-level keys:', Object.keys(json || {}));
-      console.log('=== END RAW RESPONSE ===');
-
-      // Check if we have the expected response structure: data.packages (array of countries)
-      if (!json.data || !json.data.packages || json.data.packages.length === 0) {
-        console.log('No packages found in response');
-        return res.status(200).json({
-          status: 'success',
-          message: 'No packages found from Roamify API',
-          syncedCount: 0
+      try {
+        const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages?page=${page}&limit=${limit}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
         });
-      }
 
-      // Flatten all country packages and attach country info
-      const countryObjs = json.data.packages;
-      let allPackages: any[] = [];
-      for (const country of countryObjs) {
-        if (country.packages && Array.isArray(country.packages)) {
-          for (const pkg of country.packages) {
-            allPackages.push({
-              ...pkg,
-              countryName: country.countryName,
-              countryCode: country.countryCode,
-              region: country.region,
-              geography: country.geography
-            });
+        console.log(`Response status: ${response.status}`);
+        
+        if (!response.ok) {
+          throw new Error(`Roamify API responded with status: ${response.status}`);
+        }
+
+        const json = await response.json() as { status?: string; data?: { packages?: any[] } };
+
+        // Debug: Log the raw response structure for first page
+        if (page === 1) {
+          console.log('=== RAW ROAMIFY API RESPONSE (Page 1) ===');
+          console.log('Response type:', typeof json);
+          console.log('Top-level keys:', Object.keys(json || {}));
+          console.log('=== END RAW RESPONSE ===');
+        }
+
+        // Check if we have the expected response structure: data.packages (array of countries)
+        if (!json.data || !json.data.packages || json.data.packages.length === 0) {
+          console.log(`No more data on page ${page}, stopping pagination`);
+          break;
+        }
+
+        // Flatten all country packages and attach country info
+        const countryObjs = json.data.packages;
+        let pagePackages = 0;
+        for (const country of countryObjs) {
+          if (country.packages && Array.isArray(country.packages)) {
+            for (const pkg of country.packages) {
+              allPackages.push({
+                ...pkg,
+                countryName: country.countryName,
+                countryCode: country.countryCode,
+                region: country.region,
+                geography: country.geography
+              });
+              pagePackages++;
+            }
           }
         }
-      }
-      console.log(`Total flattened packages: ${allPackages.length}`);
-
-      if (allPackages.length === 0) {
-        return res.status(200).json({
-          status: 'success',
-          message: 'No packages found from Roamify API',
-          syncedCount: 0
-        });
-      }
-
-      // Clear existing packages from the packages table
-      console.log('Clearing existing packages from database...');
-      const { error: deleteError } = await supabaseAdmin
-        .from('packages')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except dummy record
-      
-      if (deleteError) {
-        console.error('Error clearing packages table:', deleteError);
-        throw deleteError;
-      }
-      
-      console.log('Cleared existing packages from database');
-      
-      // Process packages in batches for better performance
-      const batchSize = 50;
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (let i = 0; i < allPackages.length; i += batchSize) {
-        const batch = allPackages.slice(i, i + batchSize);
-        console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allPackages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, allPackages.length)} of ${allPackages.length})`);
         
-        const batchData = batch.map(pkg => {
-          try {
-            // Convert dataAmount from MB to GB if needed
-            let dataStr = pkg.dataAmount;
-            if (typeof pkg.dataAmount === 'number') {
-              if (pkg.isUnlimited) {
-                dataStr = 'Unlimited';
-              } else if (pkg.dataAmount > 1024) {
-                dataStr = `${Math.round(pkg.dataAmount / 1024)}GB`;
-              } else {
-                dataStr = `${pkg.dataAmount}MB`;
-              }
-            }
+        console.log(`Page ${page}: Found ${pagePackages} packages (Total so far: ${allPackages.length})`);
 
-            // Validate country_code format
-            let countryCode = 'XX'; // Default fallback
-            if (pkg.countryCode) {
-              countryCode = pkg.countryCode.toUpperCase().slice(0, 2);
-            }
+        // Check if we should continue to next page
+        if (pagePackages === 0) {
+          console.log(`No packages found on page ${page}, stopping pagination`);
+          break;
+        }
 
-            // Only insert if we have all required fields
-            const missingFields = [];
-            if (!pkg.package) missingFields.push('package');
-            if (!pkg.price) missingFields.push('price');
-            if (!dataStr) missingFields.push('dataStr');
-            if (!pkg.day) missingFields.push('day');
-            if (!pkg.countryName) missingFields.push('countryName');
-            if (missingFields.length > 0) {
-              console.log(`Skipping package due to missing fields [${missingFields.join(', ')}]:`, pkg.package);
-              return null;
-            }
+        page++;
+        
+        // Safety check to prevent infinite loops
+        if (page > 200) {
+          console.log('Reached maximum page limit (200), stopping pagination');
+          break;
+        }
 
-            return {
-              id: uuidv4(),
-              name: pkg.package,
-              description: pkg.package || '',
-              price: pkg.price,
-              data_amount: dataStr,
-              validity_days: pkg.day,
-              country_code: countryCode,
-              country_name: pkg.countryName,
-              operator: 'Roamify',
-              type: 'initial',
-              is_active: true,
-              features: {
-                packageId: pkg.packageId,
-                plan: pkg.plan,
-                activation: pkg.activation,
-                isUnlimited: pkg.isUnlimited,
-                withHotspot: pkg.withHotspot,
-                withDataRoaming: pkg.withDataRoaming,
-                withUsageCheck: pkg.withUsageCheck,
-                region: pkg.region,
-                geography: pkg.geography
-              },
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-          } catch (error) {
-            console.error(`Error processing package:`, error);
-            console.error('Package data:', pkg);
+        // Add a small delay to be respectful to the API
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+      } catch (error) {
+        console.error(`❌ Failed to fetch page ${page} from Roamify:`, error);
+        throw error;
+      }
+    }
+
+    console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
+
+    if (allPackages.length === 0) {
+      return res.status(200).json({
+        status: 'success',
+        message: 'No packages found from Roamify API',
+        syncedCount: 0
+      });
+    }
+
+    // Clear existing packages from the packages table
+    console.log('Clearing existing packages from database...');
+    const { error: deleteError } = await supabaseAdmin
+      .from('packages')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all except dummy record
+    
+    if (deleteError) {
+      console.error('Error clearing packages table:', deleteError);
+      throw deleteError;
+    }
+    
+    console.log('Cleared existing packages from database');
+    
+    // Process packages in batches for better performance
+    const batchSize = 50;
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < allPackages.length; i += batchSize) {
+      const batch = allPackages.slice(i, i + batchSize);
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allPackages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, allPackages.length)} of ${allPackages.length})`);
+      
+      const batchData = batch.map(pkg => {
+        try {
+          // Convert dataAmount from MB to GB if needed
+          let dataStr = pkg.dataAmount;
+          if (typeof pkg.dataAmount === 'number') {
+            if (pkg.isUnlimited) {
+              dataStr = 'Unlimited';
+            } else if (pkg.dataAmount > 1024) {
+              dataStr = `${Math.round(pkg.dataAmount / 1024)}GB`;
+            } else {
+              dataStr = `${pkg.dataAmount}MB`;
+            }
+          }
+
+          // Validate country_code format
+          let countryCode = 'XX'; // Default fallback
+          if (pkg.countryCode) {
+            countryCode = pkg.countryCode.toUpperCase().slice(0, 2);
+          }
+
+          // Only insert if we have all required fields
+          const missingFields = [];
+          if (!pkg.package) missingFields.push('package');
+          if (!pkg.price) missingFields.push('price');
+          if (!dataStr) missingFields.push('dataStr');
+          if (!pkg.day) missingFields.push('day');
+          if (!pkg.countryName) missingFields.push('countryName');
+          if (missingFields.length > 0) {
+            console.log(`Skipping package due to missing fields [${missingFields.join(', ')}]:`, pkg.package);
             return null;
           }
-        }).filter(Boolean);
 
-        if (batchData.length > 0) {
-          try {
-            const { error } = await supabaseAdmin.from('packages').upsert(batchData, { onConflict: 'id' });
-            
-            if (error) {
-              console.error(`Error syncing batch:`, error);
-              errorCount += batchData.length;
-            } else {
-              successCount += batchData.length;
-              console.log(`✓ Successfully synced ${batchData.length} packages in this batch`);
-            }
-          } catch (error) {
+          return {
+            id: uuidv4(),
+            name: pkg.package,
+            description: pkg.package || '',
+            price: pkg.price,
+            data_amount: dataStr,
+            validity_days: pkg.day,
+            country_code: countryCode,
+            country_name: pkg.countryName,
+            operator: 'Roamify',
+            type: 'initial',
+            is_active: true,
+            features: {
+              packageId: pkg.packageId,
+              plan: pkg.plan,
+              activation: pkg.activation,
+              isUnlimited: pkg.isUnlimited,
+              withHotspot: pkg.withHotspot,
+              withDataRoaming: pkg.withDataRoaming,
+              withUsageCheck: pkg.withUsageCheck,
+              region: pkg.region,
+              geography: pkg.geography
+            },
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+        } catch (error) {
+          console.error(`Error processing package:`, error);
+          console.error('Package data:', pkg);
+          return null;
+        }
+      }).filter(Boolean);
+
+      if (batchData.length > 0) {
+        try {
+          const { error } = await supabaseAdmin.from('packages').upsert(batchData, { onConflict: 'id' });
+          
+          if (error) {
             console.error(`Error syncing batch:`, error);
             errorCount += batchData.length;
+          } else {
+            successCount += batchData.length;
+            console.log(`✓ Successfully synced ${batchData.length} packages in this batch`);
           }
+        } catch (error) {
+          console.error(`Error syncing batch:`, error);
+          errorCount += batchData.length;
         }
       }
-
-      console.log(`\nPackage sync completed!`);
-      console.log(`✓ Successfully synced: ${successCount} packages`);
-      console.log(`✗ Failed to sync: ${errorCount} packages`);
-      console.log(`Total processed: ${successCount + errorCount} packages`);
-
-      res.status(200).json({
-        status: 'success',
-        message: `Successfully synced ${successCount} packages from Roamify API`,
-        syncedCount: successCount,
-        errorCount: errorCount,
-        totalProcessed: successCount + errorCount
-      });
-
-    } catch (error) {
-      console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
-      throw error;
     }
+
+    console.log(`\nPackage sync completed!`);
+    console.log(`✓ Successfully synced: ${successCount} packages`);
+    console.log(`✗ Failed to sync: ${errorCount} packages`);
+    console.log(`Total processed: ${successCount + errorCount} packages`);
+
+    res.status(200).json({
+      status: 'success',
+      message: `Successfully synced ${successCount} packages from Roamify API`,
+      syncedCount: successCount,
+      errorCount: errorCount,
+      totalProcessed: successCount + errorCount,
+      pagesFetched: page - 1
+    });
+
   } catch (error) {
     console.error('Error syncing Roamify packages:', error);
     next(error);

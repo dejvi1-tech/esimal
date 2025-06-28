@@ -190,14 +190,16 @@ const AdminPanel: React.FC = () => {
   };
 
   const fetchAllData = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       await Promise.all([
         fetchMyPackages(),
         fetchMainPackages(),
-        fetchRoamifyPackages()
+        fetchRoamifyPackages(1, pageSize), // Use pagination
+        fetchAllCountries()
       ]);
-    } catch (err) {
+    } catch (error) {
+      console.error('Error fetching data:', error);
       setError('Failed to fetch data');
     } finally {
       setLoading(false);
@@ -254,12 +256,12 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const fetchRoamifyPackages = async () => {
+  const fetchRoamifyPackages = async (page: number = 1, limit: number = 50) => {
     try {
-      console.log('Fetching Roamify packages...');
+      console.log(`Fetching Roamify packages (page ${page}, limit ${limit})...`);
       setRoamifyLoading(true);
       
-      const fullUrl = `${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages`;
+      const fullUrl = `${import.meta.env.VITE_API_URL}/api/admin/all-roamify-packages?page=${page}&limit=${limit}`;
       console.log('Fetching from URL:', fullUrl);
       
       const response = await fetch(fullUrl, {
@@ -275,11 +277,14 @@ const AdminPanel: React.FC = () => {
         
         // Extract the actual packages array from the response
         let data: RoamifyPackage[] = [];
+        let paginationInfo = null;
+        
         if (responseData && typeof responseData === 'object') {
           if (Array.isArray(responseData)) {
             data = responseData;
           } else if (responseData.data && Array.isArray(responseData.data)) {
             data = responseData.data;
+            paginationInfo = responseData.pagination;
           } else {
             console.error('Unexpected response structure:', responseData);
             setError('Invalid response format from server');
@@ -289,6 +294,14 @@ const AdminPanel: React.FC = () => {
         
         console.log('Roamify packages received:', data.length);
         console.log('First package sample:', data[0]);
+        console.log('Pagination info:', paginationInfo);
+        
+        // Update pagination state if available
+        if (paginationInfo) {
+          setCurrentPage(paginationInfo.page);
+          setTotalPages(paginationInfo.totalPages);
+          setTotalCount(paginationInfo.totalCount);
+        }
         
         // Analyze packages for duplicates
         const analysis = analyzePackagesForDuplicates(data);
@@ -667,6 +680,7 @@ const AdminPanel: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    fetchRoamifyPackages(page, pageSize);
   };
 
   // Generate page numbers for pagination
