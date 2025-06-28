@@ -39,6 +39,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
+  console.log('[DEBUG] PaymentForm rendered');
+  console.log('[DEBUG] Stripe:', stripe);
+  console.log('[DEBUG] Elements:', elements);
+  console.log('[DEBUG] Props:', { amount, currency, email, packageId });
+
   const createPaymentIntent = async () => {
     console.log('[DEBUG] Creating payment intent...');
     console.log('[DEBUG] Payment intent data:', { amount, currency, email, packageId });
@@ -84,6 +89,8 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[DEBUG] handleSubmit called');
+    console.log('[DEBUG] stripe:', stripe);
+    console.log('[DEBUG] elements:', elements);
     if (!stripe || !elements) {
       console.error('[DEBUG] Stripe not loaded');
       toast({ title: 'Stripe Error', description: 'Stripe has not loaded yet. Please try again.', variant: 'destructive' });
@@ -92,13 +99,14 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
     setIsProcessing(true);
     try {
-      if (!clientSecret) {
+      let usedClientSecret = clientSecret;
+      if (!usedClientSecret) {
         console.log('[DEBUG] No clientSecret, creating new payment intent...');
-        const newClientSecret = await createPaymentIntent();
-        setClientSecret(newClientSecret);
-        console.log('[DEBUG] Received clientSecret:', newClientSecret);
+        usedClientSecret = await createPaymentIntent();
+        setClientSecret(usedClientSecret);
+        console.log('[DEBUG] Received clientSecret:', usedClientSecret);
       } else {
-        console.log('[DEBUG] Using existing clientSecret:', clientSecret);
+        console.log('[DEBUG] Using existing clientSecret:', usedClientSecret);
       }
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
@@ -107,7 +115,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         throw new Error('Card element not found');
       }
       console.log('[DEBUG] Confirming card payment...');
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret!, {
+      const { error, paymentIntent } = await stripe.confirmCardPayment(usedClientSecret, {
         payment_method: {
           card: cardElement,
           billing_details: { email: email },
