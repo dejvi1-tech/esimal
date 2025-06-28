@@ -64,26 +64,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       {!hideFooter && <Footer />}
       <WhatsAppSupport phoneNumber="+1234567890" /> {/* Replace with actual WhatsApp number */}
-      {showStickyCTA && (
-        <AnimatePresence>
-          <motion.div
-            key="sticky-cta"
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ duration: 0.35, ease: 'easeInOut' }}
-            className="fixed bottom-0 left-0 right-0 z-50 md:hidden px-4 pb-4 pointer-events-none"
-          >
-            <div className="pointer-events-auto">
-              <Link to="/checkout">
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg text-lg active:scale-95 transition-transform">
-                  Buy Now
-                </button>
-              </Link>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
     </div>
   );
 };
