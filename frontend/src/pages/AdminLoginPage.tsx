@@ -6,32 +6,48 @@ const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+
+    const requestBody = { username, password };
+    console.log('🔐 Frontend login attempt');
+    console.log('📝 Request body:', requestBody);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/login`, {
+      const response = await fetch(`/api/admin/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
+      const data = await response.json();
+      console.log('📡 Response data:', data);
+
       if (response.ok) {
-        const data = await response.json();
         localStorage.setItem('admin_token', data.token);
         toast.success('Login successful!');
         navigate('/admin');
       } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || 'Login failed');
+        const errorMessage = data.error || 'Login failed';
+        setError(errorMessage);
+        toast.error(errorMessage);
+        console.error('❌ Login failed:', errorMessage);
       }
     } catch (error) {
-      toast.error('Network error. Please try again.');
+      const errorMessage = 'Network error. Please try again.';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error('❌ Network error:', error);
     } finally {
       setLoading(false);
     }
@@ -86,6 +102,12 @@ const AdminLoginPage: React.FC = () => {
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
 
             <div>
               <button

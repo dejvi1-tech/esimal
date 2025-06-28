@@ -36,8 +36,27 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
 
 // Route handler for login
 export function adminLoginHandler(req: Request, res: Response, next: NextFunction): void {
+  console.log('🔐 Admin login attempt');
+  console.log('📝 Request body:', req.body);
+  console.log('🔑 Expected username:', ADMIN_USERNAME);
+  console.log('🔑 Expected password:', ADMIN_PASSWORD);
+  
   const { username, password } = req.body;
+  
+  console.log('📝 Received username:', username);
+  console.log('📝 Received password:', password);
+  
+  if (!username || !password) {
+    console.log('❌ Missing username or password');
+    res.status(400).json({ 
+      success: false,
+      error: 'Username and password are required' 
+    });
+    return;
+  }
+  
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    console.log('✅ Login successful');
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
     res.json({ 
       success: true,
@@ -46,9 +65,11 @@ export function adminLoginHandler(req: Request, res: Response, next: NextFunctio
     });
     return;
   }
+  
+  console.log('❌ Invalid credentials');
   res.status(401).json({ 
     success: false,
-    error: 'Invalid credentials' 
+    error: 'Invalid username or password' 
   });
   return;
 }

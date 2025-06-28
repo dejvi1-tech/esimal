@@ -19,7 +19,7 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
 
       try {
         // Test the token by making a request to a protected endpoint
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/test`, {
+        const response = await fetch(`/api/admin/test`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
