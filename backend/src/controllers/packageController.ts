@@ -388,22 +388,55 @@ export const getAllRoamifyPackages = async (
         throw countError;
       }
 
-      // Fetch all packages without pagination
-      const { data: packages, error } = await supabaseAdmin
-        .from('packages')
-        .select('*')
-        .eq('is_active', true)
-        .order('country_name', { ascending: true });
+      // Fetch all packages in chunks of 1000 (Supabase limit)
+      const allPackages: any[] = [];
+      const chunkSize = 1000;
+      let offset = 0;
+      
+      if (!totalCount || totalCount <= 0) {
+        console.log('No packages found in database');
+        return res.status(200).json({
+          status: 'success',
+          data: [],
+          count: 0,
+          pagination: {
+            page: 1,
+            limit: 0,
+            totalCount: 0,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPrevPage: false
+          }
+        });
+      }
+      
+      while (offset < totalCount) {
+        console.log(`Fetching chunk ${Math.floor(offset / chunkSize) + 1}/${Math.ceil(totalCount / chunkSize)} (offset ${offset}, limit ${chunkSize})`);
+        
+        const { data: chunk, error } = await supabaseAdmin
+          .from('packages')
+          .select('*')
+          .eq('is_active', true)
+          .order('country_name', { ascending: true })
+          .range(offset, offset + chunkSize - 1);
 
-      if (error) {
-        console.error('Error fetching packages from database:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching packages chunk:', error);
+          throw error;
+        }
+
+        if (chunk && chunk.length > 0) {
+          allPackages.push(...chunk);
+          console.log(`Fetched ${chunk.length} packages in this chunk`);
+        }
+
+        offset += chunkSize;
       }
 
-      console.log(`Found ${packages?.length || 0} packages in database (all packages)`);
+      console.log(`Found ${allPackages.length} packages in database (all packages)`);
 
       // Map the packages to the expected format for frontend compatibility
-      const mappedPackages = (packages || []).map((pkg: any) => ({
+      const mappedPackages = allPackages.map((pkg: any) => ({
         id: pkg.id,
         country: pkg.country_name,
         region: pkg.region || 'Global',
