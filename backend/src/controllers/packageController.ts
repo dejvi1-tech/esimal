@@ -11,6 +11,9 @@ import {
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
+// At top of file
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
+
 // Create admin client for operations that need service role
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL!,
@@ -357,28 +360,33 @@ export const getAllRoamifyPackages = async (
     while (true) {
       console.log(`Fetching page ${page} from Roamify API...`);
       
-      const response = await fetch(`https://partner.roamify.com/api/packages?page=${page}&limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      try {
+        const response = await fetch(`${ROAMIFY_API_BASE}/api/packages?page=${page}&limit=${limit}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const json = await response.json() as { data?: any[] };
+        const json = await response.json() as { data?: any[] };
 
-      if (!json.data || json.data.length === 0) {
-        console.log(`No more data on page ${page}, stopping pagination`);
-        break;
-      }
+        if (!json.data || json.data.length === 0) {
+          console.log(`No more data on page ${page}, stopping pagination`);
+          break;
+        }
 
-      console.log(`Page ${page}: Found ${json.data.length} packages`);
-      allPackages.push(...json.data);
-      page++;
-      
-      // Safety check to prevent infinite loops
-      if (page > 50) {
-        console.log('Reached maximum page limit (50), stopping pagination');
-        break;
+        console.log(`Page ${page}: Found ${json.data.length} packages`);
+        allPackages.push(...json.data);
+        page++;
+        
+        // Safety check to prevent infinite loops
+        if (page > 50) {
+          console.log('Reached maximum page limit (50), stopping pagination');
+          break;
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
+        throw error;
       }
     }
 
@@ -585,28 +593,33 @@ export const syncRoamifyPackages = async (
     while (true) {
       console.log(`Fetching page ${page} from Roamify API for sync...`);
       
-      const response = await fetch(`https://partner.roamify.com/api/packages?page=${page}&limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      try {
+        const response = await fetch(`${ROAMIFY_API_BASE}/api/packages?page=${page}&limit=${limit}`, {
+          headers: {
+            Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-      const json = await response.json() as { data?: any[] };
+        const json = await response.json() as { data?: any[] };
 
-      if (!json.data || json.data.length === 0) {
-        console.log(`No more data on page ${page}, stopping pagination`);
-        break;
-      }
+        if (!json.data || json.data.length === 0) {
+          console.log(`No more data on page ${page}, stopping pagination`);
+          break;
+        }
 
-      console.log(`Page ${page}: Found ${json.data.length} packages for sync`);
-      allPackages.push(...json.data);
-      page++;
-      
-      // Safety check to prevent infinite loops
-      if (page > 50) {
-        console.log('Reached maximum page limit (50), stopping pagination');
-        break;
+        console.log(`Page ${page}: Found ${json.data.length} packages for sync`);
+        allPackages.push(...json.data);
+        page++;
+        
+        // Safety check to prevent infinite loops
+        if (page > 50) {
+          console.log('Reached maximum page limit (50), stopping pagination');
+          break;
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
+        throw error;
       }
     }
     

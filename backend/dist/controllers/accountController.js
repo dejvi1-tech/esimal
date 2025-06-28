@@ -8,6 +8,8 @@ const supabase_1 = require("../config/supabase");
 const appError_1 = require("../utils/appError");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const axios_1 = __importDefault(require("axios"));
+// At top of file
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 // Admin-only function to get all users
 exports.getAllUsers = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const { data: users, error } = await supabase_1.supabase
@@ -64,7 +66,7 @@ exports.getUserTransactions = (0, asyncHandler_1.asyncHandler)(async (req, res, 
  */
 exports.getAccountBalanceFromRoamify = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     try {
-        const roamifyUrl = 'https://api.getroamify.com/api/balance';
+        const roamifyUrl = `${ROAMIFY_API_BASE}/api/balance`;
         const roamifyApiKey = process.env.ROAMIFY_API_KEY;
         if (!roamifyApiKey) {
             return next(new appError_1.AppError('Roamify API key not configured', 500));

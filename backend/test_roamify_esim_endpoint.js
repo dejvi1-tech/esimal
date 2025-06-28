@@ -1,6 +1,7 @@
 const axios = require('axios');
 require('dotenv').config();
 
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 const roamifyApiKey = process.env.ROAMIFY_API_KEY;
 const esimCode = '8eecd845-2fea-47d3-b39c-8bef57b3d31c';
 
@@ -11,7 +12,7 @@ async function testRoamifyEsimEndpoint() {
 
   try {
     console.log('1. Calling Roamify /api/esim endpoint...');
-    const response = await axios.get(`https://api.getroamify.com/api/esim`, {
+    const response = await axios.get(`${ROAMIFY_API_BASE}/api/esim`, {
       params: {
         iccid: esimCode
       },
@@ -50,6 +51,7 @@ async function testRoamifyEsimEndpoint() {
     }
 
   } catch (error) {
+    console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
     console.error('❌ Error:', error.message);
     if (error.response) {
       console.error('Response status:', error.response.status);

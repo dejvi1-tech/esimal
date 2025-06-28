@@ -4,6 +4,9 @@ import { AppError } from '../utils/appError';
 import { asyncHandler } from '../utils/asyncHandler';
 import axios from 'axios';
 
+// At top of file
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
+
 // Admin-only function to get all users
 export const getAllUsers = asyncHandler(async (
   req: Request,
@@ -88,7 +91,7 @@ export const getAccountBalanceFromRoamify = asyncHandler(async (
   next: NextFunction
 ) => {
   try {
-    const roamifyUrl = 'https://api.getroamify.com/api/balance';
+    const roamifyUrl = `${ROAMIFY_API_BASE}/api/balance`;
     const roamifyApiKey = process.env.ROAMIFY_API_KEY;
 
     if (!roamifyApiKey) {

@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 // Load environment variables
 config();
 
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
 
 async function testRoamifyAPI() {
@@ -31,7 +32,7 @@ async function testRoamifyAPI() {
       console.log(`\n=== Test ${i + 1}: ${JSON.stringify(params)} ===`);
       
       try {
-        const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
+        const response = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
           headers: {
             Authorization: `Bearer ${ROAMIFY_API_KEY}`,
             'Content-Type': 'application/json',
@@ -65,6 +66,7 @@ async function testRoamifyAPI() {
         }
         
       } catch (error: any) {
+        console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
         console.error(`Test ${i + 1} failed:`, error.message);
         if (error.response) {
           console.error('Error status:', error.response.status);

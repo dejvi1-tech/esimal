@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 // Load environment variables
 config();
 
+const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -116,7 +117,7 @@ async function syncPackages() {
     // Approach 1: Try with high limit
     try {
       console.log('\n=== Approach 1: High limit ===');
-      const response1 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+      const response1 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
         headers: {
           Authorization: `Bearer ${ROAMIFY_API_KEY}`,
           'Content-Type': 'application/json',
@@ -148,6 +149,7 @@ async function syncPackages() {
         console.log(`Approach 1 found ${totalPackagesFound} packages`);
       }
     } catch (error) {
+      console.error('❌ Failed to fetch from Roamify (Approach 1):', ROAMIFY_API_BASE, error);
       if (error instanceof Error) {
         console.log('Approach 1 failed:', error.message);
       } else {
@@ -159,7 +161,7 @@ async function syncPackages() {
     if (totalPackagesFound === 0) {
       try {
         console.log('\n=== Approach 2: No parameters ===');
-        const response2 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+        const response2 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
           headers: {
             Authorization: `Bearer ${ROAMIFY_API_KEY}`,
             'Content-Type': 'application/json',
@@ -186,6 +188,7 @@ async function syncPackages() {
           console.log(`Approach 2 found ${totalPackagesFound} packages`);
         }
       } catch (error) {
+        console.error('❌ Failed to fetch from Roamify (Approach 2):', ROAMIFY_API_BASE, error);
         if (error instanceof Error) {
           console.log('Approach 2 failed:', error.message);
         } else {
@@ -207,7 +210,7 @@ async function syncPackages() {
         while (hasMore && page <= 50) { // Increased limit to 50 pages to get all 11k+ packages
           console.log(`Fetching page ${page} with offset ${offset}...`);
           
-          const response3 = await axios.get('https://api.getroamify.com/api/esim/packages', {
+          const response3 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
             headers: {
               Authorization: `Bearer ${ROAMIFY_API_KEY}`,
               'Content-Type': 'application/json',
@@ -255,6 +258,7 @@ async function syncPackages() {
         totalPackagesFound = packages.length;
         console.log(`Approach 3 found ${totalPackagesFound} total packages after pagination`);
       } catch (error) {
+        console.error('❌ Failed to fetch from Roamify (Approach 3):', ROAMIFY_API_BASE, error);
         if (error instanceof Error) {
           console.log('Approach 3 failed:', error.message);
         } else {

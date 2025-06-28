@@ -154,7 +154,7 @@ class RoamifyService {
 }
 exports.RoamifyService = RoamifyService;
 RoamifyService.apiKey = process.env.ROAMIFY_API_KEY;
-RoamifyService.baseUrl = 'https://api.getroamify.com';
+RoamifyService.baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 RoamifyService.maxRetries = 3;
 RoamifyService.retryDelay = 2000; // 2 seconds
 //# sourceMappingURL=roamifyService.js.map

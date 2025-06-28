@@ -46,7 +46,7 @@ export interface RoamifyApplyResponse {
 
 export class RoamifyService {
   private static apiKey = process.env.ROAMIFY_API_KEY;
-  private static baseUrl = 'https://api.getroamify.com';
+  private static baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
   private static maxRetries = 3;
   private static retryDelay = 2000; // 2 seconds
 
