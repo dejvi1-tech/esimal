@@ -326,10 +326,7 @@ export const searchPackages = async (
       throw error;
     }
 
-    res.status(200).json({
-      status: 'success',
-      data: packages || [],
-    });
+    res.json(packages || []);
   } catch (error) {
     console.error('Search packages error:', error);
     next(error);
