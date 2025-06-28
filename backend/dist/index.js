@@ -24,13 +24,35 @@ const supabase_1 = require("./config/supabase");
 const app = (0, express_1.default)();
 // Trust only 1 proxy (e.g. Render, Vercel) to safely support rate-limiting
 app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
-// Enable CORS
-app.use((0, cors_1.default)({
-    origin: ['https://esimfly.al', 'http://localhost:8080'],
-    credentials: true
-}));
+// Enhanced CORS configuration
+const corsOptions = {
+    origin: [
+        'https://esimfly.al',
+        'http://localhost:8080',
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:3000'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+        'Origin',
+        'X-Requested-With',
+        'Content-Type',
+        'Accept',
+        'Authorization',
+        'X-API-Key'
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+app.use((0, cors_1.default)(corsOptions));
+// Add preflight handling for all routes
+app.options('*', (0, cors_1.default)(corsOptions));
 // Security
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 // Parse JSON (except Stripe raw body)
 app.use(express_1.default.json());
 // Raw body parser for Stripe webhook

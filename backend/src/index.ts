@@ -31,14 +31,38 @@ const app = express();
 // Trust only 1 proxy (e.g. Render, Vercel) to safely support rate-limiting
 app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
 
-// Enable CORS
-app.use(cors({
-  origin: ['https://esimfly.al', 'http://localhost:8080'],
-  credentials: true
-}));
+// Enhanced CORS configuration
+const corsOptions = {
+  origin: [
+    'https://esimfly.al',
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-API-Key'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions));
+
+// Add preflight handling for all routes
+app.options('*', cors(corsOptions));
 
 // Security
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // Parse JSON (except Stripe raw body)
 app.use(express.json());
