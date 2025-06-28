@@ -80,6 +80,24 @@ app.get('/api/search-packages', (req, res, next) => {
   return controller.searchPackages(req, res, next);
 });
 
+// Add endpoint for frontend packages (plain array, only visible)
+app.get('/api/frontend-packages', async (req: Request, res: Response) => {
+  try {
+    const { data, error } = await supabase
+      .from('my_packages')
+      .select('id, name, country_name, data_amount, validity_days, sale_price, reseller_id')
+      .eq('visible', true)
+      .order('sale_price', { ascending: true });
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    res.json(data || []);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
+});
+
 // 404 Handler
 app.use('*', (req: Request, res: Response) => {
   res.status(404).json({
