@@ -350,19 +350,48 @@ export const getAllRoamifyPackages = async (
   try {
     console.log('Fetching ALL packages from Roamify API...');
     
-    // Fetch directly from Roamify API with proper pagination
-    const packages = await fetchAllRoamifyPackagesFromAPI();
-    
-    console.log(`Retrieved ${packages?.length || 0} packages from Roamify API`);
-    
-    res.status(200).json({ 
-      status: 'success', 
-      data: packages || [],
-      count: packages?.length || 0
+    let allPackages: any[] = [];
+    let page = 1;
+    const limit = 1000;
+
+    while (true) {
+      console.log(`Fetching page ${page} from Roamify API...`);
+      
+      const response = await fetch(`https://partner.roamify.com/api/packages?page=${page}&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const json = await response.json() as { data?: any[] };
+
+      if (!json.data || json.data.length === 0) {
+        console.log(`No more data on page ${page}, stopping pagination`);
+        break;
+      }
+
+      console.log(`Page ${page}: Found ${json.data.length} packages`);
+      allPackages.push(...json.data);
+      page++;
+      
+      // Safety check to prevent infinite loops
+      if (page > 50) {
+        console.log('Reached maximum page limit (50), stopping pagination');
+        break;
+      }
+    }
+
+    console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
+
+    return res.status(200).json({
+      status: 'success',
+      data: allPackages,
+      count: allPackages.length,
     });
   } catch (error) {
     console.error('Error fetching Roamify packages:', error);
-    next(error);
+    return res.status(500).json({ status: 'error', message: 'Failed to fetch Roamify packages' });
   }
 };
 
@@ -539,83 +568,6 @@ function calculateCompleteness(pkg: any): number {
   return score;
 }
 
-// Function to fetch ALL packages from Roamify API with pagination
-async function fetchAllRoamifyPackagesFromAPI(): Promise<any[]> {
-  const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
-  
-  if (!ROAMIFY_API_KEY) {
-    throw new Error('ROAMIFY_API_KEY not configured');
-  }
-
-  console.log('Fetching ALL packages from Roamify API with pagination...');
-  
-  let allPackages: any[] = [];
-  let page = 1;
-  let hasMore = true;
-  let consecutiveEmptyPages = 0;
-  
-  while (hasMore && page <= 100) { // Allow up to 100 pages to get all packages
-    try {
-      console.log(`Fetching page ${page} from Roamify API...`);
-      
-      const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
-        headers: {
-          Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        params: {
-          limit: 10000, // Maximum per page
-          offset: (page - 1) * 10000, // Calculate offset
-          page: page
-        },
-        timeout: 60000 // 60 second timeout
-      });
-
-      const data = response.data as { status?: string; data?: { packages?: any[] } };
-      
-      if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
-        let pagePackages = 0;
-        
-        // Extract individual packages from country objects
-        for (const country of data.data.packages) {
-          if (country.packages && Array.isArray(country.packages)) {
-            console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
-            const packagesWithCountry = country.packages.map((pkg: any) => ({
-              ...pkg,
-              country_name: country.countryName || country.country || 'Unknown',
-              country_code: country.countryCode || null
-            }));
-            allPackages = allPackages.concat(packagesWithCountry);
-            pagePackages += country.packages.length;
-          }
-        }
-        
-        if (pagePackages === 0) {
-          consecutiveEmptyPages++;
-          if (consecutiveEmptyPages >= 3) {
-            console.log('Stopping pagination after 3 consecutive empty pages');
-            hasMore = false;
-          }
-        } else {
-          consecutiveEmptyPages = 0; // Reset counter
-          console.log(`Page ${page}: Found ${pagePackages} packages, total so far: ${allPackages.length}`);
-        }
-        
-        page++;
-      } else {
-        console.log('No valid data in response, stopping pagination');
-        hasMore = false;
-      }
-    } catch (error) {
-      console.error(`Error fetching page ${page}:`, error);
-      hasMore = false;
-    }
-  }
-  
-  console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
-  return allPackages;
-}
-
 // Secure admin endpoint: Sync packages from Roamify API to database
 export const syncRoamifyPackages = async (
   req: Request,
@@ -625,10 +577,40 @@ export const syncRoamifyPackages = async (
   try {
     console.log('Starting Roamify packages sync...');
     
-    // Fetch all packages from Roamify API
-    const packages = await fetchAllRoamifyPackagesFromAPI();
+    // Fetch all packages from Roamify API using simple pagination
+    let allPackages: any[] = [];
+    let page = 1;
+    const limit = 1000;
+
+    while (true) {
+      console.log(`Fetching page ${page} from Roamify API for sync...`);
+      
+      const response = await fetch(`https://partner.roamify.com/api/packages?page=${page}&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const json = await response.json() as { data?: any[] };
+
+      if (!json.data || json.data.length === 0) {
+        console.log(`No more data on page ${page}, stopping pagination`);
+        break;
+      }
+
+      console.log(`Page ${page}: Found ${json.data.length} packages for sync`);
+      allPackages.push(...json.data);
+      page++;
+      
+      // Safety check to prevent infinite loops
+      if (page > 50) {
+        console.log('Reached maximum page limit (50), stopping pagination');
+        break;
+      }
+    }
     
-    if (packages.length === 0) {
+    if (allPackages.length === 0) {
       return res.status(200).json({
         status: 'success',
         message: 'No packages found from Roamify API',
@@ -636,7 +618,7 @@ export const syncRoamifyPackages = async (
       });
     }
     
-    console.log(`Fetched ${packages.length} packages from Roamify API, syncing to database...`);
+    console.log(`Fetched ${allPackages.length} packages from Roamify API, syncing to database...`);
     
     // Clear existing packages
     const { error: deleteError } = await supabaseAdmin
@@ -656,9 +638,9 @@ export const syncRoamifyPackages = async (
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < packages.length; i += batchSize) {
-      const batch = packages.slice(i, i + batchSize);
-      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(packages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, packages.length)} of ${packages.length})`);
+    for (let i = 0; i < allPackages.length; i += batchSize) {
+      const batch = allPackages.slice(i, i + batchSize);
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(allPackages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, allPackages.length)} of ${allPackages.length})`);
       
       const batchData = batch.map(pkg => {
         try {
@@ -742,4 +724,4 @@ export const syncRoamifyPackages = async (
     console.error('Error syncing Roamify packages:', error);
     next(error);
   }
-}; 
+};
