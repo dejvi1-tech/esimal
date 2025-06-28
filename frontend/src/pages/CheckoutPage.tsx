@@ -250,7 +250,7 @@ const CheckoutPage: React.FC = () => {
           {/* Left: Form */}
           <div className="flex-1 bg-white rounded-xl shadow p-4 md:p-8 mb-4 md:mb-0">
             <h2 className="text-2xl font-bold mb-6 md:mb-8 text-gray-900">{t('checkout')}</h2>
-            <form className="space-y-4 md:space-y-6" onSubmit={handleFormSubmit}>
+            <div className="space-y-4 md:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('first_name')} *</label>
@@ -290,7 +290,7 @@ const CheckoutPage: React.FC = () => {
                   onError={handlePaymentError}
                 />
               </Elements>
-            </form>
+            </div>
           </div>
           {/* Right: Order Summary */}
           <div className="w-full md:w-96 bg-gradient-to-b from-purple-800 to-purple-600 rounded-xl shadow p-4 md:p-8 text-white flex flex-col">
