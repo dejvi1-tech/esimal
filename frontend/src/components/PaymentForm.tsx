@@ -41,6 +41,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   onSuccess,
   onError,
 }) => {
+  // Ensure email is never null
+  const safeEmail = email ?? '';
+  
   const { t } = useLanguage();
   const stripe = useStripe();
   const elements = useElements();
@@ -50,11 +53,11 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   console.log('[DEBUG] PaymentForm rendered');
   console.log('[DEBUG] Stripe:', stripe);
   console.log('[DEBUG] Elements:', elements);
-  console.log('[DEBUG] Props:', { amount, currency, email, packageId, name, surname, phone, country });
+  console.log('[DEBUG] Props:', { amount, currency, email: safeEmail, packageId, name, surname, phone, country });
 
   const createPaymentIntent = async () => {
     console.log('[DEBUG] Creating payment intent...');
-    console.log('[DEBUG] Payment intent data:', { amount, currency, email, packageId, name, surname, phone, country });
+    console.log('[DEBUG] Payment intent data:', { amount, currency, email: safeEmail, packageId, name, surname, phone, country });
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-intent`, {
         method: 'POST',
@@ -64,12 +67,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         body: JSON.stringify({
           amount,
           currency,
-          email,
+          email: safeEmail,
           packageId,
-          name,
-          surname,
-          phone,
-          country,
+          name: name ?? '',
+          surname: surname ?? '',
+          phone: phone ?? '',
+          country: country ?? '',
         }),
       });
 
@@ -136,7 +139,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const { error, paymentIntent } = await stripe.confirmCardPayment(usedClientSecret, {
         payment_method: {
           card: cardNumberElement,
-          billing_details: { email: email },
+          billing_details: { email: safeEmail },
         },
       });
       if (error) {
@@ -145,7 +148,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         onError(error.message || 'There was an error processing your payment.');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('[DEBUG] Payment successful:', paymentIntent);
-        toast({ title: t('payment_successful'), description: t('payment_processed_successfully'), variant: 'success' });
+        toast({ title: t('payment_successful'), description: t('payment_processed_successfully'), variant: 'default' });
         onSuccess(paymentIntent.id);
       } else {
         console.error('[DEBUG] Payment failed:', paymentIntent);

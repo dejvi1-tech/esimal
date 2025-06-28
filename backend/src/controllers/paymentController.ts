@@ -102,20 +102,11 @@ export const createPaymentIntent = async (
 
     // Create order in database
     const orderData = {
-      packageId: packageId,
-      user_email: email,
-      user_name: name && surname ? `${name} ${surname}` : name || surname || '',
-      name: name || '',
-      surname: surname || '',
-      phone: phone || '',
-      country: country || '',
-      status: 'pending',
+      package_id: packageId,
+      guest_email: email,
       amount: amount,
-      data_amount: packageData.data_amount,
-      validity_days: packageData.validity_days,
-      country_name: packageData.country_name,
-      stripe_payment_intent_id: paymentIntent.id,
-      stripe_customer_id: customer.id,
+      status: 'pending',
+      payment_intent_id: paymentIntent.id,
       created_at: new Date().toISOString(),
     };
 
