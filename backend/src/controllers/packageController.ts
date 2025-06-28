@@ -20,6 +20,22 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Interface for Roamify raw package data
+interface RoamifyRawPackage {
+  id?: string;
+  package_id?: string;
+  country?: string;
+  country_name?: string;
+  region?: string;
+  description?: string;
+  data?: string;
+  dataAmount?: string;
+  day?: number;
+  validity?: string;
+  price?: number;
+  amount?: number;
+}
+
 console.log('updatePackage controller loaded');
 
 // Admin-only function to create package
@@ -384,7 +400,7 @@ export const getAllRoamifyPackages = async (
             console.log(`Found ${country.packages.length} packages for ${country.countryName || country.country} on page ${page}`);
             
             // Map each package with country information
-            const packagesWithCountry = country.packages.map(pkg => ({
+            const packagesWithCountry = country.packages.map((pkg: any) => ({
               ...pkg,
               country_name: country.countryName || country.country || 'Unknown',
               country_code: country.countryCode || null,
@@ -419,53 +435,15 @@ export const getAllRoamifyPackages = async (
     console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
 
     // Map the packages to the expected format
-    const mappedPackages = allPackages.map(pkg => {
-      // Extract and validate required fields
-      const id = pkg.packageId || pkg.id || 'unknown';
-      const country = pkg.country_name || pkg.country || 'unknown';
-      const region = pkg.region || 'Global';
-      const dataAmount = pkg.dataAmount || pkg.data || 'unknown';
-      const validity = pkg.day || pkg.days || pkg.validity_days || 'unknown';
-      const price = pkg.price || pkg.base_price || 0;
-      
-      // Create description from data and validity
-      let description = 'unknown';
-      if (dataAmount !== 'unknown' && validity !== 'unknown') {
-        if (pkg.isUnlimited) {
-          description = `Unlimited - ${validity} days`;
-        } else {
-          // Convert MB to GB if needed
-          let dataStr = dataAmount;
-          if (typeof dataAmount === 'number' && dataAmount > 1024) {
-            dataStr = `${Math.round(dataAmount / 1024)}GB`;
-          } else if (typeof dataAmount === 'number') {
-            dataStr = `${dataAmount}MB`;
-          }
-          description = `${dataStr} - ${validity} days`;
-        }
-      }
-
-      return {
-        id,
-        country,
-        region,
-        description,
-        data: dataAmount,
-        validity: validity,
-        price: price,
-        // Include original fields for backward compatibility
-        packageId: pkg.packageId,
-        packageName: pkg.package || pkg.name,
-        country_code: pkg.country_code,
-        dataAmount: pkg.dataAmount,
-        validity_days: pkg.day || pkg.days,
-        base_price: pkg.price,
-        // Additional fields that might be useful
-        operator: pkg.operator,
-        features: pkg.features,
-        isUnlimited: pkg.isUnlimited
-      };
-    });
+    const mappedPackages = allPackages.map((pkg: RoamifyRawPackage) => ({
+      id: pkg.package_id || pkg.id,
+      country: pkg.country_name || pkg.country,
+      region: pkg.region || 'Global',
+      description: `${pkg.dataAmount || pkg.data} - ${pkg.day || pkg.validity} days`,
+      data: pkg.dataAmount || pkg.data,
+      validity: `${pkg.day || pkg.validity} days`,
+      price: pkg.price || pkg.amount
+    }));
 
     // Log a sample package for debugging
     if (mappedPackages.length > 0) {
