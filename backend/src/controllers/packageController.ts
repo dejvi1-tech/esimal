@@ -392,10 +392,64 @@ export const getAllRoamifyPackages = async (
 
     console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
 
+    // Map the packages to the expected format
+    const mappedPackages = allPackages.map(pkg => {
+      // Extract and validate required fields
+      const id = pkg.packageId || pkg.id || 'unknown';
+      const country = pkg.country_name || pkg.country || 'unknown';
+      const region = pkg.region || 'unknown';
+      const dataAmount = pkg.dataAmount || pkg.data || 'unknown';
+      const validity = pkg.day || pkg.days || pkg.validity_days || 'unknown';
+      const price = pkg.price || pkg.base_price || 0;
+      
+      // Create description from data and validity
+      let description = 'unknown';
+      if (dataAmount !== 'unknown' && validity !== 'unknown') {
+        if (pkg.isUnlimited) {
+          description = `Unlimited - ${validity} days`;
+        } else {
+          // Convert MB to GB if needed
+          let dataStr = dataAmount;
+          if (typeof dataAmount === 'number' && dataAmount > 1024) {
+            dataStr = `${Math.round(dataAmount / 1024)}GB`;
+          } else if (typeof dataAmount === 'number') {
+            dataStr = `${dataAmount}MB`;
+          }
+          description = `${dataStr} - ${validity} days`;
+        }
+      }
+
+      return {
+        id,
+        country,
+        region,
+        description,
+        data: dataAmount,
+        validity: validity,
+        price: price,
+        // Include original fields for backward compatibility
+        packageId: pkg.packageId,
+        packageName: pkg.package || pkg.name,
+        country_code: pkg.country_code,
+        dataAmount: pkg.dataAmount,
+        validity_days: pkg.day || pkg.days,
+        base_price: pkg.price,
+        // Additional fields that might be useful
+        operator: pkg.operator,
+        features: pkg.features,
+        isUnlimited: pkg.isUnlimited
+      };
+    });
+
+    // Log a sample package for debugging
+    if (mappedPackages.length > 0) {
+      console.log('Sample mapped package:', mappedPackages[0]);
+    }
+
     return res.status(200).json({
       status: 'success',
-      data: allPackages,
-      count: allPackages.length,
+      data: mappedPackages,
+      count: mappedPackages.length,
     });
   } catch (error) {
     console.error('Error fetching Roamify packages:', error);

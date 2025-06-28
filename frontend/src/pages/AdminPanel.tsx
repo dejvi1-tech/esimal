@@ -35,23 +35,32 @@ interface MainPackage {
 }
 
 interface RoamifyPackage {
-  packageId?: string;
+  // New mapped fields from backend
   id?: string;
+  country?: string;
+  region?: string;
+  description?: string;
+  data?: string | number;
+  validity?: string | number;
+  price?: number;
+  
+  // Original fields for backward compatibility
+  packageId?: string;
   package?: string;
   packageName?: string;
   name?: string;
-  country?: string;
+  country_name?: string;
   country_code?: string;
   dataAmount?: number;
   dataUnit?: string;
-  data?: string;
   day?: number;
   days?: number;
   validity_days?: number;
-  price?: number;
   base_price?: number;
   sale_price?: number;
-  region?: string;
+  operator?: string;
+  features?: any;
+  isUnlimited?: boolean;
   [key: string]: any; // For any additional fields from Roamify API
 }
 
@@ -294,23 +303,23 @@ const AdminPanel: React.FC = () => {
           console.log('=== DUPLICATE IDS ===');
           Object.entries(analysis.duplicateIds).forEach(([id, packages]) => {
             console.log(`ID "${id}" appears ${packages.length} times:`, packages.map(p => ({
-              name: p.packageName || p.name || p.package,
-              country: p.country,
-              data: p.data_amount || p.dataAmount || p.data,
-              days: p.validity_days || p.days || p.day,
-              price: p.base_price || p.price
+              name: p.description || p.packageName || p.name || p.package,
+              country: p.country || p.country_name,
+              data: p.data || p.dataAmount,
+              validity: p.validity || p.validity_days || p.days || p.day,
+              price: p.price || p.base_price
             })));
           });
           
           console.log('=== DUPLICATE COMBINATIONS ===');
           Object.entries(analysis.duplicateCombinations).forEach(([key, packages]) => {
             console.log(`Combination "${key}" appears ${packages.length} times:`, packages.map(p => ({
-              id: p.packageId || p.id,
-              name: p.packageName || p.name || p.package,
-              country: p.country,
-              data: p.data_amount || p.dataAmount || p.data,
-              days: p.validity_days || p.days || p.day,
-              price: p.base_price || p.price
+              id: p.id || p.packageId,
+              name: p.description || p.packageName || p.name || p.package,
+              country: p.country || p.country_name,
+              data: p.data || p.dataAmount,
+              validity: p.validity || p.validity_days || p.days || p.day,
+              price: p.price || p.base_price
             })));
           });
         }
@@ -351,7 +360,7 @@ const AdminPanel: React.FC = () => {
     // Check for duplicate IDs
     const idCounts: { [id: string]: RoamifyPackage[] } = {};
     packages.forEach(pkg => {
-      const id = pkg.packageId || pkg.id || 'unknown';
+      const id = pkg.id || pkg.packageId || 'unknown';
       if (!idCounts[id]) {
         idCounts[id] = [];
       }
@@ -365,15 +374,16 @@ const AdminPanel: React.FC = () => {
       }
     });
     
-    // Check for duplicate combinations (country + data + days + price)
+    // Check for duplicate combinations (country + data + validity + price)
     const combinationCounts: { [key: string]: RoamifyPackage[] } = {};
     packages.forEach(pkg => {
+      // Use the new mapped fields from backend
       const country = pkg.country || pkg.country_name || 'unknown';
-      const data = pkg.data_amount || pkg.dataAmount || pkg.data || 'unknown';
-      const days = pkg.validity_days || pkg.days || pkg.day || 'unknown';
-      const price = pkg.base_price || pkg.price || 'unknown';
+      const data = pkg.data || pkg.dataAmount || 'unknown';
+      const validity = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown';
+      const price = pkg.price || pkg.base_price || 'unknown';
       
-      const combinationKey = `${country}|${data}|${days}|${price}`;
+      const combinationKey = `${country}|${data}|${validity}|${price}`;
       
       if (!combinationCounts[combinationKey]) {
         combinationCounts[combinationKey] = [];
@@ -500,14 +510,14 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleSaveRoamifyPackage = async (pkg: RoamifyPackage) => {
-    setUpdating(pkg.packageId || pkg.id || '');
+    setUpdating(pkg.id || pkg.packageId || '');
     try {
       // Extract and map all required fields with fallbacks
-      const name = pkg.packageName || pkg.name || pkg.package || 'Unknown Package';
+      const name = pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package';
       const country_name = pkg.country || pkg.country_name || '';
       const country_code = pkg.country_code || '';
       // Parse data_amount as a number in GB
-      let data_amount_raw = pkg.data_amount || pkg.dataAmount || pkg.data || '';
+      let data_amount_raw = pkg.data || pkg.dataAmount || '';
       let data_amount = 0;
       if (typeof data_amount_raw === 'number') {
         data_amount = data_amount_raw;
@@ -521,11 +531,11 @@ const AdminPanel: React.FC = () => {
           data_amount = value;
         }
       }
-      const validity_days = pkg.validity_days || pkg.days || pkg.day || 0;
-      const base_price = pkg.base_price || pkg.price || 0;
-      const salePriceStr = roamifySalePrices[pkg.packageId || pkg.id || ''] ?? base_price.toString();
+      const validity_days = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 0;
+      const base_price = pkg.price || pkg.base_price || 0;
+      const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
-      const reseller_id = pkg.packageId || pkg.id || '';
+      const reseller_id = pkg.id || pkg.packageId || '';
       const region = pkg.region || '';
 
       // Frontend validation
@@ -584,7 +594,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleSaveAsMostPopular = async (pkg: RoamifyPackage) => {
-    setUpdating(pkg.packageId || pkg.id || '');
+    setUpdating(pkg.id || pkg.packageId || '');
     try {
       // Check if the package is for Europe & United States
       if (pkg.country !== "Europe & United States") {
@@ -594,16 +604,16 @@ const AdminPanel: React.FC = () => {
         return;
       }
 
-      const base_price = pkg.base_price || pkg.price || 0;
-      const salePriceStr = roamifySalePrices[pkg.packageId || pkg.id || ''] ?? base_price.toString();
+      const base_price = pkg.price || pkg.base_price || 0;
+      const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
 
       const packageData = {
-        id: pkg.packageId || pkg.id || '',
+        id: pkg.id || pkg.packageId || '',
         country: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
-        data: pkg.data_amount || pkg.dataAmount || pkg.data || '',
-        days: pkg.validity_days || pkg.days || pkg.day || 0,
+        data: pkg.data || pkg.dataAmount || '',
+        days: pkg.validity || pkg.validity_days || pkg.days || pkg.day || 0,
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
@@ -1087,7 +1097,7 @@ const AdminPanel: React.FC = () => {
                                     <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
                                     {packages.map((pkg, index) => (
                                       <div key={index} className="text-sm text-red-700 ml-4">
-                                        {index + 1}. {pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
+                                        {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
                                       </div>
                                     ))}
                                   </div>
@@ -1105,7 +1115,7 @@ const AdminPanel: React.FC = () => {
                                     <div className="font-medium text-orange-800">Combination: {key} (appears {packages.length} times)</div>
                                     {packages.map((pkg, index) => (
                                       <div key={index} className="text-sm text-orange-700 ml-4">
-                                        {index + 1}. ID: {pkg.packageId || pkg.id} - {pkg.packageName || pkg.name || pkg.package}
+                                        {index + 1}. ID: {pkg.id || pkg.packageId} - {pkg.description || pkg.packageName || pkg.name || pkg.package}
                                       </div>
                                     ))}
                                   </div>
@@ -1258,17 +1268,17 @@ const AdminPanel: React.FC = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {filteredRoamifyPackages.slice(0, roamifyVisibleCount).map((pkg) => {
-                      const basePrice = pkg.base_price || pkg.price || 0;
-                      const salePrice = parseFloat(roamifySalePrices[pkg.packageId || pkg.id || ''] ?? basePrice.toString());
+                      const basePrice = pkg.price || pkg.base_price || 0;
+                      const salePrice = parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] ?? basePrice.toString());
                       const profit = salePrice - basePrice;
                       
-                      // Check if this package is a duplicate
-                      const packageId = pkg.packageId || pkg.id || 'unknown';
+                      // Check if this package is a duplicate using new mapped fields
+                      const packageId = pkg.id || pkg.packageId || 'unknown';
                       const country = pkg.country || pkg.country_name || 'unknown';
-                      const data = pkg.data_amount || pkg.dataAmount || pkg.data || 'unknown';
-                      const days = pkg.validity_days || pkg.days || pkg.day || 'unknown';
-                      const price = pkg.base_price || pkg.price || 'unknown';
-                      const combinationKey = `${country}|${data}|${days}|${price}`;
+                      const data = pkg.data || pkg.dataAmount || 'unknown';
+                      const validity = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown';
+                      const price = pkg.price || pkg.base_price || 'unknown';
+                      const combinationKey = `${country}|${data}|${validity}|${price}`;
                       
                       const isDuplicateId = duplicateAnalysis.duplicateIds[packageId] && duplicateAnalysis.duplicateIds[packageId].length > 1;
                       const isDuplicateCombination = duplicateAnalysis.duplicateCombinations[combinationKey] && duplicateAnalysis.duplicateCombinations[combinationKey].length > 1;
@@ -1276,12 +1286,12 @@ const AdminPanel: React.FC = () => {
                       
                       return (
                         <tr 
-                          key={pkg.packageId || pkg.id} 
+                          key={pkg.id || pkg.packageId} 
                           className={`hover:bg-gray-50 ${isDuplicate ? 'bg-red-50 border-l-4 border-red-400' : ''}`}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
-                              {pkg.packageName || pkg.name || pkg.package || 'Unknown Package'}
+                              {pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package'}
                               {isDuplicate && (
                                 <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                   {isDuplicateId && isDuplicateCombination ? 'Duplicate ID & Combo' : 
@@ -1289,7 +1299,7 @@ const AdminPanel: React.FC = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="text-sm text-gray-500">ID: {pkg.packageId || pkg.id}</div>
+                            <div className="text-sm text-gray-500">ID: {pkg.id || pkg.packageId}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-900">{pkg.country || pkg.country_name}</span>
@@ -1298,10 +1308,10 @@ const AdminPanel: React.FC = () => {
                             <span className="text-sm text-gray-900">{pkg.country_code || 'N/A'}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.data_amount || pkg.dataAmount || pkg.data || 'N/A'}</span>
+                            <span className="text-sm text-gray-900">{pkg.data || pkg.dataAmount || 'N/A'}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.validity_days || pkg.days || pkg.day || 'N/A'}</span>
+                            <span className="text-sm text-gray-900">{pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'N/A'}</span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <span className="text-sm text-gray-900">${basePrice.toFixed(2)}</span>
@@ -1311,15 +1321,15 @@ const AdminPanel: React.FC = () => {
                               type="text"
                               inputMode="decimal"
                               value={
-                                roamifySalePrices[pkg.packageId || pkg.id || ''] !== undefined
-                                  ? roamifySalePrices[pkg.packageId || pkg.id || '']
+                                roamifySalePrices[pkg.id || pkg.packageId || ''] !== undefined
+                                  ? roamifySalePrices[pkg.id || pkg.packageId || '']
                                   : basePrice.toString()
                               }
                               onChange={e => {
                                 // Only allow numbers and decimal point
                                 const val = e.target.value;
                                 if (/^\d*\.?\d*$/.test(val)) {
-                                  setRoamifySalePrices({ ...roamifySalePrices, [pkg.packageId || pkg.id || '']: val });
+                                  setRoamifySalePrices({ ...roamifySalePrices, [pkg.id || pkg.packageId || '']: val });
                                 }
                               }}
                               className="w-32 px-4 py-2 border-2 border-indigo-500 rounded-lg text-lg font-semibold text-center focus:ring-2 focus:ring-indigo-400 focus:border-indigo-600 transition-all"
@@ -1332,10 +1342,10 @@ const AdminPanel: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <button
                               onClick={() => handleSaveAsMostPopular(pkg)}
-                              disabled={updating === (pkg.packageId || pkg.id)}
+                              disabled={updating === (pkg.id || pkg.packageId)}
                               className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
                             >
-                              {updating === (pkg.packageId || pkg.id) ? 'Saving...' : 'Save'}
+                              {updating === (pkg.id || pkg.packageId) ? 'Saving...' : 'Save'}
                             </button>
                           </td>
                         </tr>
