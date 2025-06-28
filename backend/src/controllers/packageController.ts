@@ -328,4 +328,40 @@ export const searchPackages = async (
     console.error('Search packages error:', error);
     next(error);
   }
+};
+
+// Secure admin endpoint: Get all my_packages
+export const getMyPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { data: packages, error } = await supabaseAdmin
+      .from('my_packages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.status(200).json({ status: 'success', data: packages });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Secure admin endpoint: Get all Roamify packages
+export const getAllRoamifyPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { data: packages, error } = await supabaseAdmin
+      .from('packages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.status(200).json({ status: 'success', data: packages });
+  } catch (error) {
+    next(error);
+  }
 }; 
