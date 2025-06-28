@@ -90,7 +90,7 @@ interface RoamifyPackageWithCountry extends RoamifyPackage {
   countryCode: string;
 }
 
-async function fetchAllRoamifyPackages(): Promise<RoamifyPackageWithCountry[]> {
+async function fetchAllRoamifyPackages(): Promise<any[]> {
   try {
     console.log('Fetching packages from Roamify API...');
     
@@ -101,39 +101,40 @@ async function fetchAllRoamifyPackages(): Promise<RoamifyPackageWithCountry[]> {
       }
     });
 
+    const json: any = response.data;
     console.log('=== RAW RESPONSE ===');
-    console.log(JSON.stringify(response.data, null, 2));
+    console.log(JSON.stringify(json, null, 2));
     console.log('=== END RAW RESPONSE ===');
 
-    // Check for the correct response structure: data.countries
-    const responseData = response.data as { data?: { countries?: RoamifyCountry[] } };
-    if (!responseData.data || !Array.isArray(responseData.data.countries)) {
-      throw new Error('Invalid response structure from Roamify API - expected data.countries array');
+    if (!json.data || !Array.isArray(json.data.countries)) {
+      throw new Error('Invalid response structure from Roamify API');
     }
 
-    const countries: RoamifyCountry[] = responseData.data.countries;
-    const allPackages: RoamifyPackageWithCountry[] = [];
-    
-    console.log(`Found ${countries.length} countries with packages`);
-    
-    for (const country of countries) {
-      if (!Array.isArray(country.packages)) {
-        console.log(`No packages array found for country: ${country.countryName}`);
-        continue;
+    const allPackages: any[] = [];
+
+    for (const country of json.data.countries) {
+      if (!Array.isArray(country.packages)) continue;
+
+      for (const pkg of country.packages) {
+        // Only include packages with required fields
+        if (!pkg.packageId || !pkg.price) continue;
+        allPackages.push({
+          id: pkg.packageId,
+          country: country.countryName,
+          region: country.region,
+          description: pkg.package,
+          data: (pkg.dataAmount !== undefined && pkg.dataUnit) ? `${pkg.dataAmount} ${pkg.dataUnit}` : undefined,
+          validity: pkg.day ? `${pkg.day} days` : undefined,
+          price: pkg.price,
+          withDataRoaming: pkg.withDataRoaming,
+          // Add any other fields needed for frontend here
+        });
       }
-      
-      console.log(`Processing ${country.packages.length} packages for ${country.countryName}`);
-      const packagesWithCountry = country.packages.map(pkg => ({
-        ...pkg,
-        countryName: country.countryName,
-        countryCode: country.countryCode
-      }));
-      allPackages.push(...packagesWithCountry);
     }
 
-    console.log(`Total packages found: ${allPackages.length}`);
+    console.log('Flattened allPackages array:', allPackages.slice(0, 3)); // Log a sample
+    console.log(`Total packages returned: ${allPackages.length}`);
     return allPackages;
-
   } catch (error) {
     console.error('Error fetching packages from Roamify:', error);
     throw error;
