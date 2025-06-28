@@ -361,22 +361,48 @@ export const getAllRoamifyPackages = async (
       console.log(`Fetching page ${page} from Roamify API...`);
       
       try {
-        const response = await fetch(`${ROAMIFY_API_BASE}/api/packages?page=${page}&limit=${limit}`, {
+        // Use the correct endpoint: /api/esim/packages instead of /api/packages
+        const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages?page=${page}&limit=${limit}`, {
           headers: {
             Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
             'Content-Type': 'application/json',
           },
         });
 
-        const json = await response.json() as { data?: any[] };
+        const json = await response.json() as { status?: string; data?: { packages?: any[] } };
 
-        if (!json.data || json.data.length === 0) {
+        // Check if we have the expected response structure
+        if (!json.data || !json.data.packages || json.data.packages.length === 0) {
           console.log(`No more data on page ${page}, stopping pagination`);
           break;
         }
 
-        console.log(`Page ${page}: Found ${json.data.length} packages`);
-        allPackages.push(...json.data);
+        // Extract packages from each country
+        let pagePackages = 0;
+        for (const country of json.data.packages) {
+          if (country.packages && Array.isArray(country.packages)) {
+            console.log(`Found ${country.packages.length} packages for ${country.countryName || country.country} on page ${page}`);
+            
+            // Map each package with country information
+            const packagesWithCountry = country.packages.map(pkg => ({
+              ...pkg,
+              country_name: country.countryName || country.country || 'Unknown',
+              country_code: country.countryCode || null,
+              region: country.region || country.geography || 'Global'
+            }));
+            
+            allPackages.push(...packagesWithCountry);
+            pagePackages += country.packages.length;
+          }
+        }
+
+        console.log(`Page ${page}: Found ${pagePackages} packages`);
+        
+        if (pagePackages === 0) {
+          console.log(`No packages found on page ${page}, stopping pagination`);
+          break;
+        }
+        
         page++;
         
         // Safety check to prevent infinite loops
@@ -397,7 +423,7 @@ export const getAllRoamifyPackages = async (
       // Extract and validate required fields
       const id = pkg.packageId || pkg.id || 'unknown';
       const country = pkg.country_name || pkg.country || 'unknown';
-      const region = pkg.region || 'unknown';
+      const region = pkg.region || 'Global';
       const dataAmount = pkg.dataAmount || pkg.data || 'unknown';
       const validity = pkg.day || pkg.days || pkg.validity_days || 'unknown';
       const price = pkg.price || pkg.base_price || 0;

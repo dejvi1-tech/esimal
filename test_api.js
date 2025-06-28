@@ -1,12 +1,12 @@
 const fetch = require('node-fetch');
 
-async function testRoamifyMapping() {
+async function testAPI() {
   try {
-    console.log('Testing Roamify package mapping...');
+    console.log('Testing API endpoint...');
     
     const response = await fetch('http://localhost:3001/api/admin/all-roamify-packages', {
       headers: {
-        'Authorization': 'Bearer test-token', // You'll need to replace with actual token
+        'Authorization': 'Bearer test-token',
         'Content-Type': 'application/json',
       },
     });
@@ -26,14 +26,6 @@ async function testRoamifyMapping() {
         console.log('Data:', sample.data);
         console.log('Validity:', sample.validity);
         console.log('Price:', sample.price);
-        console.log('Original fields preserved:', {
-          packageId: sample.packageId,
-          packageName: sample.packageName,
-          country_code: sample.country_code,
-          dataAmount: sample.dataAmount,
-          validity_days: sample.validity_days,
-          base_price: sample.base_price
-        });
         
         // Check if all required fields are present
         const requiredFields = ['id', 'country', 'region', 'description', 'data', 'validity', 'price'];
@@ -49,8 +41,8 @@ async function testRoamifyMapping() {
       console.error('Failed to fetch packages:', response.status, response.statusText);
     }
   } catch (error) {
-    console.error('Error testing Roamify mapping:', error);
+    console.error('Error testing API:', error);
   }
 }
 
-testRoamifyMapping(); 
+testAPI(); 
