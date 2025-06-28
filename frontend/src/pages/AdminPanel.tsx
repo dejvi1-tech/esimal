@@ -295,12 +295,23 @@ const AdminPanel: React.FC = () => {
         console.log('Roamify packages received:', data.length);
         console.log('First package sample:', data[0]);
         console.log('Pagination info:', paginationInfo);
+        console.log('Pagination info type:', typeof paginationInfo);
+        console.log('Pagination info keys:', paginationInfo ? Object.keys(paginationInfo) : 'null');
+        console.log('Total count from pagination:', paginationInfo?.totalCount);
+        console.log('Total pages from pagination:', paginationInfo?.totalPages);
+        console.log('Current page from pagination:', paginationInfo?.page);
         
         // Update pagination state if available
         if (paginationInfo) {
+          console.log('Setting pagination state...');
+          console.log('Setting totalCount to:', paginationInfo.totalCount);
+          console.log('Setting totalPages to:', paginationInfo.totalPages);
+          console.log('Setting currentPage to:', paginationInfo.page);
           setCurrentPage(paginationInfo.page);
           setTotalPages(paginationInfo.totalPages);
           setTotalCount(paginationInfo.totalCount);
+        } else {
+          console.log('No pagination info available');
         }
         
         // Analyze packages for duplicates
@@ -1396,6 +1407,10 @@ const AdminPanel: React.FC = () => {
                 <div className="mt-6 flex justify-center items-center space-x-2">
                   <div className="text-xs text-gray-500 mb-2">
                     Pagination Debug: totalCount={totalCount}, totalPages={totalPages}, currentPage={currentPage}, roamifyPackages.length={roamifyPackages.length}
+                    <br />
+                    Condition check: totalCount > roamifyPackages.length = {totalCount} > {roamifyPackages.length} = {totalCount > roamifyPackages.length}
+                    <br />
+                    totalCount type: {typeof totalCount}, roamifyPackages.length type: {typeof roamifyPackages.length}
                   </div>
                   
                   {totalCount && totalCount > roamifyPackages.length ? (
