@@ -42,8 +42,8 @@ async function testRoamifyAPI() {
                 console.log('Response keys:', Object.keys(data || {}));
                 // Count total packages
                 let totalPackages = 0;
-                if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
-                    for (const country of data.data.packages) {
+                if (data && data.status === 'success' && data.data && data.data.countries && Array.isArray(data.data.countries)) {
+                    for (const country of data.data.countries) {
                         if (country.packages && Array.isArray(country.packages)) {
                             totalPackages += country.packages.length;
                         }
@@ -51,8 +51,8 @@ async function testRoamifyAPI() {
                 }
                 console.log('Total packages found:', totalPackages);
                 if (totalPackages > 0) {
-                    console.log('Sample country packages:', data.data.packages[0]?.packages?.length || 0);
-                    console.log('First package sample:', data.data.packages[0]?.packages?.[0] || 'None');
+                    console.log('Sample country packages:', data.data.countries[0]?.packages?.length || 0);
+                    console.log('First package sample:', data.data.countries[0]?.packages?.[0] || 'None');
                 }
             }
             catch (error) {

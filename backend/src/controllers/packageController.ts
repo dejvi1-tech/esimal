@@ -369,92 +369,96 @@ export const getAllRoamifyPackages = async (
   try {
     console.log('Fetching ALL packages from Roamify API...');
     
-    let allPackages: any[] = [];
-    let page = 1;
-    const limit = 1000;
+    try {
+      // Use the correct endpoint: /api/esim/packages without pagination parameters
+      const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages`, {
+        headers: {
+          Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    while (true) {
-      console.log(`Fetching page ${page} from Roamify API...`);
-      
-      try {
-        // Use the correct endpoint: /api/esim/packages instead of /api/packages
-        const response = await fetch(`${ROAMIFY_API_BASE}/api/esim/packages?page=${page}&limit=${limit}`, {
-          headers: {
-            Authorization: `Bearer ${process.env.ROAMIFY_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
+      console.log(`Response status: ${response.status}`);
+      console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+
+      const json = await response.json() as { status?: string; data?: { countries?: any[] } };
+
+      // Debug: Log the raw response structure
+      console.log('=== RAW ROAMIFY API RESPONSE ===');
+      console.log('Response type:', typeof json);
+      console.log('Top-level keys:', Object.keys(json || {}));
+      console.log('Full response:', JSON.stringify(json, null, 2));
+      console.log('=== END RAW RESPONSE ===');
+
+      // Check if we have the expected response structure: data.countries
+      if (!json.data || !json.data.countries || json.data.countries.length === 0) {
+        console.log('No countries found in response');
+        return res.status(200).json({
+          status: 'success',
+          data: [],
+          count: 0,
         });
+      }
 
-        const json = await response.json() as { status?: string; data?: { packages?: any[] } };
-
-        // Check if we have the expected response structure
-        if (!json.data || !json.data.packages || json.data.packages.length === 0) {
-          console.log(`No more data on page ${page}, stopping pagination`);
-          break;
+      // Extract packages from each country
+      let allPackages: any[] = [];
+      for (const country of json.data.countries) {
+        if (country.packages && Array.isArray(country.packages)) {
+          console.log(`Found ${country.packages.length} packages for ${country.countryName || country.country}`);
+          
+          // Map each package with country information
+          const packagesWithCountry = country.packages.map((pkg: any) => ({
+            ...pkg,
+            country_name: country.countryName || country.country || 'Unknown',
+            country_code: country.countryCode || null,
+            region: country.region || country.geography || 'Global'
+          }));
+          
+          allPackages.push(...packagesWithCountry);
         }
+      }
 
-        // Extract packages from each country
-        let pagePackages = 0;
-        for (const country of json.data.packages) {
-          if (country.packages && Array.isArray(country.packages)) {
-            console.log(`Found ${country.packages.length} packages for ${country.countryName || country.country} on page ${page}`);
-            
-            // Map each package with country information
-            const packagesWithCountry = country.packages.map((pkg: any) => ({
-              ...pkg,
-              country_name: country.countryName || country.country || 'Unknown',
-              country_code: country.countryCode || null,
-              region: country.region || country.geography || 'Global'
-            }));
-            
-            allPackages.push(...packagesWithCountry);
-            pagePackages += country.packages.length;
+      console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
+
+      // Map the packages to the expected format
+      const mappedPackages = allPackages.map((pkg: any) => {
+        // Convert dataAmount from MB to GB if needed
+        let dataStr = pkg.dataAmount;
+        if (typeof pkg.dataAmount === 'number') {
+          if (pkg.isUnlimited) {
+            dataStr = 'Unlimited';
+          } else if (pkg.dataAmount > 1024) {
+            dataStr = `${Math.round(pkg.dataAmount / 1024)}GB`;
+          } else {
+            dataStr = `${pkg.dataAmount}MB`;
           }
         }
 
-        console.log(`Page ${page}: Found ${pagePackages} packages`);
-        
-        if (pagePackages === 0) {
-          console.log(`No packages found on page ${page}, stopping pagination`);
-          break;
-        }
-        
-        page++;
-        
-        // Safety check to prevent infinite loops
-        if (page > 50) {
-          console.log('Reached maximum page limit (50), stopping pagination');
-          break;
-        }
-      } catch (error) {
-        console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
-        throw error;
+        return {
+          id: pkg.packageId || pkg.id,
+          country: pkg.country_name || pkg.country,
+          region: pkg.region || 'Global',
+          description: `${dataStr} - ${pkg.day || pkg.validity} days`,
+          data: dataStr,
+          validity: `${pkg.day || pkg.validity} days`,
+          price: pkg.price || pkg.amount
+        };
+      });
+
+      // Log a sample package for debugging
+      if (mappedPackages.length > 0) {
+        console.log('Sample mapped package:', mappedPackages[0]);
       }
+
+      return res.status(200).json({
+        status: 'success',
+        data: mappedPackages,
+        count: mappedPackages.length,
+      });
+    } catch (error) {
+      console.error('❌ Failed to fetch from Roamify:', ROAMIFY_API_BASE, error);
+      throw error;
     }
-
-    console.log(`Total packages fetched from Roamify API: ${allPackages.length}`);
-
-    // Map the packages to the expected format
-    const mappedPackages = allPackages.map((pkg: RoamifyRawPackage) => ({
-      id: pkg.package_id || pkg.id,
-      country: pkg.country_name || pkg.country,
-      region: pkg.region || 'Global',
-      description: `${pkg.dataAmount || pkg.data} - ${pkg.day || pkg.validity} days`,
-      data: pkg.dataAmount || pkg.data,
-      validity: `${pkg.day || pkg.validity} days`,
-      price: pkg.price || pkg.amount
-    }));
-
-    // Log a sample package for debugging
-    if (mappedPackages.length > 0) {
-      console.log('Sample mapped package:', mappedPackages[0]);
-    }
-
-    return res.status(200).json({
-      status: 'success',
-      data: mappedPackages,
-      count: mappedPackages.length,
-    });
   } catch (error) {
     console.error('Error fetching Roamify packages:', error);
     return res.status(500).json({ status: 'error', message: 'Failed to fetch Roamify packages' });

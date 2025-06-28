@@ -44,12 +44,12 @@ async function debugRoamifyResponse() {
     if (data && data.data) {
       console.log('\n📦 Data object keys:', Object.keys(data.data));
       
-      if (data.data.packages && Array.isArray(data.data.packages)) {
-        console.log(`\n🌍 Found ${data.data.packages.length} countries`);
+      if (data.data.countries && Array.isArray(data.data.countries)) {
+        console.log(`\n🌍 Found ${data.data.countries.length} countries`);
         
         // Inspect first country
-        if (data.data.packages.length > 0) {
-          const firstCountry = data.data.packages[0];
+        if (data.data.countries.length > 0) {
+          const firstCountry = data.data.countries[0];
           console.log('\n🏳️ First Country Structure:');
           console.log('Country keys:', Object.keys(firstCountry));
           console.log('Country name:', firstCountry.countryName || firstCountry.country || 'Unknown');

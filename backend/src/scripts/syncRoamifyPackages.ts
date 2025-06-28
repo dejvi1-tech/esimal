@@ -1,446 +1,269 @@
-import { supabase } from '../config/supabase';
 import axios from 'axios';
-import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
 import { v4 as uuidv4 } from 'uuid';
 
-// Load environment variables
-config();
+// Load environment variables from backend .env file
+dotenv.config({ path: './.env' });
 
-const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
-const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const roamifyApiKey = process.env.ROAMIFY_API_KEY!;
 
-// Create a Supabase client with service role key to bypass RLS
-const supabaseAdmin = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+if (!supabaseUrl || !supabaseServiceKey || !roamifyApiKey) {
+  console.error('Missing required environment variables');
+  process.exit(1);
+}
 
-// Function to deduplicate packages
-function deduplicatePackages(packages: any[]) {
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+interface RoamifyPackage {
+  packageId: string;
+  package: string;
+  plan: string;
+  activation: string;
+  day: number;
+  price: number;
+  isUnlimited: boolean;
+  isAPNAutomatic: boolean;
+  apn: string;
+  dataAmount: number;
+  dataUnit: string;
+  callType: string;
+  callAmount: number;
+  callUnit: string;
+  smsType: string;
+  smsAmount: number;
+  smsUnit: string;
+  withSMS: boolean;
+  withCall: boolean;
+  withHotspot: boolean;
+  withDataRoaming: boolean;
+  withDestinationInstall: boolean;
+  withUsageCheck: boolean;
+  withThrottle: boolean;
+  throttle: {
+    throttleSpeed: number;
+    throttleSpeedUnit: string;
+    throttleThreshold: number;
+    throttleThresholdUnit: string;
+  };
+  notes: string[];
+}
+
+interface RoamifyCountry {
+  id: string;
+  countryName: string;
+  countryCode: string;
+  countrySlug: string;
+  region: string;
+  geography: string;
+  minPrice: number;
+  maxPrice: number;
+  image: string;
+  signals: Array<{
+    code: string;
+    name: string;
+    networks: string[];
+    carriers: string[];
+  }>;
+  packages: RoamifyPackage[];
+}
+
+interface RoamifyResponse {
+  data: RoamifyCountry[];
+}
+
+interface MyPackage {
+  id: string;
+  name: string;
+  country_name: string;
+  data_amount: number;
+  validity_days: number;
+  base_price: number;
+  sale_price: number;
+  profit: number;
+}
+
+interface RoamifyPackageWithCountry extends RoamifyPackage {
+  countryName: string;
+  countryCode: string;
+}
+
+async function fetchAllRoamifyPackages(): Promise<RoamifyPackageWithCountry[]> {
+  try {
+    console.log('Fetching packages from Roamify API...');
+    
+    const response = await axios.get('https://api.getroamify.com/api/esim/packages', {
+      headers: {
+        'Authorization': `Bearer ${roamifyApiKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('=== RAW RESPONSE ===');
+    console.log(JSON.stringify(response.data, null, 2));
+    console.log('=== END RAW RESPONSE ===');
+
+    // Check for the correct response structure: data.countries
+    const responseData = response.data as { data?: { countries?: RoamifyCountry[] } };
+    if (!responseData.data || !Array.isArray(responseData.data.countries)) {
+      throw new Error('Invalid response structure from Roamify API - expected data.countries array');
+    }
+
+    const countries: RoamifyCountry[] = responseData.data.countries;
+    const allPackages: RoamifyPackageWithCountry[] = [];
+    
+    console.log(`Found ${countries.length} countries with packages`);
+    
+    for (const country of countries) {
+      if (!Array.isArray(country.packages)) {
+        console.log(`No packages array found for country: ${country.countryName}`);
+        continue;
+      }
+      
+      console.log(`Processing ${country.packages.length} packages for ${country.countryName}`);
+      const packagesWithCountry = country.packages.map(pkg => ({
+        ...pkg,
+        countryName: country.countryName,
+        countryCode: country.countryCode
+      }));
+      allPackages.push(...packagesWithCountry);
+    }
+
+    console.log(`Total packages found: ${allPackages.length}`);
+    return allPackages;
+
+  } catch (error) {
+    console.error('Error fetching packages from Roamify:', error);
+    throw error;
+  }
+}
+
+function deduplicatePackages(packages: RoamifyPackageWithCountry[]): RoamifyPackageWithCountry[] {
   console.log('\n=== Starting Package Deduplication ===');
   console.log(`Initial package count: ${packages.length}`);
-
-  // Step 1: Remove duplicate IDs by keeping the most recent version
-  const idMap = new Map();
+  
+  // First, deduplicate by packageId
+  const idMap = new Map<string, RoamifyPackageWithCountry>();
   packages.forEach(pkg => {
-    const id = pkg.packageId || null;
-    if (id) {
-      // If we already have this ID, keep the one with more complete information
-      if (idMap.has(id)) {
-        const existing = idMap.get(id);
-        const newPkgScore = calculateCompleteness(pkg);
-        const existingScore = calculateCompleteness(existing);
-        if (newPkgScore > existingScore) {
-          idMap.set(id, pkg);
-        }
-      } else {
-        idMap.set(id, pkg);
-      }
+    if (!idMap.has(pkg.packageId)) {
+      idMap.set(pkg.packageId, pkg);
     }
   });
-
-  // Get packages without IDs and those with unique IDs
-  const packagesWithoutIds = packages.filter(pkg => !pkg.packageId);
-  const uniqueIdPackages = Array.from(idMap.values());
-  let dedupedPackages = [...uniqueIdPackages, ...packagesWithoutIds];
-
-  console.log(`After ID deduplication: ${dedupedPackages.length} packages`);
-  console.log(`Removed ${packages.length - dedupedPackages.length} duplicate IDs`);
-
-  // Step 2: Remove duplicate combinations
-  const combinationMap = new Map();
-  dedupedPackages.forEach(pkg => {
-    const country = pkg.country_name || 'unknown';
-    const data = pkg.dataAmount || 'unknown';
-    const days = pkg.day || 'unknown';
-    const price = pkg.price || 'unknown';
-    const key = `${country}|${data}|${days}|${price}`;
-
-    if (combinationMap.has(key)) {
-      const existing = combinationMap.get(key);
-      // Keep the one with an ID over one without, or the one with more complete information
-      if ((!existing.packageId && pkg.packageId) || 
-          (calculateCompleteness(pkg) > calculateCompleteness(existing))) {
-        combinationMap.set(key, pkg);
-      }
-    } else {
+  
+  const uniqueById = Array.from(idMap.values());
+  console.log(`After ID deduplication: ${uniqueById.length} packages`);
+  console.log(`Removed ${packages.length - uniqueById.length} duplicate IDs`);
+  
+  // Then, deduplicate by combination of key fields
+  const combinationMap = new Map<string, RoamifyPackageWithCountry>();
+  uniqueById.forEach(pkg => {
+    const key = `${pkg.countryName}-${pkg.dataAmount}-${pkg.dataUnit}-${pkg.day}-${pkg.price}`;
+    if (!combinationMap.has(key)) {
       combinationMap.set(key, pkg);
     }
   });
-
-  dedupedPackages = Array.from(combinationMap.values());
-
-  console.log(`After combination deduplication: ${dedupedPackages.length} packages`);
-  console.log(`Removed ${packages.length - dedupedPackages.length} total duplicates`);
+  
+  const finalUnique = Array.from(combinationMap.values());
+  console.log(`After combination deduplication: ${finalUnique.length} packages`);
+  console.log(`Removed ${uniqueById.length - finalUnique.length} total duplicates`);
   console.log('=== Deduplication Complete ===\n');
-
-  return dedupedPackages;
+  
+  return finalUnique;
 }
 
-// Helper function to calculate how complete a package's information is
-function calculateCompleteness(pkg: any): number {
-  let score = 0;
-  if (pkg.packageId) score += 2;
-  if (pkg.package) score += 1;
-  if (pkg.price) score += 1;
-  if (pkg.dataAmount) score += 1;
-  if (pkg.day) score += 1;
-  if (pkg.country_name) score += 1;
-  if (pkg.country_code) score += 1;
-  if (pkg.features) score += 1;
-  return score;
-}
-
-async function syncPackages() {
-  if (!ROAMIFY_API_KEY) {
-    throw new Error('ROAMIFY_API_KEY not set');
+function convertDataAmount(dataAmount: number, dataUnit: string): number {
+  if (dataUnit === 'MB') {
+    return dataAmount / 1024; // Convert MB to GB
+  } else if (dataUnit === 'GB') {
+    return dataAmount;
+  } else {
+    return dataAmount; // Default to original value
   }
+}
 
-  try {
-    console.log('Clearing packages table...');
-    // Get all existing IDs and delete them
-    const { data: existingPackages } = await supabaseAdmin.from('packages').select('id');
-    if (existingPackages && existingPackages.length > 0) {
-      const ids = existingPackages.map(pkg => pkg.id);
-      await supabaseAdmin.from('packages').delete().in('id', ids);
-      console.log(`Deleted ${ids.length} existing packages`);
-    }
-    console.log('Table cleared.');
+function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage {
+  const dataAmountGB = convertDataAmount(pkg.dataAmount, pkg.dataUnit);
+  const basePrice = pkg.price;
+  const salePrice = pkg.price; // You can adjust this based on your pricing strategy
+  const profit = salePrice - basePrice;
 
-    console.log('Fetching packages from Roamify API...');
-    console.log('Using API Key:', ROAMIFY_API_KEY.substring(0, 10) + '...');
+  return {
+    id: uuidv4(), // Generate a new UUID for each package
+    name: pkg.package,
+    country_name: pkg.countryName,
+    data_amount: dataAmountGB,
+    validity_days: pkg.day,
+    base_price: basePrice,
+    sale_price: salePrice,
+    profit: profit
+  };
+}
+
+async function syncPackagesToDatabase(packages: MyPackage[]): Promise<void> {
+  const batchSize = 50;
+  const totalBatches = Math.ceil(packages.length / batchSize);
+  
+  console.log(`Syncing ${packages.length} packages in ${totalBatches} batches...`);
+  
+  let successCount = 0;
+  let failureCount = 0;
+
+  for (let i = 0; i < totalBatches; i++) {
+    const start = i * batchSize;
+    const end = Math.min(start + batchSize, packages.length);
+    const batch = packages.slice(start, end);
     
-    // Try multiple approaches to get all packages
-    let packages: any[] = [];
-    let totalPackagesFound = 0;
+    console.log(`Processing batch ${i + 1}/${totalBatches} (${start + 1}-${end} of ${packages.length})`);
     
-    // Approach 1: Try with high limit
     try {
-      console.log('\n=== Approach 1: High limit ===');
-      const response1 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
-        headers: {
-          Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        params: {
-          limit: 50000, // Very high limit
-          offset: 0
-        },
-        timeout: 120000 // 2 minute timeout
-      });
-
-      const data1 = response1.data as { status?: string; data?: { packages?: any[] } };
-      if (data1 && data1.status === 'success' && data1.data && data1.data.packages && Array.isArray(data1.data.packages)) {
-        console.log('Found packages array in response.data.data.packages');
-        
-        // Flatten all packages with correct mapping
-        for (const country of data1.data.packages) {
-          if (country.packages && Array.isArray(country.packages)) {
-            for (const pkg of country.packages) {
-              // Log the raw package for debugging
-              console.log('DEBUG PACKAGE SHAPE:', pkg);
-
-              // Extract fields with fallbacks
-              const mapped = {
-                id: pkg.packageId || pkg.id || null,
-                country: country.countryName || country.country || country.countryCode || 'unknown',
-                country_code: country.countryCode || 'unknown',
-                region: country.region || country.geography || 'unknown',
-                description: pkg.package || pkg.plan || pkg.activation || 'unknown',
-                price: pkg.price ?? 0,
-                data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
-                duration: pkg.day || pkg.days || pkg.validity || 'unknown',
-                validity: pkg.day || pkg.days || pkg.validity || 'unknown',
-                isUnlimited: pkg.isUnlimited || false,
-                features: {
-                  withSMS: pkg.withSMS,
-                  withCall: pkg.withCall,
-                  withHotspot: pkg.withHotspot,
-                  withDataRoaming: pkg.withDataRoaming,
-                  withDestinationInstall: pkg.withDestinationInstall,
-                  withUsageCheck: pkg.withUsageCheck,
-                  withThrottle: pkg.withThrottle,
-                  throttle: pkg.throttle,
-                },
-                notes: pkg.notes || [],
-              };
-
-              // Log missing critical fields
-              if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
-                console.warn('⚠️ Missing critical fields in package:', mapped);
-              }
-
-              packages.push(mapped);
-            }
-          }
-        }
-        totalPackagesFound = packages.length;
-        console.log(`Approach 1 found ${totalPackagesFound} packages`);
-      }
-    } catch (error) {
-      console.error('❌ Failed to fetch from Roamify (Approach 1):', ROAMIFY_API_BASE, error);
-      if (error instanceof Error) {
-        console.log('Approach 1 failed:', error.message);
-      } else {
-        console.log('Approach 1 failed with unknown error:', error);
-      }
-    }
-
-    // Approach 2: Try without parameters (default behavior)
-    if (totalPackagesFound === 0) {
-      try {
-        console.log('\n=== Approach 2: No parameters ===');
-        const response2 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
-          headers: {
-            Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000
+      const { error } = await supabase
+        .from('my_packages')
+        .upsert(batch, { 
+          onConflict: 'id',
+          ignoreDuplicates: false 
         });
 
-        const data2 = response2.data as { status?: string; data?: { packages?: any[] } };
-        if (data2 && data2.status === 'success' && data2.data && data2.data.packages && Array.isArray(data2.data.packages)) {
-          console.log('Found packages array in response.data.data.packages');
-          
-          // Flatten all packages with correct mapping
-          for (const country of data2.data.packages) {
-            if (country.packages && Array.isArray(country.packages)) {
-              for (const pkg of country.packages) {
-                // Log the raw package for debugging
-                console.log('DEBUG PACKAGE SHAPE:', pkg);
-
-                // Extract fields with fallbacks
-                const mapped = {
-                  id: pkg.packageId || pkg.id || null,
-                  country: country.countryName || country.country || country.countryCode || 'unknown',
-                  country_code: country.countryCode || 'unknown',
-                  region: country.region || country.geography || 'unknown',
-                  description: pkg.package || pkg.plan || pkg.activation || 'unknown',
-                  price: pkg.price ?? 0,
-                  data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
-                  duration: pkg.day || pkg.days || pkg.validity || 'unknown',
-                  validity: pkg.day || pkg.days || pkg.validity || 'unknown',
-                  isUnlimited: pkg.isUnlimited || false,
-                  features: {
-                    withSMS: pkg.withSMS,
-                    withCall: pkg.withCall,
-                    withHotspot: pkg.withHotspot,
-                    withDataRoaming: pkg.withDataRoaming,
-                    withDestinationInstall: pkg.withDestinationInstall,
-                    withUsageCheck: pkg.withUsageCheck,
-                    withThrottle: pkg.withThrottle,
-                    throttle: pkg.throttle,
-                  },
-                  notes: pkg.notes || [],
-                };
-
-                // Log missing critical fields
-                if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
-                  console.warn('⚠️ Missing critical fields in package:', mapped);
-                }
-
-                packages.push(mapped);
-              }
-            }
-          }
-          totalPackagesFound = packages.length;
-          console.log(`Approach 2 found ${totalPackagesFound} packages`);
-        }
-      } catch (error) {
-        console.error('❌ Failed to fetch from Roamify (Approach 2):', ROAMIFY_API_BASE, error);
-        if (error instanceof Error) {
-          console.log('Approach 2 failed:', error.message);
-        } else {
-          console.log('Approach 2 failed with unknown error:', error);
-        }
+      if (error) {
+        console.error(`Error syncing batch:`, error);
+        failureCount += batch.length;
+      } else {
+        successCount += batch.length;
+        console.log(`✓ Successfully synced batch ${i + 1}`);
       }
+    } catch (error) {
+      console.error(`Error syncing batch:`, error);
+      failureCount += batch.length;
     }
+  }
 
-    // Approach 3: Try with pagination to get ALL packages
-    // Always try pagination to ensure we get the complete dataset
-    if (totalPackagesFound > 0) {
-      try {
-        console.log('\n=== Approach 3: Pagination to get ALL packages ===');
-        let offset = totalPackagesFound;
-        let hasMore = true;
-        let page = 1;
-        let consecutiveEmptyPages = 0;
-        
-        while (hasMore && page <= 50) { // Increased limit to 50 pages to get all 11k+ packages
-          console.log(`Fetching page ${page} with offset ${offset}...`);
-          
-          const response3 = await axios.get(`${ROAMIFY_API_BASE}/api/esim/packages`, {
-            headers: {
-              Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            params: {
-              limit: 10000, // Increased to 10k per page
-              offset: offset
-            },
-            timeout: 60000 // Increased timeout for larger requests
-          });
+  console.log('\nPackage sync completed!');
+  console.log(`✓ Successfully synced: ${successCount} packages`);
+  console.log(`✗ Failed to sync: ${failureCount} packages`);
+  console.log(`Total processed: ${packages.length} packages`);
+}
 
-          const data3 = response3.data as { status?: string; data?: { packages?: any[] } };
-          if (data3 && data3.status === 'success' && data3.data && data3.data.packages && Array.isArray(data3.data.packages)) {
-            let pagePackages = 0;
-            for (const country of data3.data.packages) {
-              if (country.packages && Array.isArray(country.packages)) {
-                console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
-                for (const pkg of country.packages) {
-                  // Log the raw package for debugging
-                  console.log('DEBUG PACKAGE SHAPE:', pkg);
-
-                  // Extract fields with fallbacks
-                  const mapped = {
-                    id: pkg.packageId || pkg.id || null,
-                    country: country.countryName || country.country || country.countryCode || 'unknown',
-                    country_code: country.countryCode || 'unknown',
-                    region: country.region || country.geography || 'unknown',
-                    description: pkg.package || pkg.plan || pkg.activation || 'unknown',
-                    price: pkg.price ?? 0,
-                    data: pkg.isUnlimited ? 'Unlimited' : (pkg.dataAmount ? `${Math.round(pkg.dataAmount / 1024)}GB` : 'unknown'),
-                    duration: pkg.day || pkg.days || pkg.validity || 'unknown',
-                    validity: pkg.day || pkg.days || pkg.validity || 'unknown',
-                    isUnlimited: pkg.isUnlimited || false,
-                    features: {
-                      withSMS: pkg.withSMS,
-                      withCall: pkg.withCall,
-                      withHotspot: pkg.withHotspot,
-                      withDataRoaming: pkg.withDataRoaming,
-                      withDestinationInstall: pkg.withDestinationInstall,
-                      withUsageCheck: pkg.withUsageCheck,
-                      withThrottle: pkg.withThrottle,
-                      throttle: pkg.throttle,
-                    },
-                    notes: pkg.notes || [],
-                  };
-
-                  // Log missing critical fields
-                  if (!mapped.id || !mapped.country || !mapped.price || !mapped.data || !mapped.duration) {
-                    console.warn('⚠️ Missing critical fields in package:', mapped);
-                  }
-
-                  packages.push(mapped);
-                }
-                pagePackages += country.packages.length;
-              }
-            }
-            
-            if (pagePackages === 0) {
-              consecutiveEmptyPages++;
-              if (consecutiveEmptyPages >= 3) { // Stop after 3 consecutive empty pages
-                console.log('Stopping pagination after 3 consecutive empty pages');
-                hasMore = false;
-              }
-            } else {
-              consecutiveEmptyPages = 0; // Reset counter
-              offset += pagePackages;
-              page++;
-            }
-          } else {
-            console.log('No valid data in response, stopping pagination');
-            hasMore = false;
-          }
-        }
-        
-        totalPackagesFound = packages.length;
-        console.log(`Approach 3 found ${totalPackagesFound} total packages after pagination`);
-      } catch (error) {
-        console.error('❌ Failed to fetch from Roamify (Approach 3):', ROAMIFY_API_BASE, error);
-        if (error instanceof Error) {
-          console.log('Approach 3 failed:', error.message);
-        } else {
-          console.log('Approach 3 failed with unknown error:', error);
-        }
-      }
-    }
-
-    if (totalPackagesFound === 0) {
-      console.error('No packages found from any approach');
-      throw new Error('Failed to fetch packages from Roamify API');
-    }
-
-    console.log(`\nTotal packages found: ${totalPackagesFound}`);
-
-    // Deduplicate packages before processing
-    packages = deduplicatePackages(packages);
-
-    // Process packages in batches for better performance
-    const batchSize = 50;
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (let i = 0; i < packages.length; i += batchSize) {
-      const batch = packages.slice(i, i + batchSize);
-      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(packages.length / batchSize)} (${i + 1}-${Math.min(i + batchSize, packages.length)} of ${packages.length})`);
-      
-      const batchData = batch.map(pkg => {
-        try {
-          // Only insert if we have all required fields
-          if (!pkg.id || !pkg.country || !pkg.price || !pkg.data || !pkg.duration) {
-            console.log('Skipping package due to missing required fields:', pkg);
-            return null;
-          }
-
-          return {
-            id: pkg.id,
-            name: pkg.description || '',
-            description: pkg.description || '',
-            price: pkg.price,
-            data_amount: pkg.data,
-            validity_days: pkg.duration,
-            country_code: pkg.country_code,
-            country_name: pkg.country,
-            region: pkg.region,
-            operator: 'Roamify',
-            type: 'initial',
-            is_active: true,
-            features: pkg.features || null,
-            reseller_id: pkg.id,
-            notes: pkg.notes || [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-        } catch (error) {
-          console.error(`Error processing package:`, error);
-          console.error('Package data:', pkg);
-          return null;
-        }
-      }).filter(Boolean);
-
-      if (batchData.length > 0) {
-        try {
-          const { error } = await supabaseAdmin.from('packages').upsert(batchData, { onConflict: 'id' });
-          if (error) {
-            console.error(`Error syncing batch:`, error);
-            errorCount += batchData.length;
-          } else {
-            successCount += batchData.length;
-            console.log(`✓ Successfully synced ${batchData.length} packages in this batch`);
-          }
-        } catch (error) {
-          console.error(`Error syncing batch:`, error);
-          errorCount += batchData.length;
-        }
-      }
-    }
-
-    console.log(`\nPackage sync completed!`);
-    console.log(`✓ Successfully synced: ${successCount} packages`);
-    console.log(`✗ Failed to sync: ${errorCount} packages`);
-    console.log(`Total processed: ${successCount + errorCount} packages`);
+async function main() {
+  try {
+    // Fetch all packages from Roamify
+    const roamifyPackages = await fetchAllRoamifyPackages();
+    
+    // Deduplicate packages
+    const uniquePackages = deduplicatePackages(roamifyPackages);
+    
+    // Map to our database structure
+    const myPackages: MyPackage[] = uniquePackages.map(pkg => {
+      return mapRoamifyToMyPackage(pkg);
+    });
+    
+    // Sync to database
+    await syncPackagesToDatabase(myPackages);
+    
   } catch (error) {
-    console.error('Failed to sync packages:', error);
-    if (error && typeof error === 'object' && 'response' in error) {
-      const apiError = error as any;
-      console.error('API Error Response:', apiError.response?.data);
-      console.error('API Error Status:', apiError.response?.status);
-      console.error('API Error Headers:', apiError.response?.headers);
-    }
+    console.error('Error in main process:', error);
     process.exit(1);
   }
 }
 
-// Run the sync
-syncPackages().catch(console.error);
+main();
