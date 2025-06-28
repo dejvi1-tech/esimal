@@ -79,17 +79,15 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     console.log('[DEBUG] handleSubmit called');
     if (!stripe || !elements) {
+      console.error('[DEBUG] Stripe not loaded');
+      toast({ title: 'Stripe Error', description: 'Stripe has not loaded yet. Please try again.', variant: 'destructive' });
       onError('Stripe has not loaded yet. Please try again.');
       return;
     }
-
     setIsProcessing(true);
-
     try {
-      // Create payment intent if we don't have one
       if (!clientSecret) {
         console.log('[DEBUG] No clientSecret, creating new payment intent...');
         const newClientSecret = await createPaymentIntent();
@@ -98,42 +96,36 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       } else {
         console.log('[DEBUG] Using existing clientSecret:', clientSecret);
       }
-
-      // Get the card element
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
         console.error('[DEBUG] Card element not found');
+        toast({ title: 'Card Error', description: 'Card element not found', variant: 'destructive' });
         throw new Error('Card element not found');
       }
-
       console.log('[DEBUG] Confirming card payment...');
-      // Confirm the payment
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret!, {
         payment_method: {
           card: cardElement,
-          billing_details: {
-            email: email,
-          },
+          billing_details: { email: email },
         },
       });
-
       if (error) {
         console.error('[DEBUG] Payment confirmation error:', error);
+        toast({ title: t('payment_failed'), description: error.message || 'There was an error processing your payment.', variant: 'destructive' });
         onError(error.message || 'There was an error processing your payment.');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         console.log('[DEBUG] Payment successful:', paymentIntent);
-        toast({
-          title: t('payment_successful'),
-          description: t('payment_processed_successfully'),
-        });
+        toast({ title: t('payment_successful'), description: t('payment_processed_successfully'), variant: 'success' });
         onSuccess(paymentIntent.id);
       } else {
         console.error('[DEBUG] Payment failed:', paymentIntent);
+        toast({ title: t('payment_failed'), description: 'Payment was not successful. Please try again.', variant: 'destructive' });
         onError('Payment was not successful. Please try again.');
       }
     } catch (err) {
       console.error('[DEBUG] Payment error:', err);
       const errorMessage = err instanceof Error ? err.message : 'There was an error processing your payment.';
+      toast({ title: t('payment_failed'), description: errorMessage, variant: 'destructive' });
       onError(errorMessage);
     } finally {
       setIsProcessing(false);
