@@ -106,44 +106,160 @@ async function syncPackages() {
         console.log('Table cleared.');
         console.log('Fetching packages from Roamify API...');
         console.log('Using API Key:', ROAMIFY_API_KEY.substring(0, 10) + '...');
-        const response = await axios_1.default.get('https://api.getroamify.com/api/esim/packages', {
-            headers: {
-                Authorization: `Bearer ${ROAMIFY_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-        });
-        console.log('Response status:', response.status);
-        // Handle the actual Roamify API response structure
+        // Try multiple approaches to get all packages
         let packages = [];
-        const data = response.data;
-        if (data && data.status === 'success' && data.data && data.data.packages && Array.isArray(data.data.packages)) {
-            console.log('Found packages array in response.data.data.packages');
-            // Extract individual packages from country objects
-            for (const country of data.data.packages) {
-                if (country.packages && Array.isArray(country.packages)) {
-                    console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
-                    // Add country info to each package using separate fields
-                    const packagesWithCountry = country.packages.map((pkg) => ({
-                        ...pkg,
-                        country_name: country.countryName || country.country || 'Unknown',
-                        country_code: country.countryCode || null
-                    }));
-                    packages = packages.concat(packagesWithCountry);
+        let totalPackagesFound = 0;
+        // Approach 1: Try with high limit
+        try {
+            console.log('\n=== Approach 1: High limit ===');
+            const response1 = await axios_1.default.get('https://api.getroamify.com/api/esim/packages', {
+                headers: {
+                    Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+                    'Content-Type': 'application/json',
+                },
+                params: {
+                    limit: 50000, // Very high limit
+                    offset: 0
+                },
+                timeout: 120000 // 2 minute timeout
+            });
+            const data1 = response1.data;
+            if (data1 && data1.status === 'success' && data1.data && data1.data.packages && Array.isArray(data1.data.packages)) {
+                console.log('Found packages array in response.data.data.packages');
+                // Extract individual packages from country objects
+                for (const country of data1.data.packages) {
+                    if (country.packages && Array.isArray(country.packages)) {
+                        console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
+                        const packagesWithCountry = country.packages.map((pkg) => ({
+                            ...pkg,
+                            country_name: country.countryName || country.country || 'Unknown',
+                            country_code: country.countryCode || null
+                        }));
+                        packages = packages.concat(packagesWithCountry);
+                    }
+                }
+                totalPackagesFound = packages.length;
+                console.log(`Approach 1 found ${totalPackagesFound} packages`);
+            }
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                console.log('Approach 1 failed:', error.message);
+            }
+            else {
+                console.log('Approach 1 failed with unknown error:', error);
+            }
+        }
+        // Approach 2: Try without parameters (default behavior)
+        if (totalPackagesFound === 0) {
+            try {
+                console.log('\n=== Approach 2: No parameters ===');
+                const response2 = await axios_1.default.get('https://api.getroamify.com/api/esim/packages', {
+                    headers: {
+                        Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+                        'Content-Type': 'application/json',
+                    },
+                    timeout: 60000
+                });
+                const data2 = response2.data;
+                if (data2 && data2.status === 'success' && data2.data && data2.data.packages && Array.isArray(data2.data.packages)) {
+                    console.log('Found packages array in response.data.data.packages');
+                    for (const country of data2.data.packages) {
+                        if (country.packages && Array.isArray(country.packages)) {
+                            console.log(`Found ${country.packages.length} packages for ${country.countryName}`);
+                            const packagesWithCountry = country.packages.map((pkg) => ({
+                                ...pkg,
+                                country_name: country.countryName || country.country || 'Unknown',
+                                country_code: country.countryCode || null
+                            }));
+                            packages = packages.concat(packagesWithCountry);
+                        }
+                    }
+                    totalPackagesFound = packages.length;
+                    console.log(`Approach 2 found ${totalPackagesFound} packages`);
+                }
+            }
+            catch (error) {
+                if (error instanceof Error) {
+                    console.log('Approach 2 failed:', error.message);
+                }
+                else {
+                    console.log('Approach 2 failed with unknown error:', error);
                 }
             }
         }
-        else {
-            console.error('Unexpected API response structure. Available keys:', Object.keys(data || {}));
-            if (data && data.data) {
-                console.error('Data keys:', Object.keys(data.data));
+        // Approach 3: Try with pagination to get ALL packages
+        // Always try pagination to ensure we get the complete dataset
+        if (totalPackagesFound > 0) {
+            try {
+                console.log('\n=== Approach 3: Pagination to get ALL packages ===');
+                let offset = totalPackagesFound;
+                let hasMore = true;
+                let page = 1;
+                let consecutiveEmptyPages = 0;
+                while (hasMore && page <= 50) { // Increased limit to 50 pages to get all 11k+ packages
+                    console.log(`Fetching page ${page} with offset ${offset}...`);
+                    const response3 = await axios_1.default.get('https://api.getroamify.com/api/esim/packages', {
+                        headers: {
+                            Authorization: `Bearer ${ROAMIFY_API_KEY}`,
+                            'Content-Type': 'application/json',
+                        },
+                        params: {
+                            limit: 10000, // Increased to 10k per page
+                            offset: offset
+                        },
+                        timeout: 60000 // Increased timeout for larger requests
+                    });
+                    const data3 = response3.data;
+                    if (data3 && data3.status === 'success' && data3.data && data3.data.packages && Array.isArray(data3.data.packages)) {
+                        let pagePackages = 0;
+                        for (const country of data3.data.packages) {
+                            if (country.packages && Array.isArray(country.packages)) {
+                                console.log(`Found ${country.packages.length} packages for ${country.countryName} on page ${page}`);
+                                const packagesWithCountry = country.packages.map((pkg) => ({
+                                    ...pkg,
+                                    country_name: country.countryName || country.country || 'Unknown',
+                                    country_code: country.countryCode || null
+                                }));
+                                packages = packages.concat(packagesWithCountry);
+                                pagePackages += country.packages.length;
+                            }
+                        }
+                        if (pagePackages === 0) {
+                            consecutiveEmptyPages++;
+                            if (consecutiveEmptyPages >= 3) { // Stop after 3 consecutive empty pages
+                                console.log('Stopping pagination after 3 consecutive empty pages');
+                                hasMore = false;
+                            }
+                        }
+                        else {
+                            consecutiveEmptyPages = 0; // Reset counter
+                            offset += pagePackages;
+                            page++;
+                        }
+                    }
+                    else {
+                        console.log('No valid data in response, stopping pagination');
+                        hasMore = false;
+                    }
+                }
+                totalPackagesFound = packages.length;
+                console.log(`Approach 3 found ${totalPackagesFound} total packages after pagination`);
             }
-            throw new Error('Invalid API response structure - no packages array found');
+            catch (error) {
+                if (error instanceof Error) {
+                    console.log('Approach 3 failed:', error.message);
+                }
+                else {
+                    console.log('Approach 3 failed with unknown error:', error);
+                }
+            }
         }
-        console.log(`Found ${packages.length} total packages from API`);
-        if (packages.length === 0) {
-            console.log('No packages found in API response');
-            return;
+        if (totalPackagesFound === 0) {
+            console.error('No packages found from any approach');
+            throw new Error('Failed to fetch packages from Roamify API');
         }
+        console.log(`\nTotal packages found: ${totalPackagesFound}`);
         // Deduplicate packages before processing
         packages = deduplicatePackages(packages);
         // Process packages in batches for better performance

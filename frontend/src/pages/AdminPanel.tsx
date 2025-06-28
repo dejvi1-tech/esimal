@@ -92,7 +92,7 @@ const AdminPanel: React.FC = () => {
 
   const [countrySearch, setCountrySearch] = useState('');
 
-  const [roamifyVisibleCount, setRoamifyVisibleCount] = useState(100);
+  const [roamifyVisibleCount, setRoamifyVisibleCount] = useState(50000); // Show all packages by default (enough for 50k+ packages)
 
   // Add state for duplicate analysis
   const [duplicateAnalysis, setDuplicateAnalysis] = useState<{
@@ -1173,6 +1173,23 @@ const AdminPanel: React.FC = () => {
               </div>
             ) : (
               <div className="overflow-x-auto" style={{ maxHeight: 600, overflowY: 'auto' }}>
+                {/* Package Summary */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Total Packages:</span> {roamifyPackages.length.toLocaleString()}
+                      {selectedRoamifyCountry && (
+                        <span className="ml-4">
+                          <span className="font-medium">Filtered:</span> {filteredRoamifyPackages.length.toLocaleString()} for {selectedRoamifyCountry}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Showing {Math.min(roamifyVisibleCount, filteredRoamifyPackages.length).toLocaleString()} packages
+                    </div>
+                  </div>
+                </div>
+                
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -1278,10 +1295,15 @@ const AdminPanel: React.FC = () => {
                   <div className="text-center my-4">
                     <button
                       className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                      onClick={() => setRoamifyVisibleCount(c => c + 100)}
+                      onClick={() => setRoamifyVisibleCount(c => c + 5000)}
                     >
-                      Show More
+                      Show More ({roamifyVisibleCount} of {filteredRoamifyPackages.length} packages)
                     </button>
+                  </div>
+                )}
+                {filteredRoamifyPackages.length > 0 && roamifyVisibleCount >= filteredRoamifyPackages.length && (
+                  <div className="text-center my-4 text-sm text-gray-600">
+                    Showing all {filteredRoamifyPackages.length} packages
                   </div>
                 )}
               </div>

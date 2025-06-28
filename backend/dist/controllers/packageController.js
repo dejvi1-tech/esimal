@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
+exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const errors_1 = require("../utils/errors");
@@ -166,29 +166,21 @@ const deletePackage = async (req, res, next) => {
 exports.deletePackage = deletePackage;
 const getCountries = async (req, res, next) => {
     try {
-        let allCountries = [];
-        let offset = 0;
-        const batchSize = 1000;
-        let hasMore = true;
-        while (hasMore) {
-            const { data, error } = await supabaseAdmin
-                .from('packages')
-                .select('country_name')
-                .neq('country_name', null)
-                .range(offset, offset + batchSize - 1);
-            if (error)
-                throw error;
-            if (!data || data.length === 0)
-                break;
-            allCountries.push(...data.map((pkg) => pkg.country_name));
-            hasMore = data.length === batchSize;
-            offset += batchSize;
-        }
-        // Deduplicate and sort
-        const uniqueCountries = Array.from(new Set(allCountries)).filter(Boolean).sort();
+        // Get all countries at once without pagination
+        const { data: countries, error } = await supabaseAdmin
+            .from('packages')
+            .select('country_name')
+            .neq('country_name', null)
+            .neq('country_name', '')
+            .order('country_name', { ascending: true });
+        if (error)
+            throw error;
+        // Extract unique country names
+        const uniqueCountries = Array.from(new Set(countries?.map(c => c.country_name) || [])).filter(Boolean).sort();
         res.status(200).json({
             status: 'success',
             data: uniqueCountries,
+            count: uniqueCountries.length
         });
     }
     catch (error) {
@@ -270,17 +262,183 @@ exports.getMyPackages = getMyPackages;
 // Secure admin endpoint: Get all Roamify packages
 const getAllRoamifyPackages = async (req, res, next) => {
     try {
+        // Get all packages without any limit to ensure we get all 11,000+ packages
         const { data: packages, error } = await supabaseAdmin
             .from('packages')
             .select('*')
             .order('created_at', { ascending: false });
         if (error)
             throw error;
-        res.status(200).json({ status: 'success', data: packages });
+        console.log(`Retrieved ${packages?.length || 0} packages from database`);
+        res.status(200).json({
+            status: 'success',
+            data: packages || [],
+            count: packages?.length || 0
+        });
     }
     catch (error) {
+        console.error('Error fetching Roamify packages:', error);
         next(error);
     }
 };
 exports.getAllRoamifyPackages = getAllRoamifyPackages;
+// Secure admin endpoint: Get distinct countries from packages
+const getPackageCountries = async (req, res, next) => {
+    try {
+        // Get distinct countries from packages table
+        const { data: countries, error } = await supabaseAdmin
+            .from('packages')
+            .select('country_name')
+            .neq('country_name', null)
+            .neq('country_name', '')
+            .order('country_name', { ascending: true });
+        if (error)
+            throw error;
+        // Extract unique country names
+        const uniqueCountries = Array.from(new Set(countries?.map(c => c.country_name) || [])).filter(Boolean).sort();
+        res.status(200).json({
+            status: 'success',
+            data: uniqueCountries,
+            count: uniqueCountries.length
+        });
+    }
+    catch (error) {
+        console.error('Error fetching package countries:', error);
+        next(error);
+    }
+};
+exports.getPackageCountries = getPackageCountries;
+// Secure admin endpoint: Deduplicate packages
+const deduplicatePackages = async (req, res, next) => {
+    try {
+        // Get all packages from the packages table (not my_packages)
+        const { data: allPackages, error: fetchError } = await supabaseAdmin
+            .from('packages')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (fetchError)
+            throw fetchError;
+        if (!allPackages || allPackages.length === 0) {
+            return res.status(200).json({
+                status: 'success',
+                message: 'No packages to deduplicate',
+                removedCount: 0
+            });
+        }
+        console.log(`Starting deduplication of ${allPackages.length} packages`);
+        // Step 1: Remove duplicate IDs by keeping the most recent version
+        const idMap = new Map();
+        const packagesToKeep = [];
+        const packagesToDelete = [];
+        allPackages.forEach(pkg => {
+            const id = pkg.reseller_id || pkg.id;
+            if (id) {
+                if (idMap.has(id)) {
+                    // Keep the one with more complete information or more recent
+                    const existing = idMap.get(id);
+                    const newPkgScore = calculateCompleteness(pkg);
+                    const existingScore = calculateCompleteness(existing);
+                    if (newPkgScore > existingScore ||
+                        (newPkgScore === existingScore && new Date(pkg.created_at) > new Date(existing.created_at))) {
+                        // Replace existing with new package
+                        packagesToDelete.push(existing.id);
+                        idMap.set(id, pkg);
+                    }
+                    else {
+                        // Keep existing, mark new for deletion
+                        packagesToDelete.push(pkg.id);
+                    }
+                }
+                else {
+                    idMap.set(id, pkg);
+                }
+            }
+            else {
+                // Package without reseller_id, keep it
+                packagesToKeep.push(pkg);
+            }
+        });
+        // Add unique ID packages to keep list
+        packagesToKeep.push(...Array.from(idMap.values()));
+        // Step 2: Remove duplicate combinations (country + data + days + price)
+        const combinationMap = new Map();
+        const finalPackagesToKeep = [];
+        let combinationDuplicates = 0;
+        packagesToKeep.forEach(pkg => {
+            const country = pkg.country_name || pkg.country || '';
+            const data = pkg.data_amount || pkg.data || '';
+            const days = pkg.validity_days || pkg.days || pkg.day || '';
+            const price = pkg.price || pkg.base_price || '';
+            const combinationKey = `${country}|${data}|${days}|${price}`;
+            if (combinationMap.has(combinationKey)) {
+                // Duplicate combination found, mark for deletion
+                packagesToDelete.push(pkg.id);
+                combinationDuplicates++;
+            }
+            else {
+                combinationMap.set(combinationKey, pkg);
+                finalPackagesToKeep.push(pkg);
+            }
+        });
+        // Remove duplicates from database
+        if (packagesToDelete.length > 0) {
+            console.log(`Attempting to delete ${packagesToDelete.length} duplicate packages...`);
+            // Delete in batches to avoid potential issues with large arrays
+            const batchSize = 100;
+            for (let i = 0; i < packagesToDelete.length; i += batchSize) {
+                const batch = packagesToDelete.slice(i, i + batchSize);
+                const { error: deleteError } = await supabaseAdmin
+                    .from('packages')
+                    .delete()
+                    .in('id', batch);
+                if (deleteError) {
+                    console.error(`Error deleting batch ${Math.floor(i / batchSize) + 1}:`, deleteError);
+                    throw deleteError;
+                }
+            }
+            console.log(`Successfully deleted ${packagesToDelete.length} duplicate packages`);
+        }
+        console.log(`Deduplication completed: Removed ${packagesToDelete.length} duplicate packages`);
+        console.log(`- ID duplicates: ${packagesToDelete.length - combinationDuplicates}`);
+        console.log(`- Combination duplicates: ${combinationDuplicates}`);
+        res.status(200).json({
+            status: 'success',
+            message: `Successfully removed ${packagesToDelete.length} duplicate packages`,
+            removedCount: packagesToDelete.length,
+            remainingCount: finalPackagesToKeep.length,
+            details: {
+                idDuplicates: packagesToDelete.length - combinationDuplicates,
+                combinationDuplicates: combinationDuplicates
+            }
+        });
+    }
+    catch (error) {
+        console.error('Error deduplicating packages:', error);
+        next(error);
+    }
+};
+exports.deduplicatePackages = deduplicatePackages;
+// Helper function to calculate package completeness score
+function calculateCompleteness(pkg) {
+    let score = 0;
+    if (pkg.name || pkg.package)
+        score += 2;
+    if (pkg.country_name || pkg.country)
+        score += 2;
+    if (pkg.country_code)
+        score += 1;
+    if (pkg.data_amount || pkg.data)
+        score += 2;
+    if (pkg.validity_days || pkg.days || pkg.day)
+        score += 2;
+    if (pkg.price || pkg.base_price)
+        score += 2;
+    if (pkg.reseller_id)
+        score += 1;
+    if (pkg.operator)
+        score += 1;
+    if (pkg.features)
+        score += 1;
+    return score;
+}
 //# sourceMappingURL=packageController.js.map

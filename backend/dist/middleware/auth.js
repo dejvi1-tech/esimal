@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAdminAuth = requireAdminAuth;
 exports.adminLoginHandler = adminLoginHandler;
+exports.adminLogoutHandler = adminLogoutHandler;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ADMIN_USERNAME = 'egde';
 const ADMIN_PASSWORD = 'Elbasan2016!'; // Change this to a strong password
@@ -28,19 +29,60 @@ function requireAdminAuth(req, res, next) {
         next();
     }
     catch (err) {
-        res.status(401).json({ error: 'Invalid or expired token' });
+        if (err instanceof jsonwebtoken_1.default.TokenExpiredError) {
+            res.status(401).json({ error: 'Token expired' });
+        }
+        else if (err instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            res.status(401).json({ error: 'Invalid token' });
+        }
+        else {
+            res.status(401).json({ error: 'Invalid or expired token' });
+        }
         return;
     }
 }
 // Route handler for login
 function adminLoginHandler(req, res, next) {
+    console.log('🔐 Admin login attempt');
+    console.log('📝 Request body:', req.body);
+    console.log('🔑 Expected username:', ADMIN_USERNAME);
+    console.log('🔑 Expected password:', ADMIN_PASSWORD);
     const { username, password } = req.body;
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        const token = jsonwebtoken_1.default.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
-        res.json({ token });
+    console.log('📝 Received username:', username);
+    console.log('📝 Received password:', password);
+    if (!username || !password) {
+        console.log('❌ Missing username or password');
+        res.status(400).json({
+            success: false,
+            error: 'Username and password are required'
+        });
         return;
     }
-    res.status(401).json({ error: 'Invalid credentials' });
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        console.log('✅ Login successful');
+        const token = jsonwebtoken_1.default.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
+        res.json({
+            success: true,
+            token,
+            message: 'Login successful'
+        });
+        return;
+    }
+    console.log('❌ Invalid credentials');
+    res.status(401).json({
+        success: false,
+        error: 'Invalid username or password'
+    });
     return;
+}
+// Route handler for logout (optional - for server-side session management)
+function adminLogoutHandler(req, res, next) {
+    // Since we're using JWT tokens stored in localStorage, 
+    // the actual logout happens on the client side
+    // This endpoint can be used for any server-side cleanup if needed
+    res.json({
+        success: true,
+        message: 'Logout successful'
+    });
 }
 //# sourceMappingURL=auth.js.map

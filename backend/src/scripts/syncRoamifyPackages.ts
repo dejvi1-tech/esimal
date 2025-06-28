@@ -194,15 +194,17 @@ async function syncPackages() {
       }
     }
 
-    // Approach 3: Try with pagination if we got some packages but not all
-    if (totalPackagesFound > 0 && totalPackagesFound < 5000) { // If we got some but not enough
+    // Approach 3: Try with pagination to get ALL packages
+    // Always try pagination to ensure we get the complete dataset
+    if (totalPackagesFound > 0) {
       try {
-        console.log('\n=== Approach 3: Pagination ===');
+        console.log('\n=== Approach 3: Pagination to get ALL packages ===');
         let offset = totalPackagesFound;
         let hasMore = true;
         let page = 1;
+        let consecutiveEmptyPages = 0;
         
-        while (hasMore && page <= 10) { // Limit to 10 pages to avoid infinite loop
+        while (hasMore && page <= 50) { // Increased limit to 50 pages to get all 11k+ packages
           console.log(`Fetching page ${page} with offset ${offset}...`);
           
           const response3 = await axios.get('https://api.getroamify.com/api/esim/packages', {
@@ -211,10 +213,10 @@ async function syncPackages() {
               'Content-Type': 'application/json',
             },
             params: {
-              limit: 1000,
+              limit: 10000, // Increased to 10k per page
               offset: offset
             },
-            timeout: 30000
+            timeout: 60000 // Increased timeout for larger requests
           });
 
           const data3 = response3.data as { status?: string; data?: { packages?: any[] } };
@@ -234,18 +236,24 @@ async function syncPackages() {
             }
             
             if (pagePackages === 0) {
-              hasMore = false;
+              consecutiveEmptyPages++;
+              if (consecutiveEmptyPages >= 3) { // Stop after 3 consecutive empty pages
+                console.log('Stopping pagination after 3 consecutive empty pages');
+                hasMore = false;
+              }
             } else {
+              consecutiveEmptyPages = 0; // Reset counter
               offset += pagePackages;
               page++;
             }
           } else {
+            console.log('No valid data in response, stopping pagination');
             hasMore = false;
           }
         }
         
         totalPackagesFound = packages.length;
-        console.log(`Approach 3 found ${totalPackagesFound} total packages`);
+        console.log(`Approach 3 found ${totalPackagesFound} total packages after pagination`);
       } catch (error) {
         if (error instanceof Error) {
           console.log('Approach 3 failed:', error.message);

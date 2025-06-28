@@ -229,32 +229,23 @@ export const getCountries = async (
   next: NextFunction
 ) => {
   try {
-    let allCountries: string[] = [];
-    let offset = 0;
-    const batchSize = 1000;
-    let hasMore = true;
+    // Get all countries at once without pagination
+    const { data: countries, error } = await supabaseAdmin
+      .from('packages')
+      .select('country_name')
+      .neq('country_name', null)
+      .neq('country_name', '')
+      .order('country_name', { ascending: true });
 
-    while (hasMore) {
-      const { data, error } = await supabaseAdmin
-        .from('packages')
-        .select('country_name')
-        .neq('country_name', null)
-        .range(offset, offset + batchSize - 1);
+    if (error) throw error;
 
-      if (error) throw error;
-      if (!data || data.length === 0) break;
-
-      allCountries.push(...data.map((pkg: any) => pkg.country_name));
-      hasMore = data.length === batchSize;
-      offset += batchSize;
-    }
-
-    // Deduplicate and sort
-    const uniqueCountries = Array.from(new Set(allCountries)).filter(Boolean).sort();
+    // Extract unique country names
+    const uniqueCountries = Array.from(new Set(countries?.map(c => c.country_name) || [])).filter(Boolean).sort();
 
     res.status(200).json({
       status: 'success',
       data: uniqueCountries,
+      count: uniqueCountries.length
     });
   } catch (error) {
     next(error);
