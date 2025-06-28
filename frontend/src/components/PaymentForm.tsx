@@ -40,6 +40,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const createPaymentIntent = async () => {
+    console.log('[DEBUG] Creating payment intent...');
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/payments/create-intent`, {
         method: 'POST',
@@ -54,12 +55,16 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         }),
       });
 
+      console.log('[DEBUG] Payment intent response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.log('[DEBUG] Payment intent error data:', errorData);
         throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
+      console.log('[DEBUG] Payment intent result:', result);
       
       if (result.status === 'success') {
         return result.data.clientSecret;
@@ -67,7 +72,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
         throw new Error(result.message || 'Failed to create payment intent');
       }
     } catch (error) {
-      console.error('Error creating payment intent:', error);
+      console.error('[DEBUG] Error creating payment intent:', error);
       throw error;
     }
   };
@@ -75,6 +80,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('[DEBUG] handleSubmit called');
     if (!stripe || !elements) {
       onError('Stripe has not loaded yet. Please try again.');
       return;
@@ -85,16 +91,22 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     try {
       // Create payment intent if we don't have one
       if (!clientSecret) {
+        console.log('[DEBUG] No clientSecret, creating new payment intent...');
         const newClientSecret = await createPaymentIntent();
         setClientSecret(newClientSecret);
+        console.log('[DEBUG] Received clientSecret:', newClientSecret);
+      } else {
+        console.log('[DEBUG] Using existing clientSecret:', clientSecret);
       }
 
       // Get the card element
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
+        console.error('[DEBUG] Card element not found');
         throw new Error('Card element not found');
       }
 
+      console.log('[DEBUG] Confirming card payment...');
       // Confirm the payment
       const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret!, {
         payment_method: {
@@ -106,21 +118,21 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       });
 
       if (error) {
-        console.error('Payment confirmation error:', error);
+        console.error('[DEBUG] Payment confirmation error:', error);
         onError(error.message || 'There was an error processing your payment.');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        console.log('Payment successful:', paymentIntent);
+        console.log('[DEBUG] Payment successful:', paymentIntent);
         toast({
           title: t('payment_successful'),
           description: t('payment_processed_successfully'),
         });
         onSuccess(paymentIntent.id);
       } else {
-        console.error('Payment failed:', paymentIntent);
+        console.error('[DEBUG] Payment failed:', paymentIntent);
         onError('Payment was not successful. Please try again.');
       }
     } catch (err) {
-      console.error('Payment error:', err);
+      console.error('[DEBUG] Payment error:', err);
       const errorMessage = err instanceof Error ? err.message : 'There was an error processing your payment.';
       onError(errorMessage);
     } finally {
