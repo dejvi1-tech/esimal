@@ -17,6 +17,7 @@ const esimRoutes_1 = __importDefault(require("./routes/esimRoutes"));
 const accountRoutes_1 = __importDefault(require("./routes/accountRoutes"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const stripeRoutes_1 = __importDefault(require("./routes/stripeRoutes"));
+const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
 const webhookController_1 = require("./controllers/webhookController");
 const supabase_1 = require("./config/supabase");
 // Load environment variables
@@ -77,6 +78,7 @@ app.use('/api/esims', esimRoutes_1.default);
 app.use('/api/account', accountRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/stripe', stripeRoutes_1.default);
+app.use('/api/payments', paymentRoutes_1.default);
 // Direct routes to match frontend URLs
 app.get('/api/get-section-packages', (req, res, next) => {
     const controller = require('./controllers/packageController');

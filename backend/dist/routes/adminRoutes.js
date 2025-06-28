@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const router = (0, express_1.Router)();
 const packageController_1 = require("../controllers/packageController");
+const adminController_1 = require("../controllers/adminController");
 const auth_1 = require("../middleware/auth");
 const asyncHandler_1 = require("../utils/asyncHandler");
 router.get('/test', (req, res) => {
@@ -19,5 +20,7 @@ router.get('/all-roamify-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.
 router.get('/package-countries', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.getPackageCountries));
 router.post('/deduplicate-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.deduplicatePackages));
 router.post('/sync-roamify-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.syncRoamifyPackages));
+// Debug routes
+router.get('/debug-order/:orderId', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.debugOrder));
 exports.default = router;
 //# sourceMappingURL=adminRoutes.js.map

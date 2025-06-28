@@ -30,6 +30,13 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
     }
 
     try {
+      // Log the entire webhook event for debugging
+      logger.info(`Received Stripe webhook event: ${event.type}`, {
+        eventId: event.id,
+        eventType: event.type,
+        eventData: JSON.stringify(event.data.object),
+      });
+
       // Handle the event
       switch (event.type) {
         case 'payment_intent.succeeded':
@@ -69,10 +76,19 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
 };
 
 /**
- * Handle successful payment intent
+ * Handle successful payment intent with comprehensive logging
  */
 async function handlePaymentIntentSucceeded(paymentIntent: any) {
-  logger.info(`Payment succeeded: ${paymentIntent.id}`);
+  const paymentIntentId = paymentIntent.id;
+  const metadata = paymentIntent.metadata;
+  
+  logger.info(`Payment succeeded: ${paymentIntentId}`, {
+    paymentIntentId,
+    amount: paymentIntent.amount,
+    currency: paymentIntent.currency,
+    customerId: paymentIntent.customer,
+    metadata: JSON.stringify(metadata),
+  });
 
   try {
     // Update order status to paid
@@ -81,37 +97,228 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
       .update({ 
         status: 'paid',
         paid_at: new Date().toISOString(),
-        stripe_payment_intent_id: paymentIntent.id
+        stripe_payment_intent_id: paymentIntentId,
+        audit_log: {
+          payment_succeeded_at: new Date().toISOString(),
+          payment_intent_id: paymentIntentId,
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+        }
       })
-      .eq('stripe_payment_intent_id', paymentIntent.id)
+      .eq('stripe_payment_intent_id', paymentIntentId)
       .select()
       .single();
 
     if (orderError) {
-      logger.error('Error updating order status:', orderError);
+      logger.error('Error updating order status:', orderError, { paymentIntentId });
       return;
     }
 
-    // Send confirmation email
-    if (order && paymentIntent.metadata.userEmail) {
-      try {
-        await sendEmail({
-          to: paymentIntent.metadata.userEmail,
-          subject: emailTemplates.paymentSuccess.subject,
-          html: async () => emailTemplates.paymentSuccess.html({
-            orderId: order.id,
-            amount: paymentIntent.amount / 100,
-            packageName: paymentIntent.metadata.packageName || 'eSIM Package',
-            paymentIntentId: paymentIntent.id,
-          }),
-        });
-        logger.info(`Payment success email sent to ${paymentIntent.metadata.userEmail}`);
-      } catch (emailError) {
-        logger.error('Error sending payment success email:', emailError);
-      }
+    if (!order) {
+      logger.error('Order not found for payment intent:', paymentIntentId);
+      return;
     }
+
+    logger.info(`Order updated successfully: ${order.id}`, { orderId: order.id, paymentIntentId });
+
+    // Send confirmation email with comprehensive logging
+    if (metadata.email) {
+      await sendConfirmationEmail(order, paymentIntent, metadata);
+    } else {
+      logger.warn('No email found in payment intent metadata', { paymentIntentId });
+    }
+
+    // Deliver eSIM with comprehensive logging
+    if (metadata.packageId) {
+      await deliverEsim(order, paymentIntent, metadata);
+    } else {
+      logger.warn('No package ID found in payment intent metadata', { paymentIntentId });
+    }
+
   } catch (error) {
-    logger.error('Error handling payment success:', error);
+    logger.error('Error handling payment success:', error, { paymentIntentId });
+  }
+}
+
+/**
+ * Send confirmation email with comprehensive logging
+ */
+async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: any) {
+  const orderId = order.id;
+  const email = metadata.email;
+  const packageId = metadata.packageId;
+
+  logger.info(`Starting email confirmation process`, {
+    orderId,
+    email,
+    packageId,
+    paymentIntentId: paymentIntent.id,
+  });
+
+  try {
+    // Log before sending email
+    logger.info(`Sending confirmation email`, {
+      orderId,
+      email,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    await sendEmail({
+      to: email,
+      subject: emailTemplates.paymentSuccess.subject,
+      html: async () => emailTemplates.paymentSuccess.html({
+        orderId: orderId,
+        amount: paymentIntent.amount / 100,
+        packageName: metadata.packageName || 'eSIM Package',
+        paymentIntentId: paymentIntent.id,
+      }),
+    });
+
+    // Log successful email send
+    logger.info(`Confirmation email sent successfully`, {
+      orderId,
+      email,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Update order with email success
+    await supabase
+      .from('orders')
+      .update({
+        email_sent: true,
+        email_sent_at: new Date().toISOString(),
+        audit_log: {
+          email_sent_at: new Date().toISOString(),
+          email_recipient: email,
+          email_template: 'paymentSuccess',
+        }
+      })
+      .eq('id', orderId);
+
+  } catch (emailError) {
+    logger.error('Error sending confirmation email:', emailError, {
+      orderId,
+      email,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Update order with email error
+    await supabase
+      .from('orders')
+      .update({
+        email_sent: false,
+        email_error: emailError instanceof Error ? emailError.message : String(emailError),
+        audit_log: {
+          email_error_at: new Date().toISOString(),
+          email_error: emailError instanceof Error ? emailError.message : String(emailError),
+          email_recipient: email,
+        }
+      })
+      .eq('id', orderId);
+  }
+}
+
+/**
+ * Deliver eSIM with comprehensive logging
+ */
+async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
+  const orderId = order.id;
+  const packageId = metadata.packageId;
+  const email = metadata.email;
+
+  logger.info(`Starting eSIM delivery process`, {
+    orderId,
+    packageId,
+    email,
+    paymentIntentId: paymentIntent.id,
+  });
+
+  try {
+    // Log eSIM API request
+    logger.info(`Requesting eSIM from Roamify API`, {
+      orderId,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Create eSIM order with Roamify
+    const roamifyOrder = await RoamifyService.createEsimOrder(packageId, 1);
+    
+    logger.info(`Roamify order created successfully`, {
+      orderId,
+      packageId,
+      roamifyOrderId: roamifyOrder.orderId,
+      esimId: roamifyOrder.esimId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Generate real QR code
+    const realQRData = await RoamifyService.generateRealQRCode(roamifyOrder.esimId);
+    
+    logger.info(`Real QR code generated successfully`, {
+      orderId,
+      packageId,
+      roamifyOrderId: roamifyOrder.orderId,
+      esimId: roamifyOrder.esimId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Update order with eSIM data
+    const { error: updateError } = await supabase
+      .from('orders')
+      .update({
+        esim_code: roamifyOrder.esimId,
+        qr_code_data: realQRData.lpaCode,
+        esim_delivered: true,
+        esim_delivered_at: new Date().toISOString(),
+        audit_log: {
+          esim_delivered_at: new Date().toISOString(),
+          roamify_order_id: roamifyOrder.orderId,
+          esim_id: roamifyOrder.esimId,
+          qr_code_generated: true,
+        }
+      })
+      .eq('id', orderId);
+
+    if (updateError) {
+      logger.error('Error updating order with eSIM data:', updateError, {
+        orderId,
+        packageId,
+        roamifyOrderId: roamifyOrder.orderId,
+        esimId: roamifyOrder.esimId,
+      });
+    } else {
+      logger.info(`eSIM delivered successfully`, {
+        orderId,
+        packageId,
+        roamifyOrderId: roamifyOrder.orderId,
+        esimId: roamifyOrder.esimId,
+        paymentIntentId: paymentIntent.id,
+      });
+    }
+
+  } catch (esimError) {
+    logger.error('Error delivering eSIM:', esimError, {
+      orderId,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Update order with eSIM error
+    await supabase
+      .from('orders')
+      .update({
+        esim_delivered: false,
+        esim_error: esimError instanceof Error ? esimError.message : String(esimError),
+        audit_log: {
+          esim_error_at: new Date().toISOString(),
+          esim_error: esimError instanceof Error ? esimError.message : String(esimError),
+        }
+      })
+      .eq('id', orderId);
   }
 }
 
