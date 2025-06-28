@@ -1,7 +1,6 @@
 import { Router } from 'express';
 const router = Router();
 import { getAllPackages, getMyPackages, getAllRoamifyPackages } from '../controllers/packageController';
-import { Request, Response } from 'express';
 import { requireAdminAuth, adminLoginHandler } from '../middleware/auth';
 
 router.get('/test', (req, res) => {

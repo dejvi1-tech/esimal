@@ -26,7 +26,7 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
 }
 
 // Route handler for login
-export function adminLoginHandler(req: Request, res: Response) {
+export function adminLoginHandler(req: Request, res: Response, next: NextFunction) {
   const { username, password } = req.body;
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
