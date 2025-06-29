@@ -242,19 +242,29 @@ async function deliverEsim(order, paymentIntent, metadata) {
     });
     try {
         // Get package details to get the reseller_id from the packages table
-        const { data: packageData, error: packageError } = await supabase_1.supabase
+        // First, try to find package by UUID (id field)
+        let { data: packageData, error: packageError } = await supabase_1.supabase
             .from('packages')
             .select('*')
             .eq('id', packageId)
             .single();
+        // If not found by UUID, try to find by location_slug (slug)
         if (packageError || !packageData) {
-            logger_1.logger.error('Package not found for eSIM delivery:', packageError, {
-                packageId,
-                orderId,
-                paymentIntentId: paymentIntent.id,
-                metadata: metadata
-            });
-            throw new Error(`Package not found: ${packageId}`);
+            logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+            const { data: packageBySlug, error: slugError } = await supabase_1.supabase
+                .from('packages')
+                .select('*')
+                .eq('location_slug', packageId)
+                .single();
+            if (slugError || !packageBySlug) {
+                logger_1.logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
+                throw new Error(`Package not found: ${packageId}`);
+            }
+            packageData = packageBySlug;
+            logger_1.logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+        }
+        else {
+            logger_1.logger.info(`Package found by UUID: ${packageId}`);
         }
         // Use the working Roamify API method with the packageId from features
         const roamifyPackageId = packageData.features?.packageId || packageId;
