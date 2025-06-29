@@ -412,10 +412,13 @@ async function handlePaymentIntentCanceled(paymentIntent: any) {
  * Handle checkout session completed
  */
 async function handleCheckoutSessionCompleted(session: any) {
-  logger.info(`Checkout session completed: ${session.id}`);
-
+  console.log('[EMAIL DEBUG] TOP OF FUNCTION - SESSION:', JSON.stringify(session, null, 2));
+  logger.info(`[EMAIL DEBUG] Raw session object:`, JSON.stringify(session, null, 2));
   try {
     const { packageId, name, surname } = session.metadata;
+    let customerEmail = session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null;
+    console.log('[EMAIL DEBUG] Extracted customerEmail:', customerEmail);
+    logger.info(`[EMAIL DEBUG] Extracted customerEmail:`, customerEmail);
     const amount = session.amount_total / 100;
 
     // First, try to find package by UUID (id field)
@@ -511,12 +514,7 @@ async function handleCheckoutSessionCompleted(session: any) {
     }
 
     logger.info(`Order created successfully: ${order.id}`);
-
-    // Extract customer email from all possible locations and log session
-    logger.info(`[EMAIL DEBUG] Raw session object:`, JSON.stringify(session, null, 2));
-    let customerEmail = session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null;
-    logger.info(`[EMAIL DEBUG] Extracted customerEmail:`, customerEmail);
-
+    console.log('[EMAIL DEBUG] Before email block - customerEmail:', customerEmail);
     // Step 3: Send confirmation email with real eSIM data
     if (customerEmail) {
       logger.info(`[EMAIL DEBUG] Attempting to send order confirmation email to ${customerEmail} for order ${order.id}`);
@@ -542,14 +540,19 @@ async function handleCheckoutSessionCompleted(session: any) {
           }),
         });
         logger.info(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
+        console.log(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
       } catch (emailError) {
         logger.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
+        console.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
       }
     } else {
       logger.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
+      console.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
     }
+    console.log('[EMAIL DEBUG] END OF FUNCTION');
   } catch (error) {
     logger.error('Error handling checkout session completion:', error);
+    console.error('Error handling checkout session completion:', error);
   }
 }
 
