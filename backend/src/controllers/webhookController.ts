@@ -302,20 +302,40 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         logger.info(`Package found by UUID in my_packages: ${packageId}`);
       }
 
-      // Now use the UUID from my_packages to find the real package in packages table
-      const { data: realPackageData, error: realPackageError } = await supabase
-        .from('packages')
-        .select('*')
-        .eq('id', myPackageData.id)
-        .single();
+      // Check if the myPackageData.id is a valid UUID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      const isValidUuid = uuidRegex.test(myPackageData.id);
 
-      if (realPackageError || !realPackageData) {
-        logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
-        throw new Error(`Real package not found for: ${packageId}`);
+      if (isValidUuid) {
+        // Now use the UUID from my_packages to find the real package in packages table
+        const { data: realPackageData, error: realPackageError } = await supabase
+          .from('packages')
+          .select('*')
+          .eq('id', myPackageData.id)
+          .single();
+
+        if (realPackageError || !realPackageData) {
+          logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
+          throw new Error(`Real package not found for: ${packageId}`);
+        }
+
+        packageData = realPackageData;
+        logger.info(`Real package found in packages table: ${packageData.id}`);
+      } else {
+        // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
+        logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
+        
+        // Create a mock package data structure using the my_packages data
+        packageData = {
+          id: myPackageData.id,
+          name: myPackageData.name,
+          features: {
+            packageId: myPackageData.reseller_id || packageId
+          }
+        };
+        
+        logger.info(`Created mock package data using reseller_id: ${myPackageData.reseller_id}`);
       }
-
-      packageData = realPackageData;
-      logger.info(`Real package found in packages table: ${packageData.id}`);
     } else {
       logger.info(`Package found by UUID in packages table: ${packageId}`);
     }
