@@ -20,6 +20,7 @@ const stripeRoutes_1 = __importDefault(require("./routes/stripeRoutes"));
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
 const webhookController_1 = require("./controllers/webhookController");
 const supabase_1 = require("./config/supabase");
+const packageController_1 = require("./controllers/packageController");
 // Load environment variables
 (0, dotenv_1.config)();
 const app = (0, express_1.default)();
@@ -54,10 +55,11 @@ app.options('*', (0, cors_1.default)(corsOptions));
 app.use((0, helmet_1.default)({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-// Parse JSON (except Stripe raw body)
-app.use(express_1.default.json());
-// Raw body parser for Stripe webhook
+// Stripe webhook route FIRST, with raw body parser
 app.post('/api/webhooks/stripe', express_1.default.raw({ type: 'application/json' }), webhookController_1.handleStripeWebhook);
+// THEN your other middleware
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
 // Rate limiting for public API
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
@@ -80,56 +82,47 @@ app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/stripe', stripeRoutes_1.default);
 app.use('/api/payments', paymentRoutes_1.default);
 // Direct routes to match frontend URLs
-app.get('/api/get-section-packages', (req, res, next) => {
-    const controller = require('./controllers/packageController');
-    return controller.getSectionPackages(req, res, next);
-});
-app.get('/api/search-packages', (req, res, next) => {
-    const controller = require('./controllers/packageController');
-    return controller.searchPackages(req, res, next);
-});
-// Add most-popular endpoint to match frontend expectation
-app.get('/api/packages/most-popular', (req, res, next) => {
-    const controller = require('./controllers/packageController');
-    return controller.getSectionPackages(req, res, next);
-});
+app.get('/api/get-section-packages', packageController_1.getSectionPackages);
+app.get('/api/search-packages', packageController_1.searchPackages);
+app.get('/api/packages/most-popular', packageController_1.getSectionPackages);
 // Add email test endpoint
-app.post('/api/test-email', async (req, res) => {
-    try {
-        const { to, subject, message } = req.body;
-        if (!to || !subject || !message) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Missing required fields: to, subject, message'
-            });
-        }
-        const { sendEmail } = require('./services/emailService');
-        await sendEmail({
-            to,
-            subject,
-            html: `
-        <h2>Test Email</h2>
-        <p>${message}</p>
-        <p>Sent at: ${new Date().toISOString()}</p>
-        <p>SMTP Host: ${process.env.SMTP_HOST || 'Not set'}</p>
-        <p>SMTP User: ${process.env.SMTP_USER || 'Not set'}</p>
-      `
+app.post('/api/test-email', (req, res, next) => {
+    const { to, subject, message } = req.body;
+    if (!to || !subject || !message) {
+        res.status(400).json({
+            status: 'error',
+            message: 'Missing required fields: to, subject, message'
         });
+        return;
+    }
+    const { sendEmail } = require('./services/emailService');
+    sendEmail({
+        to,
+        subject,
+        html: `
+      <h2>Test Email</h2>
+      <p>${message}</p>
+      <p>Sent at: ${new Date().toISOString()}</p>
+      <p>SMTP Host: ${process.env.SMTP_HOST || 'Not set'}</p>
+      <p>SMTP User: ${process.env.SMTP_USER || 'Not set'}</p>
+    `
+    })
+        .then(() => {
         res.json({
             status: 'success',
             message: 'Test email sent successfully'
         });
-    }
-    catch (error) {
+    })
+        .catch((error) => {
         console.error('Email test failed:', error);
         res.status(500).json({
             status: 'error',
             message: 'Email test failed: ' + (error.message || 'Unknown error')
         });
-    }
+    });
 });
 // Add endpoint for frontend packages (plain array, only visible)
-app.get('/api/frontend-packages', async (req, res) => {
+app.get('/api/frontend-packages', async (req, res, next) => {
     try {
         const { data, error } = await supabase_1.supabase
             .from('my_packages')

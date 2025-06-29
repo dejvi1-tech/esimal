@@ -254,7 +254,7 @@ export class RoamifyService {
     lastName: string;
     quantity?: number;
   }): Promise<any> {
-    const url = 'https://api.roamify.com/create-esim-order';
+    const url = `${this.baseUrl}/create-esim-order`;
     const payload = {
       packageId,
       email,

@@ -15,6 +15,7 @@ const esimUtils_1 = require("../utils/esimUtils");
  * Handle Stripe webhook events
  */
 const handleStripeWebhook = (req, res, next) => {
+    console.log('[EMAIL DEBUG] handleStripeWebhook called. Event:', req.body);
     (async () => {
         const sig = req.headers['stripe-signature'];
         const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -37,34 +38,44 @@ const handleStripeWebhook = (req, res, next) => {
                 eventType: event.type,
                 eventData: JSON.stringify(event.data.object),
             });
+            console.log('[EMAIL DEBUG] Stripe event type:', event.type);
             // Handle the event
             switch (event.type) {
                 case 'payment_intent.succeeded':
+                    console.log('[EMAIL DEBUG] Entered case: payment_intent.succeeded');
                     await handlePaymentIntentSucceeded(event.data.object);
                     break;
                 case 'payment_intent.payment_failed':
+                    console.log('[EMAIL DEBUG] Entered case: payment_intent.payment_failed');
                     await handlePaymentIntentFailed(event.data.object);
                     break;
                 case 'payment_intent.canceled':
+                    console.log('[EMAIL DEBUG] Entered case: payment_intent.canceled');
                     await handlePaymentIntentCanceled(event.data.object);
                     break;
                 case 'checkout.session.completed':
+                    console.log('[EMAIL DEBUG] Entered case: checkout.session.completed');
                     await handleCheckoutSessionCompleted(event.data.object);
                     break;
                 case 'charge.refunded':
+                    console.log('[EMAIL DEBUG] Entered case: charge.refunded');
                     await handleChargeRefunded(event.data.object);
                     break;
                 case 'customer.subscription.created':
+                    console.log('[EMAIL DEBUG] Entered case: customer.subscription.created');
                     await handleSubscriptionCreated(event.data.object);
                     break;
                 case 'customer.subscription.updated':
+                    console.log('[EMAIL DEBUG] Entered case: customer.subscription.updated');
                     await handleSubscriptionUpdated(event.data.object);
                     break;
                 case 'customer.subscription.deleted':
+                    console.log('[EMAIL DEBUG] Entered case: customer.subscription.deleted');
                     await handleSubscriptionDeleted(event.data.object);
                     break;
                 default:
                     logger_1.logger.info(`Unhandled event type: ${event.type}`);
+                    console.log('[EMAIL DEBUG] Unhandled event type:', event.type);
             }
             res.json({ received: true });
         }
@@ -202,10 +213,17 @@ async function deliverEsim(order, paymentIntent, metadata) {
     const orderId = order.id;
     const packageId = metadata.packageId;
     const email = metadata.email;
+    const phoneNumber = metadata.phone || metadata.phoneNumber || order.phone || order.phoneNumber || '';
+    const firstName = metadata.name || metadata.firstName || order.name || order.firstName || '';
+    const lastName = metadata.surname || metadata.lastName || order.surname || order.lastName || '';
+    const quantity = 1;
     logger_1.logger.info(`Starting eSIM delivery process`, {
         orderId,
         packageId,
         email,
+        phoneNumber,
+        firstName,
+        lastName,
         paymentIntentId: paymentIntent.id,
     });
     try {
@@ -224,76 +242,60 @@ async function deliverEsim(order, paymentIntent, metadata) {
             });
             throw new Error(`Package not found: ${packageId}`);
         }
-        const resellerId = packageData.reseller_id;
-        if (!resellerId) {
-            logger_1.logger.error('Package found but no reseller_id:', {
-                packageId,
-                packageName: packageData.name,
-                orderId,
-                paymentIntentId: paymentIntent.id
-            });
-            throw new Error(`No reseller_id found for package: ${packageId}`);
-        }
-        logger_1.logger.info(`Found package data for eSIM delivery`, {
+        // Use the new Roamify API
+        logger_1.logger.info(`[ROAMIFY V2 DEBUG] Creating eSIM order with new API`, {
             orderId,
             packageId,
-            resellerId,
-            packageName: packageData.name,
+            email,
+            phoneNumber,
+            firstName,
+            lastName,
             paymentIntentId: paymentIntent.id,
         });
-        // Log eSIM API request
-        logger_1.logger.info(`Requesting eSIM from Roamify API`, {
+        const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrderV2({
+            packageId: packageData.reseller_id || packageId,
+            email,
+            phoneNumber,
+            firstName,
+            lastName,
+            quantity
+        });
+        logger_1.logger.info(`[ROAMIFY V2 DEBUG] Roamify order created successfully`, {
             orderId,
             packageId,
-            resellerId,
+            roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+            esimId: roamifyOrder.esimId || roamifyOrder.esim_id,
             paymentIntentId: paymentIntent.id,
         });
-        // Create eSIM order with Roamify using reseller_id
-        const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(resellerId, 1);
-        logger_1.logger.info(`Roamify order created successfully`, {
-            orderId,
-            packageId,
-            resellerId,
-            roamifyOrderId: roamifyOrder.orderId,
-            esimId: roamifyOrder.esimId,
-            paymentIntentId: paymentIntent.id,
-        });
-        // Generate real QR code
-        const realQRData = await roamifyService_1.RoamifyService.generateRealQRCode(roamifyOrder.esimId);
-        logger_1.logger.info(`Real QR code generated successfully`, {
-            orderId,
-            packageId,
-            resellerId,
-            roamifyOrderId: roamifyOrder.orderId,
-            esimId: roamifyOrder.esimId,
-            paymentIntentId: paymentIntent.id,
-        });
-        // Update order with eSIM data
-        const { error: updateError } = await supabase_1.supabase
-            .from('orders')
-            .update({
-            esim_code: roamifyOrder.esimId,
-            updated_at: new Date().toISOString(),
-        })
-            .eq('id', orderId);
-        if (updateError) {
-            logger_1.logger.error('Error updating order with eSIM data:', updateError, {
-                orderId,
-                packageId,
-                resellerId,
-                roamifyOrderId: roamifyOrder.orderId,
-                esimId: roamifyOrder.esimId,
-            });
-        }
-        else {
-            logger_1.logger.info(`eSIM delivered successfully`, {
-                orderId,
-                packageId,
-                resellerId,
-                roamifyOrderId: roamifyOrder.orderId,
-                esimId: roamifyOrder.esimId,
-                paymentIntentId: paymentIntent.id,
-            });
+        // Optionally, handle QR code generation if needed here
+        // ...
+        // Update order with eSIM data (if available)
+        const esimId = roamifyOrder.esimId || roamifyOrder.esim_id;
+        if (esimId) {
+            const { error: updateError } = await supabase_1.supabase
+                .from('orders')
+                .update({
+                esim_code: esimId,
+                updated_at: new Date().toISOString(),
+            })
+                .eq('id', orderId);
+            if (updateError) {
+                logger_1.logger.error('Error updating order with eSIM data:', updateError, {
+                    orderId,
+                    packageId,
+                    roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+                    esimId,
+                });
+            }
+            else {
+                logger_1.logger.info(`eSIM delivered successfully`, {
+                    orderId,
+                    packageId,
+                    roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+                    esimId,
+                    paymentIntentId: paymentIntent.id,
+                });
+            }
         }
     }
     catch (esimError) {
@@ -384,10 +386,13 @@ async function handlePaymentIntentCanceled(paymentIntent) {
  * Handle checkout session completed
  */
 async function handleCheckoutSessionCompleted(session) {
-    logger_1.logger.info(`Checkout session completed: ${session.id}`);
+    console.log('[EMAIL DEBUG] TOP OF FUNCTION - SESSION:', JSON.stringify(session, null, 2));
+    logger_1.logger.info(`[EMAIL DEBUG] Raw session object:`, JSON.stringify(session, null, 2));
     try {
         const { packageId, name, surname } = session.metadata;
-        const customerEmail = session.customer_details?.email || session.customer_email;
+        let customerEmail = session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null;
+        console.log('[EMAIL DEBUG] Extracted customerEmail:', customerEmail);
+        logger_1.logger.info(`[EMAIL DEBUG] Extracted customerEmail:`, customerEmail);
         const amount = session.amount_total / 100;
         // First, try to find package by UUID (id field)
         let { data: packageData, error: packageError } = await supabase_1.supabase
@@ -442,8 +447,8 @@ async function handleCheckoutSessionCompleted(session) {
         const orderData = {
             package_id: packageData.id, // Use the actual UUID
             user_id: null,
-            user_email: customerEmail,
-            user_name: `${name || ''} ${surname || ''}`.trim() || customerEmail,
+            user_email: session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null,
+            user_name: `${name || ''} ${surname || ''}`.trim() || session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null,
             name,
             surname,
             esim_code: esimCode,
@@ -470,8 +475,10 @@ async function handleCheckoutSessionCompleted(session) {
             return;
         }
         logger_1.logger.info(`Order created successfully: ${order.id}`);
+        console.log('[EMAIL DEBUG] Before email block - customerEmail:', customerEmail);
         // Step 3: Send confirmation email with real eSIM data
         if (customerEmail) {
+            logger_1.logger.info(`[EMAIL DEBUG] Attempting to send order confirmation email to ${customerEmail} for order ${order.id}`);
             try {
                 await (0, emailService_1.sendEmail)({
                     to: customerEmail,
@@ -493,15 +500,23 @@ async function handleCheckoutSessionCompleted(session) {
                         email: customerEmail,
                     }),
                 });
-                logger_1.logger.info(`Order confirmation email sent to ${customerEmail} for order ${order.id}`);
+                logger_1.logger.info(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
+                console.log(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
             }
             catch (emailError) {
-                logger_1.logger.error('Error sending checkout success email:', emailError);
+                logger_1.logger.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
+                console.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
             }
         }
+        else {
+            logger_1.logger.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
+            console.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
+        }
+        console.log('[EMAIL DEBUG] END OF FUNCTION');
     }
     catch (error) {
         logger_1.logger.error('Error handling checkout session completion:', error);
+        console.error('Error handling checkout session completion:', error);
     }
 }
 /**
