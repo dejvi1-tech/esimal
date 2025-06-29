@@ -275,7 +275,24 @@ export class RoamifyService {
       logger.info('[ROAMIFY V2 DEBUG] Response Status:', response.status);
       logger.info('[ROAMIFY V2 DEBUG] Response Headers:', JSON.stringify(response.headers));
       logger.info('[ROAMIFY V2 DEBUG] Response Data:', JSON.stringify(response.data));
-      return response.data;
+      
+      const data = response.data as { data?: any };
+      if (!data || !data.data) {
+        throw new Error('No response from Roamify API');
+      }
+      const result = data.data;
+      const esimItem = result.items && result.items[0];
+      const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
+      if (!esimId) {
+        throw new Error('No eSIM ID received from Roamify API');
+      }
+      logger.info(`eSIM order created successfully. Order ID: ${result.id}, eSIM ID: ${esimId}`);
+
+      return {
+        orderId: result.id || result.orderId,
+        esimId: esimId,
+        items: result.items || []
+      };
     } catch (error: any) {
       if (error.response) {
         logger.error('[ROAMIFY V2 DEBUG] Error Response Status:', error.response.status);
