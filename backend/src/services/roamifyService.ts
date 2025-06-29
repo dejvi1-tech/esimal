@@ -55,6 +55,18 @@ type RoamifyEsimResponse = {
   }
 };
 
+type EsimApplyResponse = {
+  data: {
+    esim: {
+      qrCodeUrl: string;
+      status?: string;
+      lpaCode?: string;
+      activationCode?: string;
+      iosQuickInstall?: string;
+    };
+  };
+};
+
 export class RoamifyService {
   private static apiKey = process.env.ROAMIFY_API_KEY;
   private static baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -380,7 +392,7 @@ export class RoamifyService {
     iosQuickInstall: string;
   }> {
     // Step 1: Apply for profile
-    let response = await axios.post(
+    const response = await axios.post<EsimApplyResponse>(
       `${this.baseUrl}/api/esim/apply`,
       { esimId },
       {
@@ -391,15 +403,15 @@ export class RoamifyService {
         timeout: 30000,
       }
     );
-    let esimData = response.data?.data?.esim || {};
-    let qrCodeUrl = esimData.qrCodeUrl;
-    let lpaCode = esimData.lpaCode || '';
-    let activationCode = esimData.activationCode || '';
-    let iosQuickInstall = esimData.iosQuickInstall || '';
+    let esim = response.data?.data?.esim;
+    let qrCodeUrl = esim?.qrCodeUrl || '';
+    let lpaCode = esim?.lpaCode || '';
+    let activationCode = esim?.activationCode || '';
+    let iosQuickInstall = esim?.iosQuickInstall || '';
     let tries = 0;
     while (!qrCodeUrl && tries < 10) {
       await new Promise(r => setTimeout(r, 5000));
-      const statusRes = await axios.get<RoamifyEsimResponse>(`${this.baseUrl}/api/esim`, {
+      const statusRes = await axios.get<EsimApplyResponse>(`${this.baseUrl}/api/esim`, {
         params: { esimId },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -407,8 +419,8 @@ export class RoamifyService {
         },
         timeout: 15000,
       });
-      const esim = statusRes.data?.data?.esim;
-      if (esim?.qrCodeUrl) {
+      esim = statusRes.data?.data?.esim;
+      if (esim && esim.qrCodeUrl) {
         qrCodeUrl = esim.qrCodeUrl;
         lpaCode = esim.lpaCode || '';
         activationCode = esim.activationCode || '';
