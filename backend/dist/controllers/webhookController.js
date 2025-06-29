@@ -290,13 +290,9 @@ async function deliverEsim(order, paymentIntent, metadata) {
         let roamifyOrder;
         let roamifySuccess = false;
         try {
-            // First try with the new V2 method that includes customer info
+            // First try with the new V2 method that includes only packageId and quantity
             roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrderV2({
                 packageId: roamifyPackageId,
-                email: email,
-                phoneNumber: phoneNumber,
-                firstName: firstName,
-                lastName: lastName,
                 quantity: quantity
             });
             roamifySuccess = true;
