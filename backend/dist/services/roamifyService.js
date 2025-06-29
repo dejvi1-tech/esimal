@@ -159,14 +159,20 @@ class RoamifyService {
      * Create eSIM order with Roamify (new API)
      */
     static async createEsimOrderV2({ packageId, email, phoneNumber, firstName, lastName, quantity = 1 }) {
-        const url = `${this.baseUrl}/create-esim-order`;
+        const url = `${this.baseUrl}/api/esim/order`;
         const payload = {
-            packageId,
-            email,
-            phoneNumber,
-            firstName,
-            lastName,
-            quantity
+            items: [
+                {
+                    packageId: packageId,
+                    quantity: quantity
+                }
+            ],
+            customer: {
+                email,
+                phoneNumber,
+                firstName,
+                lastName
+            }
         };
         const headers = {
             'Authorization': `Bearer ${this.apiKey}`,

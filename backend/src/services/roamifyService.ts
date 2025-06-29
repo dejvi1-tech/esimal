@@ -254,14 +254,20 @@ export class RoamifyService {
     lastName: string;
     quantity?: number;
   }): Promise<any> {
-    const url = `${this.baseUrl}/create-esim-order`;
+    const url = `${this.baseUrl}/api/esim/order`;
     const payload = {
-      packageId,
-      email,
-      phoneNumber,
-      firstName,
-      lastName,
-      quantity
+      items: [
+        {
+          packageId: packageId,
+          quantity: quantity
+        }
+      ],
+      customer: {
+        email,
+        phoneNumber,
+        firstName,
+        lastName
+      }
     };
     const headers = {
       'Authorization': `Bearer ${this.apiKey}`,
