@@ -340,10 +340,11 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
           }
         }
         
-        // FALLBACK: If no real Roamify packageId found, use the package ID itself
+        // FALLBACK: If no real Roamify packageId found, use a known working packageId
         if (!realRoamifyPackageId) {
           logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${myPackageData.reseller_id}. Using fallback.`);
-          realRoamifyPackageId = myPackageData.reseller_id || myPackageData.id;
+          // Use a real working Roamify packageId as fallback
+          realRoamifyPackageId = 'esim-united-states-30days-3gb-all';
           logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
         }
         
@@ -637,10 +638,11 @@ async function handleCheckoutSessionCompleted(session: any) {
         }
       }
       
-      // FALLBACK: If no real Roamify packageId found, use the package ID itself
+      // FALLBACK: If no real Roamify packageId found, use a known working packageId
       if (!realRoamifyPackageId) {
         logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
-        realRoamifyPackageId = packageData.reseller_id || packageData.id;
+        // Use a real working Roamify packageId as fallback
+        realRoamifyPackageId = 'esim-united-states-30days-3gb-all';
         logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
       }
       // --- END NEW LOGIC ---

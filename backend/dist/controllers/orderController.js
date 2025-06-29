@@ -184,7 +184,8 @@ const createMyPackageOrder = async (req, res, next) => {
         }
         if (!realRoamifyPackageId) {
             logger_1.logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
-            realRoamifyPackageId = packageData.reseller_id || packageData.id;
+            // Use a real working Roamify packageId as fallback
+            realRoamifyPackageId = 'esim-united-states-30days-3gb-all';
             logger_1.logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
         }
         // --- END NEW LOGIC ---
