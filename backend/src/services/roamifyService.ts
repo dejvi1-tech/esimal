@@ -388,14 +388,14 @@ export class RoamifyService {
     let tries = 0;
     while (!qrCodeUrl && tries < 10) {
       await new Promise(r => setTimeout(r, 5000));
-      const statusRes = await axios.get(`${this.baseUrl}/api/esim`, {
+      const statusRes: any = await axios.get(`${this.baseUrl}/api/esim`, {
         params: { esimId },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
         },
         timeout: 15000,
-      }) as { data: any };
+      });
       esimData = statusRes.data?.data?.esim || {};
       qrCodeUrl = esimData.qrCodeUrl;
       lpaCode = esimData.lpaCode || '';
