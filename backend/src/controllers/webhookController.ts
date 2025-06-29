@@ -11,6 +11,7 @@ import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
  * Handle Stripe webhook events
  */
 export const handleStripeWebhook = (req: Request, res: Response, next: NextFunction) => {
+  console.log('[EMAIL DEBUG] handleStripeWebhook called. Event:', req.body);
   (async () => {
     const sig = req.headers['stripe-signature'] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -36,35 +37,45 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
         eventType: event.type,
         eventData: JSON.stringify(event.data.object),
       });
+      console.log('[EMAIL DEBUG] Stripe event type:', event.type);
 
       // Handle the event
       switch (event.type) {
         case 'payment_intent.succeeded':
+          console.log('[EMAIL DEBUG] Entered case: payment_intent.succeeded');
           await handlePaymentIntentSucceeded(event.data.object);
           break;
         case 'payment_intent.payment_failed':
+          console.log('[EMAIL DEBUG] Entered case: payment_intent.payment_failed');
           await handlePaymentIntentFailed(event.data.object);
           break;
         case 'payment_intent.canceled':
+          console.log('[EMAIL DEBUG] Entered case: payment_intent.canceled');
           await handlePaymentIntentCanceled(event.data.object);
           break;
         case 'checkout.session.completed':
+          console.log('[EMAIL DEBUG] Entered case: checkout.session.completed');
           await handleCheckoutSessionCompleted(event.data.object);
           break;
         case 'charge.refunded':
+          console.log('[EMAIL DEBUG] Entered case: charge.refunded');
           await handleChargeRefunded(event.data.object);
           break;
         case 'customer.subscription.created':
+          console.log('[EMAIL DEBUG] Entered case: customer.subscription.created');
           await handleSubscriptionCreated(event.data.object);
           break;
         case 'customer.subscription.updated':
+          console.log('[EMAIL DEBUG] Entered case: customer.subscription.updated');
           await handleSubscriptionUpdated(event.data.object);
           break;
         case 'customer.subscription.deleted':
+          console.log('[EMAIL DEBUG] Entered case: customer.subscription.deleted');
           await handleSubscriptionDeleted(event.data.object);
           break;
         default:
           logger.info(`Unhandled event type: ${event.type}`);
+          console.log('[EMAIL DEBUG] Unhandled event type:', event.type);
       }
 
       res.json({ received: true });
