@@ -264,7 +264,7 @@ export const createMyPackageOrder = async (
 
     // Step 3: Create order in database with real Roamify data and user info
     const orderData = {
-      packageId: packageData.id, // Use the actual UUID
+      package_id: packageData.id, // Use the actual UUID
       user_email: userEmail,
       user_name: userName || `${name} ${surname}`,
       name,
