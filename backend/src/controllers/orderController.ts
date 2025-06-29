@@ -208,22 +208,32 @@ export const createMyPackageOrder = async (
       logger.info(`Package found by UUID: ${packageId}`);
     }
 
-    // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
-    let realRoamifyPackageId: string | undefined;
-    let realPackageData: any;
+    // --- NEW LOGIC: Get real Roamify packageId from packages table ---
+    let realRoamifyPackageId = null;
+    
+    // First try to get the real Roamify packageId from the packages table using reseller_id
     if (packageData.reseller_id) {
-      const { data: foundPackage, error: foundError } = await supabaseAdmin
+      const { data: packageMapping } = await supabase
         .from('packages')
         .select('features')
         .eq('reseller_id', packageData.reseller_id)
         .single();
-      if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
-        realRoamifyPackageId = foundPackage.features.packageId;
-        realPackageData = foundPackage;
+      
+      if (packageMapping?.features?.packageId) {
+        realRoamifyPackageId = packageMapping.features.packageId;
+        logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
       }
     }
+    
+    // If not found in packages table, use the reseller_id directly as it might be the real Roamify packageId
+    if (!realRoamifyPackageId && packageData.reseller_id) {
+      realRoamifyPackageId = packageData.reseller_id;
+      logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
+    }
+    
+    // Fallback to a known working package ID
     if (!realRoamifyPackageId) {
-      logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
+      logger.warn(`Could not find real Roamify packageId for reseller_id: ${packageData.reseller_id}. Using fallback.`);
       // Fallback to a known working package ID
       const fallbackPackageId = 'esim-europe-30days-3gb-all'; // Use a confirmed existing package
       logger.info(`Using fallback Roamify packageId: ${fallbackPackageId}`);
@@ -244,6 +254,7 @@ export const createMyPackageOrder = async (
     logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
     
     try {
+      // Use the correct Roamify API payload format with items array
       const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId!, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;

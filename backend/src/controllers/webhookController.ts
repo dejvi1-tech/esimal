@@ -325,39 +325,36 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
         logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
         
-        // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
-        let realRoamifyPackageId: string | undefined;
-        let realPackageData: any;
+        // --- NEW LOGIC: Get real Roamify packageId from packages table ---
+        let realRoamifyPackageId = null;
+        
+        // First try to get the real Roamify packageId from the packages table using reseller_id
         if (myPackageData.reseller_id) {
-          const { data: foundPackage, error: foundError } = await supabase
+          const { data: packageMapping } = await supabase
             .from('packages')
             .select('features')
             .eq('reseller_id', myPackageData.reseller_id)
             .single();
-          if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
-            realRoamifyPackageId = foundPackage.features.packageId;
-            realPackageData = foundPackage;
+          
+          if (packageMapping?.features?.packageId) {
+            realRoamifyPackageId = packageMapping.features.packageId;
+            logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
           }
         }
         
-        // FALLBACK: If no real Roamify packageId found, use a known working packageId
+        // If not found in packages table, use the reseller_id directly as it might be the real Roamify packageId
+        if (!realRoamifyPackageId && myPackageData.reseller_id) {
+          realRoamifyPackageId = myPackageData.reseller_id;
+          logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
+        }
+        
+        // Fallback to a known working package ID
         if (!realRoamifyPackageId) {
-          logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${myPackageData.reseller_id}. Using fallback.`);
+          logger.warn(`Could not find real Roamify packageId for reseller_id: ${myPackageData.reseller_id}. Using fallback.`);
           // Use a real working Roamify packageId as fallback
           realRoamifyPackageId = 'esim-europe-30days-3gb-all';
           logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
         }
-        
-        // Create package data structure using the real Roamify package data
-        packageData = {
-          id: myPackageData.id,
-          name: myPackageData.name,
-          features: {
-            packageId: realRoamifyPackageId
-          }
-        };
-        
-        logger.info(`Created package data using Roamify packageId: ${realRoamifyPackageId}`);
         // --- END NEW LOGIC ---
       }
     } else {
