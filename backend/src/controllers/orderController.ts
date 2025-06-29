@@ -205,22 +205,11 @@ export const createMyPackageOrder = async (
       logger.info(`Package found by UUID: ${packageId}`);
     }
 
-    // --- NEW LOGIC: Always map my_packages.reseller_id to packages.roamify_package_id ---
+    // --- NEW LOGIC: Use reseller_id directly as Roamify package ID ---
     let realRoamifyPackageId = null;
-    let realPackageData = null;
     if (packageData.reseller_id) {
-      const { data: packageMapping, error: mappingError } = await supabaseAdmin
-        .from('packages')
-        .select('*')
-        .eq('roamify_package_id', packageData.reseller_id)
-        .single();
-      if (mappingError || !packageMapping) {
-        logger.error(`No matching real package found in packages for reseller_id: ${packageData.reseller_id}`);
-        throw new NotFoundError('No matching real package found for this package. Please contact support.');
-      }
-      realRoamifyPackageId = packageMapping.roamify_package_id;
-      realPackageData = packageMapping;
-      logger.info(`Mapped my_packages.reseller_id ${packageData.reseller_id} to real Roamify packageId: ${realRoamifyPackageId}`);
+      realRoamifyPackageId = packageData.reseller_id;
+      logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
     } else {
       logger.error('No reseller_id found in my_packages entry.');
       throw new NotFoundError('No reseller_id found for this package. Please contact support.');
