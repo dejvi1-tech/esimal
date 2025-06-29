@@ -364,9 +364,9 @@ export class RoamifyService {
    */
   static async getQrCodeWithPolling(esimId: string): Promise<{
     qrCodeUrl: string;
-    lpaCode?: string;
-    activationCode?: string;
-    iosQuickInstall?: string;
+    lpaCode: string;
+    activationCode: string;
+    iosQuickInstall: string;
   }> {
     // Step 1: Apply for profile
     let response = await axios.post(
@@ -382,6 +382,9 @@ export class RoamifyService {
     );
     let esimData = response.data?.data?.esim || {};
     let qrCodeUrl = esimData.qrCodeUrl;
+    let lpaCode = esimData.lpaCode || '';
+    let activationCode = esimData.activationCode || '';
+    let iosQuickInstall = esimData.iosQuickInstall || '';
     let tries = 0;
     while (!qrCodeUrl && tries < 10) {
       await new Promise(r => setTimeout(r, 5000));
@@ -395,6 +398,9 @@ export class RoamifyService {
       });
       esimData = statusRes.data?.data?.esim || {};
       qrCodeUrl = esimData.qrCodeUrl;
+      lpaCode = esimData.lpaCode || '';
+      activationCode = esimData.activationCode || '';
+      iosQuickInstall = esimData.iosQuickInstall || '';
       tries++;
       logger.info(`[ROAMIFY POLL] Poll attempt ${tries}: qrCodeUrl=${qrCodeUrl ? 'READY' : 'pending'}`);
     }
@@ -403,9 +409,9 @@ export class RoamifyService {
     }
     return {
       qrCodeUrl,
-      lpaCode: esimData.lpaCode,
-      activationCode: esimData.activationCode,
-      iosQuickInstall: esimData.iosQuickInstall,
+      lpaCode,
+      activationCode,
+      iosQuickInstall,
     };
   }
 } 

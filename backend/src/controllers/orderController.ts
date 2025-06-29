@@ -264,7 +264,7 @@ export const createMyPackageOrder = async (
       name,
       surname,
       esim_code: esimCode,
-      qr_code_data: realQRData.lpaCode, // Store the real LPA code from Roamify
+      qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
       roamify_order_id: roamifyOrderId,
       status: 'paid',
       amount: packageData.sale_price,
@@ -299,8 +299,8 @@ export const createMyPackageOrder = async (
           dataAmount: `${packageData.data_amount}GB`,
           validityDays: packageData.validity_days,
           esimCode: esimCode,
-          qrCodeData: realQRData.lpaCode, // Use real LPA code from Roamify
-          qrCodeUrl: realQRData.qrCodeUrl, // Use real QR code URL from Roamify
+          qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
+          qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
           isGuestOrder: true,
           signupUrl: `${process.env.FRONTEND_URL}/signup`,
           dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
@@ -322,10 +322,10 @@ export const createMyPackageOrder = async (
       data: {
         orderId: order.id,
         esimCode: esimCode,
-        qrCodeData: realQRData.lpaCode,
-        qrCodeUrl: realQRData.qrCodeUrl,
-        activationCode: realQRData.activationCode,
-        iosQuickInstall: realQRData.iosQuickInstall,
+        qrCodeData: realQRData.lpaCode || '',
+        qrCodeUrl: realQRData.qrCodeUrl || '',
+        activationCode: realQRData.activationCode || '',
+        iosQuickInstall: realQRData.iosQuickInstall || '',
         roamifyOrderId: roamifyOrderId,
         packageName: packageData.name,
         amount: packageData.sale_price,
