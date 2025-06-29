@@ -219,7 +219,7 @@ export const createMyPackageOrder = async (
         .eq('reseller_id', packageData.reseller_id)
         .single();
       
-      if (packageMapping?.features?.packageId) {
+      if (packageMapping && packageMapping.features && packageMapping.features.packageId) {
         realRoamifyPackageId = packageMapping.features.packageId;
         logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
       }
