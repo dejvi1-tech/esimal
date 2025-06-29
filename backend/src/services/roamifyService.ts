@@ -261,13 +261,7 @@ export class RoamifyService {
           packageId: packageId,
           quantity: quantity
         }
-      ],
-      customer: {
-        email,
-        phoneNumber,
-        firstName,
-        lastName
-      }
+      ]
     };
     const headers = {
       'Authorization': `Bearer ${this.apiKey}`,
