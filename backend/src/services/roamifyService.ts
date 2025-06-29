@@ -395,7 +395,7 @@ export class RoamifyService {
           'Content-Type': 'application/json',
         },
         timeout: 15000,
-      });
+      }) as { data: any };
       esimData = statusRes.data?.data?.esim || {};
       qrCodeUrl = esimData.qrCodeUrl;
       lpaCode = esimData.lpaCode || '';
