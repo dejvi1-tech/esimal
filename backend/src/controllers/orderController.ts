@@ -181,7 +181,7 @@ export const createMyPackageOrder = async (
     }
 
     // First, try to find package by UUID (id field)
-    let { data: packageData, error: packageError } = await supabase
+    let { data: packageData, error: packageError } = await supabaseAdmin
       .from('my_packages')
       .select('*')
       .eq('id', packageId)
@@ -191,7 +191,7 @@ export const createMyPackageOrder = async (
     if (packageError || !packageData) {
       logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
       
-      const { data: packageBySlug, error: slugError } = await supabase
+      const { data: packageBySlug, error: slugError } = await supabaseAdmin
         .from('my_packages')
         .select('*')
         .eq('location_slug', packageId)
@@ -258,7 +258,7 @@ export const createMyPackageOrder = async (
 
     // Step 3: Create order in database with real Roamify data and user info
     const orderData = {
-      package_id: packageData.id, // Use the actual UUID
+      packageId: packageData.id, // Use the actual UUID
       user_email: userEmail,
       user_name: userName || `${name} ${surname}`,
       name,

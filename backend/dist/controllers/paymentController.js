@@ -31,15 +31,29 @@ const createPaymentIntent = async (req, res, next) => {
             throw new errors_1.ValidationError('Package ID is required');
         }
         logger_1.logger.info(`Creating payment intent for package ${packageId}, amount: ${amount} ${currency}, email: ${email}`);
-        // Get package details by id (slug)
-        const { data: packageData, error: packageError } = await supabase_1.supabase
+        // First, try to find package by UUID (id field)
+        let { data: packageData, error: packageError } = await supabase_1.supabase
             .from('my_packages')
             .select('*')
-            .eq('id', packageId) // packageId is the slug
+            .eq('id', packageId)
             .single();
+        // If not found by UUID, try to find by location_slug (slug)
         if (packageError || !packageData) {
-            logger_1.logger.error(`Package not found: ${packageId}`, packageError);
-            throw new errors_1.NotFoundError('Package not found');
+            logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+            const { data: packageBySlug, error: slugError } = await supabase_1.supabase
+                .from('my_packages')
+                .select('*')
+                .eq('location_slug', packageId)
+                .single();
+            if (slugError || !packageBySlug) {
+                logger_1.logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
+                throw new errors_1.NotFoundError('Package not found');
+            }
+            packageData = packageBySlug;
+            logger_1.logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+        }
+        else {
+            logger_1.logger.info(`Package found by UUID: ${packageId}`);
         }
         // Use the actual UUID from the package data
         const actualPackageId = packageData.id;

@@ -88,6 +88,11 @@ app.get('/api/search-packages', (req, res, next) => {
     const controller = require('./controllers/packageController');
     return controller.searchPackages(req, res, next);
 });
+// Add most-popular endpoint to match frontend expectation
+app.get('/api/packages/most-popular', (req, res, next) => {
+    const controller = require('./controllers/packageController');
+    return controller.getSectionPackages(req, res, next);
+});
 // Add endpoint for frontend packages (plain array, only visible)
 app.get('/api/frontend-packages', async (req, res) => {
     try {

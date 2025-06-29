@@ -144,14 +144,29 @@ const createMyPackageOrder = async (req, res, next) => {
         if (!name || !surname) {
             throw new errors_1.ValidationError('Name and surname are required');
         }
-        // Get package details from my_packages
-        const { data: packageData, error: packageError } = await supabase_1.supabase
+        // First, try to find package by UUID (id field)
+        let { data: packageData, error: packageError } = await supabaseAdmin
             .from('my_packages')
             .select('*')
             .eq('id', packageId)
             .single();
+        // If not found by UUID, try to find by location_slug (slug)
         if (packageError || !packageData) {
-            throw new errors_1.NotFoundError('Package not found');
+            logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+            const { data: packageBySlug, error: slugError } = await supabaseAdmin
+                .from('my_packages')
+                .select('*')
+                .eq('location_slug', packageId)
+                .single();
+            if (slugError || !packageBySlug) {
+                logger_1.logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
+                throw new errors_1.NotFoundError('Package not found');
+            }
+            packageData = packageBySlug;
+            logger_1.logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+        }
+        else {
+            logger_1.logger.info(`Package found by UUID: ${packageId}`);
         }
         let esimCode;
         let roamifyOrderId;
@@ -191,7 +206,7 @@ const createMyPackageOrder = async (req, res, next) => {
         }
         // Step 3: Create order in database with real Roamify data and user info
         const orderData = {
-            packageId: packageId,
+            packageId: packageData.id, // Use the actual UUID
             user_email: userEmail,
             user_name: userName || `${name} ${surname}`,
             name,
