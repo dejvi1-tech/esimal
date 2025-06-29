@@ -190,54 +190,40 @@ export const createMyPackageOrder = async (
     // If not found by UUID, try to find by location_slug (slug)
     if (packageError || !packageData) {
       logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
-      
       const { data: packageBySlug, error: slugError } = await supabaseAdmin
         .from('my_packages')
         .select('*')
         .eq('location_slug', packageId)
         .single();
-
       if (slugError || !packageBySlug) {
         logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
         throw new NotFoundError('Package not found');
       }
-
       packageData = packageBySlug;
       logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
     } else {
       logger.info(`Package found by UUID: ${packageId}`);
     }
 
-    // --- NEW LOGIC: Get real Roamify packageId from packages table ---
+    // --- NEW LOGIC: Always map my_packages.reseller_id to packages.roamify_package_id ---
     let realRoamifyPackageId = null;
-    
-    // First try to get the real Roamify packageId from the packages table using reseller_id
+    let realPackageData = null;
     if (packageData.reseller_id) {
-      const { data: packageMapping } = await supabase
+      const { data: packageMapping, error: mappingError } = await supabaseAdmin
         .from('packages')
-        .select('features')
-        .eq('reseller_id', packageData.reseller_id)
+        .select('*')
+        .eq('roamify_package_id', packageData.reseller_id)
         .single();
-      
-      if (packageMapping && packageMapping.features && packageMapping.features.packageId) {
-        realRoamifyPackageId = packageMapping.features.packageId;
-        logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
+      if (mappingError || !packageMapping) {
+        logger.error(`No matching real package found in packages for reseller_id: ${packageData.reseller_id}`);
+        throw new NotFoundError('No matching real package found for this package. Please contact support.');
       }
-    }
-    
-    // If not found in packages table, use the reseller_id directly as it might be the real Roamify packageId
-    if (!realRoamifyPackageId && packageData.reseller_id) {
-      realRoamifyPackageId = packageData.reseller_id;
-      logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
-    }
-    
-    // Fallback to a known working package ID
-    if (!realRoamifyPackageId) {
-      logger.warn(`Could not find real Roamify packageId for reseller_id: ${packageData.reseller_id}. Using fallback.`);
-      // Fallback to a known working package ID
-      const fallbackPackageId = 'esim-europe-30days-3gb-all'; // Use a confirmed existing package
-      logger.info(`Using fallback Roamify packageId: ${fallbackPackageId}`);
-      realRoamifyPackageId = fallbackPackageId;
+      realRoamifyPackageId = packageMapping.roamify_package_id;
+      realPackageData = packageMapping;
+      logger.info(`Mapped my_packages.reseller_id ${packageData.reseller_id} to real Roamify packageId: ${realRoamifyPackageId}`);
+    } else {
+      logger.error('No reseller_id found in my_packages entry.');
+      throw new NotFoundError('No reseller_id found for this package. Please contact support.');
     }
     // --- END NEW LOGIC ---
 
