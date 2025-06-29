@@ -241,9 +241,9 @@ async function deliverEsim(order, paymentIntent, metadata) {
         paymentIntentId: paymentIntent.id,
     });
     try {
-        // Get package details to get the reseller_id
+        // Get package details to get the reseller_id from the packages table
         const { data: packageData, error: packageError } = await supabase_1.supabase
-            .from('my_packages')
+            .from('packages')
             .select('*')
             .eq('id', packageId)
             .single();
@@ -256,17 +256,19 @@ async function deliverEsim(order, paymentIntent, metadata) {
             });
             throw new Error(`Package not found: ${packageId}`);
         }
-        // Use the working Roamify API method
+        // Use the working Roamify API method with the packageId from features
+        const roamifyPackageId = packageData.features?.packageId || packageId;
         logger_1.logger.info(`[ROAMIFY DEBUG] Creating eSIM order with working API`, {
             orderId,
             packageId,
+            roamifyPackageId,
             email,
             phoneNumber,
             firstName,
             lastName,
             paymentIntentId: paymentIntent.id,
         });
-        const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(packageData.reseller_id || packageId, quantity);
+        const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(roamifyPackageId, quantity);
         logger_1.logger.info(`[ROAMIFY DEBUG] Roamify order created successfully`, {
             orderId,
             packageId,
