@@ -102,13 +102,14 @@ app.get('/api/search-packages', searchPackages);
 app.get('/api/packages/most-popular', getSectionPackages);
 
 // Add email test endpoint
-app.post('/api/test-email', (req: Request, res: Response, next: NextFunction) => {
+app.post('/api/test-email', (req: Request, res: Response, next: NextFunction): void => {
   const { to, subject, message } = req.body;
   if (!to || !subject || !message) {
-    return res.status(400).json({ 
+    res.status(400).json({ 
       status: 'error', 
       message: 'Missing required fields: to, subject, message' 
     });
+    return;
   }
   const { sendEmail } = require('./services/emailService');
   sendEmail({
