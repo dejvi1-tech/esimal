@@ -416,7 +416,6 @@ async function handleCheckoutSessionCompleted(session: any) {
 
   try {
     const { packageId, name, surname } = session.metadata;
-    const customerEmail = session.customer_details?.email || session.customer_email;
     const amount = session.amount_total / 100;
 
     // First, try to find package by UUID (id field)
@@ -481,8 +480,8 @@ async function handleCheckoutSessionCompleted(session: any) {
     const orderData = {
       package_id: packageData.id, // Use the actual UUID
       user_id: null,
-      user_email: customerEmail,
-      user_name: `${name || ''} ${surname || ''}`.trim() || customerEmail,
+      user_email: session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null,
+      user_name: `${name || ''} ${surname || ''}`.trim() || session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null,
       name,
       surname,
       esim_code: esimCode,
@@ -513,8 +512,12 @@ async function handleCheckoutSessionCompleted(session: any) {
 
     logger.info(`Order created successfully: ${order.id}`);
 
+    // Extract customer email from all possible locations and log session
+    logger.info(`[EMAIL DEBUG] Raw session object:`, JSON.stringify(session, null, 2));
+    let customerEmail = session.customer_details?.email || session.customer_email || session.metadata?.email || session.email || null;
+    logger.info(`[EMAIL DEBUG] Extracted customerEmail:`, customerEmail);
+
     // Step 3: Send confirmation email with real eSIM data
-    logger.info(`[EMAIL DEBUG] customerEmail value:`, customerEmail);
     if (customerEmail) {
       logger.info(`[EMAIL DEBUG] Attempting to send order confirmation email to ${customerEmail} for order ${order.id}`);
       try {
