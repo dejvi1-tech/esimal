@@ -23,6 +23,7 @@ import { createClient } from '@supabase/supabase-js';
 import { RoamifyService } from './services/roamifyService';
 import { AnalyticsService } from './utils/analytics';
 import { asyncHandler } from './utils/asyncHandler';
+import { getSectionPackages, searchPackages } from './controllers/packageController';
 
 // Load environment variables
 config();
@@ -96,21 +97,9 @@ app.use('/api/stripe', stripeRoutes);
 app.use('/api/payments', paymentRoutes);
 
 // Direct routes to match frontend URLs
-app.get('/api/get-section-packages', (req, res, next) => {
-  const controller = require('./controllers/packageController');
-  return controller.getSectionPackages(req, res, next);
-});
-
-app.get('/api/search-packages', (req, res, next) => {
-  const controller = require('./controllers/packageController');
-  return controller.searchPackages(req, res, next);
-});
-
-// Add most-popular endpoint to match frontend expectation
-app.get('/api/packages/most-popular', (req, res, next) => {
-  const controller = require('./controllers/packageController');
-  return controller.getSectionPackages(req, res, next);
-});
+app.get('/api/get-section-packages', getSectionPackages);
+app.get('/api/search-packages', searchPackages);
+app.get('/api/packages/most-popular', getSectionPackages);
 
 // Add email test endpoint
 app.post('/api/test-email', (req: Request, res: Response) => {
