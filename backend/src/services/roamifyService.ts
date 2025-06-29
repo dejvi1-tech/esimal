@@ -237,6 +237,80 @@ export class RoamifyService {
   }
 
   /**
+   * Create eSIM order with Roamify (new API)
+   */
+  static async createEsimOrderV2({
+    packageId,
+    email,
+    phoneNumber,
+    firstName,
+    lastName,
+    quantity = 1
+  }: {
+    packageId: string;
+    email: string;
+    phoneNumber: string;
+    firstName: string;
+    lastName: string;
+    quantity?: number;
+  }): Promise<any> {
+    const url = 'https://api.roamify.com/create-esim-order';
+    const payload = {
+      packageId,
+      email,
+      phoneNumber,
+      firstName,
+      lastName,
+      quantity
+    };
+    const headers = {
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json',
+    };
+    logger.info('[ROAMIFY V2 DEBUG] Request URL:', url);
+    logger.info('[ROAMIFY V2 DEBUG] Request Payload:', JSON.stringify(payload));
+    logger.info('[ROAMIFY V2 DEBUG] Request Headers:', JSON.stringify(headers));
+    try {
+      const response = await axios.post(url, payload, { headers, timeout: 30000 });
+      logger.info('[ROAMIFY V2 DEBUG] Response Status:', response.status);
+      logger.info('[ROAMIFY V2 DEBUG] Response Headers:', JSON.stringify(response.headers));
+      logger.info('[ROAMIFY V2 DEBUG] Response Data:', JSON.stringify(response.data));
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        logger.error('[ROAMIFY V2 DEBUG] Error Response Status:', error.response.status);
+        logger.error('[ROAMIFY V2 DEBUG] Error Response Headers:', JSON.stringify(error.response.headers));
+        logger.error('[ROAMIFY V2 DEBUG] Error Response Data:', JSON.stringify(error.response.data));
+      } else {
+        logger.error('[ROAMIFY V2 DEBUG] Error:', error.message);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get available packages from Roamify
+   */
+  static async getPackages(): Promise<any[]> {
+    return this.retryApiCall(async () => {
+      logger.info('Fetching available packages from Roamify');
+
+      const response = await axios.get(`${this.baseUrl}/api/packages`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000, // 15 second timeout
+      });
+
+      const packages = response.data.data || [];
+      logger.info(`Fetched ${packages.length} packages from Roamify`);
+      
+      return packages;
+    }, 'packages fetch');
+  }
+
+  /**
    * Check if Roamify API is healthy
    */
   static async checkApiHealth(): Promise<boolean> {

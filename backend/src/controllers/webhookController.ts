@@ -226,11 +226,18 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
   const orderId = order.id;
   const packageId = metadata.packageId;
   const email = metadata.email;
+  const phoneNumber = metadata.phone || metadata.phoneNumber || order.phone || order.phoneNumber || '';
+  const firstName = metadata.name || metadata.firstName || order.name || order.firstName || '';
+  const lastName = metadata.surname || metadata.lastName || order.surname || order.lastName || '';
+  const quantity = 1;
 
   logger.info(`Starting eSIM delivery process`, {
     orderId,
     packageId,
     email,
+    phoneNumber,
+    firstName,
+    lastName,
     paymentIntentId: paymentIntent.id,
   });
 
@@ -252,86 +259,65 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       throw new Error(`Package not found: ${packageId}`);
     }
 
-    const resellerId = packageData.reseller_id;
-    
-    if (!resellerId) {
-      logger.error('Package found but no reseller_id:', { 
-        packageId,
-        packageName: packageData.name,
-        orderId,
-        paymentIntentId: paymentIntent.id
-      });
-      throw new Error(`No reseller_id found for package: ${packageId}`);
+    // Use the new Roamify API
+    logger.info(`[ROAMIFY V2 DEBUG] Creating eSIM order with new API`, {
+      orderId,
+      packageId,
+      email,
+      phoneNumber,
+      firstName,
+      lastName,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    const roamifyOrder = await RoamifyService.createEsimOrderV2({
+      packageId: packageData.reseller_id || packageId,
+      email,
+      phoneNumber,
+      firstName,
+      lastName,
+      quantity
+    });
+
+    logger.info(`[ROAMIFY V2 DEBUG] Roamify order created successfully`, {
+      orderId,
+      packageId,
+      roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+      esimId: roamifyOrder.esimId || roamifyOrder.esim_id,
+      paymentIntentId: paymentIntent.id,
+    });
+
+    // Optionally, handle QR code generation if needed here
+    // ...
+
+    // Update order with eSIM data (if available)
+    const esimId = roamifyOrder.esimId || roamifyOrder.esim_id;
+    if (esimId) {
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          esim_code: esimId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      if (updateError) {
+        logger.error('Error updating order with eSIM data:', updateError, {
+          orderId,
+          packageId,
+          roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+          esimId,
+        });
+      } else {
+        logger.info(`eSIM delivered successfully`, {
+          orderId,
+          packageId,
+          roamifyOrderId: roamifyOrder.orderId || roamifyOrder.id,
+          esimId,
+          paymentIntentId: paymentIntent.id,
+        });
+      }
     }
-    
-    logger.info(`Found package data for eSIM delivery`, {
-      orderId,
-      packageId,
-      resellerId,
-      packageName: packageData.name,
-      paymentIntentId: paymentIntent.id,
-    });
-
-    // Log eSIM API request
-    logger.info(`Requesting eSIM from Roamify API`, {
-      orderId,
-      packageId,
-      resellerId,
-      paymentIntentId: paymentIntent.id,
-    });
-
-    // Create eSIM order with Roamify using reseller_id
-    const roamifyOrder = await RoamifyService.createEsimOrder(resellerId, 1);
-    
-    logger.info(`Roamify order created successfully`, {
-      orderId,
-      packageId,
-      resellerId,
-      roamifyOrderId: roamifyOrder.orderId,
-      esimId: roamifyOrder.esimId,
-      paymentIntentId: paymentIntent.id,
-    });
-
-    // Generate real QR code
-    const realQRData = await RoamifyService.generateRealQRCode(roamifyOrder.esimId);
-    
-    logger.info(`Real QR code generated successfully`, {
-      orderId,
-      packageId,
-      resellerId,
-      roamifyOrderId: roamifyOrder.orderId,
-      esimId: roamifyOrder.esimId,
-      paymentIntentId: paymentIntent.id,
-    });
-
-    // Update order with eSIM data
-    const { error: updateError } = await supabase
-      .from('orders')
-      .update({
-        esim_code: roamifyOrder.esimId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId);
-
-    if (updateError) {
-      logger.error('Error updating order with eSIM data:', updateError, {
-        orderId,
-        packageId,
-        resellerId,
-        roamifyOrderId: roamifyOrder.orderId,
-        esimId: roamifyOrder.esimId,
-      });
-    } else {
-      logger.info(`eSIM delivered successfully`, {
-        orderId,
-        packageId,
-        resellerId,
-        roamifyOrderId: roamifyOrder.orderId,
-        esimId: roamifyOrder.esimId,
-        paymentIntentId: paymentIntent.id,
-      });
-    }
-
   } catch (esimError) {
     logger.error('Error delivering eSIM:', esimError, {
       orderId,
