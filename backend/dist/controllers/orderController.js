@@ -168,13 +168,32 @@ const createMyPackageOrder = async (req, res, next) => {
         else {
             logger_1.logger.info(`Package found by UUID: ${packageId}`);
         }
+        // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+        let realRoamifyPackageId;
+        let realPackageData;
+        if (packageData.reseller_id) {
+            const { data: foundPackage, error: foundError } = await supabaseAdmin
+                .from('packages')
+                .select('features')
+                .eq('reseller_id', packageData.reseller_id)
+                .single();
+            if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+                realRoamifyPackageId = foundPackage.features.packageId;
+                realPackageData = foundPackage;
+            }
+        }
+        if (!realRoamifyPackageId) {
+            logger_1.logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
+            throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+        }
+        // --- END NEW LOGIC ---
         let esimCode;
         let roamifyOrderId;
         let realQRData;
         // Step 1: Create eSIM order with Roamify (with fallback)
-        logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
+        logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
         try {
-            const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(packageData.reseller_id, 1);
+            const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
             logger_1.logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
@@ -189,8 +208,7 @@ const createMyPackageOrder = async (req, res, next) => {
         // Step 2: Generate real QR code from Roamify (with fallback)
         logger_1.logger.info(`Generating real QR code for eSIM: ${esimCode}`);
         try {
-            realQRData = await roamifyService_1.RoamifyService.generateRealQRCode(esimCode);
-            logger_1.logger.info(`Real QR code generated. LPA Code: ${realQRData.lpaCode}`);
+            realQRData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimCode);
         }
         catch (qrError) {
             logger_1.logger.error('Failed to generate real QR code, using fallback:', qrError);
@@ -212,7 +230,7 @@ const createMyPackageOrder = async (req, res, next) => {
             name,
             surname,
             esim_code: esimCode,
-            qr_code_data: realQRData.lpaCode, // Store the real LPA code from Roamify
+            qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
             roamify_order_id: roamifyOrderId,
             status: 'paid',
             amount: packageData.sale_price,
@@ -243,8 +261,8 @@ const createMyPackageOrder = async (req, res, next) => {
                     dataAmount: `${packageData.data_amount}GB`,
                     validityDays: packageData.validity_days,
                     esimCode: esimCode,
-                    qrCodeData: realQRData.lpaCode, // Use real LPA code from Roamify
-                    qrCodeUrl: realQRData.qrCodeUrl, // Use real QR code URL from Roamify
+                    qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
+                    qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
                     isGuestOrder: true,
                     signupUrl: `${process.env.FRONTEND_URL}/signup`,
                     dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
@@ -265,10 +283,10 @@ const createMyPackageOrder = async (req, res, next) => {
             data: {
                 orderId: order.id,
                 esimCode: esimCode,
-                qrCodeData: realQRData.lpaCode,
-                qrCodeUrl: realQRData.qrCodeUrl,
-                activationCode: realQRData.activationCode,
-                iosQuickInstall: realQRData.iosQuickInstall,
+                qrCodeData: realQRData.lpaCode || '',
+                qrCodeUrl: realQRData.qrCodeUrl || '',
+                activationCode: realQRData.activationCode || '',
+                iosQuickInstall: realQRData.iosQuickInstall || '',
                 roamifyOrderId: roamifyOrderId,
                 packageName: packageData.name,
                 amount: packageData.sale_price,

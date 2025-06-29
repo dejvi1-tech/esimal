@@ -260,6 +260,57 @@ class RoamifyService {
             throw error;
         }
     }
+    /**
+     * Poll for QR code after applying eSIM profile
+     */
+    static async getQrCodeWithPolling(esimId) {
+        // Step 1: Apply for profile
+        const response = await axios_1.default.post(`${this.baseUrl}/api/esim/apply`, { esimId }, {
+            headers: {
+                'Authorization': `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+            },
+            timeout: 30000,
+        });
+        let esim = response.data?.data?.esim;
+        let qrCodeUrl = esim?.qrCodeUrl || '';
+        let lpaCode = esim?.lpaCode || '';
+        let activationCode = esim?.activationCode || '';
+        let iosQuickInstall = esim?.iosQuickInstall || '';
+        let tries = 0;
+        while (!qrCodeUrl && tries < 10) {
+            await new Promise(r => setTimeout(r, 5000));
+            const statusRes = await axios_1.default.get(`${this.baseUrl}/api/esim`, {
+                params: { esimId },
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 15000,
+            });
+            esim = statusRes.data?.data?.esim;
+            if (esim && esim.qrCodeUrl) {
+                qrCodeUrl = esim.qrCodeUrl;
+                lpaCode = esim.lpaCode || '';
+                activationCode = esim.activationCode || '';
+                iosQuickInstall = esim.iosQuickInstall || '';
+            }
+            else {
+                logger_1.logger.error('QR code not found in response while polling', { tries, esimId, response: statusRes.data });
+            }
+            tries++;
+            logger_1.logger.info(`[ROAMIFY POLL] Poll attempt ${tries}: qrCodeUrl=${qrCodeUrl ? 'READY' : 'pending'}`);
+        }
+        if (!qrCodeUrl) {
+            throw new Error('QR code not ready after multiple attempts');
+        }
+        return {
+            qrCodeUrl,
+            lpaCode,
+            activationCode,
+            iosQuickInstall,
+        };
+    }
 }
 exports.RoamifyService = RoamifyService;
 RoamifyService.apiKey = process.env.ROAMIFY_API_KEY;

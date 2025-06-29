@@ -325,16 +325,34 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
         logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
         
-        // Create a mock package data structure using the my_packages data
+        // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+        let realRoamifyPackageId: string | undefined;
+        if (myPackageData.reseller_id) {
+          const { data: foundPackage, error: foundError } = await supabase
+            .from('packages')
+            .select('features')
+            .eq('reseller_id', myPackageData.reseller_id)
+            .single();
+          if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+            realRoamifyPackageId = foundPackage.features.packageId;
+          }
+        }
+        if (!realRoamifyPackageId) {
+          logger.error('Could not find real Roamify packageId in packages table for reseller_id:', myPackageData.reseller_id);
+          throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+        }
+        
+        // Create package data structure using the real Roamify package data
         packageData = {
           id: myPackageData.id,
           name: myPackageData.name,
           features: {
-            packageId: myPackageData.reseller_id || packageId
+            packageId: realRoamifyPackageId
           }
         };
         
-        logger.info(`Created mock package data using reseller_id: ${myPackageData.reseller_id}`);
+        logger.info(`Created package data using real Roamify packageId: ${realRoamifyPackageId}`);
+        // --- END NEW LOGIC ---
       }
     } else {
       logger.info(`Package found by UUID in packages table: ${packageId}`);
@@ -601,9 +619,27 @@ async function handleCheckoutSessionCompleted(session: any) {
     let realQRData: any;
 
     try {
-      logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
+      // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+      let realRoamifyPackageId: string | undefined;
+      if (packageData.reseller_id) {
+        const { data: foundPackage, error: foundError } = await supabase
+          .from('packages')
+          .select('features')
+          .eq('reseller_id', packageData.reseller_id)
+          .single();
+        if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+          realRoamifyPackageId = foundPackage.features.packageId;
+        }
+      }
+      if (!realRoamifyPackageId) {
+        logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
+        throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+      }
+      // --- END NEW LOGIC ---
+
+      logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
       
-      const roamifyOrder = await RoamifyService.createEsimOrder(packageData.reseller_id, 1);
+      const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       

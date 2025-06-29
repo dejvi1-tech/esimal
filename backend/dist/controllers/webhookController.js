@@ -278,18 +278,53 @@ async function deliverEsim(order, paymentIntent, metadata) {
             else {
                 logger_1.logger.info(`Package found by UUID in my_packages: ${packageId}`);
             }
-            // Now use the UUID from my_packages to find the real package in packages table
-            const { data: realPackageData, error: realPackageError } = await supabase_1.supabase
-                .from('packages')
-                .select('*')
-                .eq('id', myPackageData.id)
-                .single();
-            if (realPackageError || !realPackageData) {
-                logger_1.logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
-                throw new Error(`Real package not found for: ${packageId}`);
+            // Check if the myPackageData.id is a valid UUID
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            const isValidUuid = uuidRegex.test(myPackageData.id);
+            if (isValidUuid) {
+                // Now use the UUID from my_packages to find the real package in packages table
+                const { data: realPackageData, error: realPackageError } = await supabase_1.supabase
+                    .from('packages')
+                    .select('*')
+                    .eq('id', myPackageData.id)
+                    .single();
+                if (realPackageError || !realPackageData) {
+                    logger_1.logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
+                    throw new Error(`Real package not found for: ${packageId}`);
+                }
+                packageData = realPackageData;
+                logger_1.logger.info(`Real package found in packages table: ${packageData.id}`);
             }
-            packageData = realPackageData;
-            logger_1.logger.info(`Real package found in packages table: ${packageData.id}`);
+            else {
+                // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
+                logger_1.logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
+                // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+                let realRoamifyPackageId;
+                if (myPackageData.reseller_id) {
+                    const { data: foundPackage, error: foundError } = await supabase_1.supabase
+                        .from('packages')
+                        .select('features')
+                        .eq('reseller_id', myPackageData.reseller_id)
+                        .single();
+                    if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+                        realRoamifyPackageId = foundPackage.features.packageId;
+                    }
+                }
+                if (!realRoamifyPackageId) {
+                    logger_1.logger.error('Could not find real Roamify packageId in packages table for reseller_id:', myPackageData.reseller_id);
+                    throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+                }
+                // Create package data structure using the real Roamify package data
+                packageData = {
+                    id: myPackageData.id,
+                    name: myPackageData.name,
+                    features: {
+                        packageId: realRoamifyPackageId
+                    }
+                };
+                logger_1.logger.info(`Created package data using real Roamify packageId: ${realRoamifyPackageId}`);
+                // --- END NEW LOGIC ---
+            }
         }
         else {
             logger_1.logger.info(`Package found by UUID in packages table: ${packageId}`);
@@ -385,16 +420,12 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 });
                 // Generate eSIM QR code/profile
                 try {
-                    const esimProfile = await roamifyService_1.RoamifyService.generateEsimProfile(esimId);
-                    logger_1.logger.info(`eSIM profile generated successfully`, {
-                        orderId,
-                        esimId,
-                        profileData: esimProfile,
-                    });
-                    // Pass the eSIM profile data to the email function
+                    const qrData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimId);
+                    logger_1.logger.info(`QR code polled and ready`, { orderId, esimId, qrCodeUrl: qrData.qrCodeUrl });
+                    // Pass qrData to sendConfirmationEmail
                     await sendConfirmationEmail(order, paymentIntent, {
                         ...metadata,
-                        esimProfile: esimProfile,
+                        esimProfile: qrData,
                         esimId: esimId,
                     });
                 }
@@ -538,12 +569,29 @@ async function handleCheckoutSessionCompleted(session) {
         let roamifyOrderId;
         let realQRData;
         try {
-            logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
-            const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(packageData.reseller_id, 1);
+            // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+            let realRoamifyPackageId;
+            if (packageData.reseller_id) {
+                const { data: foundPackage, error: foundError } = await supabase_1.supabase
+                    .from('packages')
+                    .select('features')
+                    .eq('reseller_id', packageData.reseller_id)
+                    .single();
+                if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+                    realRoamifyPackageId = foundPackage.features.packageId;
+                }
+            }
+            if (!realRoamifyPackageId) {
+                logger_1.logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
+                throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+            }
+            // --- END NEW LOGIC ---
+            logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
+            const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
             // Generate real QR code
-            realQRData = await roamifyService_1.RoamifyService.generateRealQRCode(esimCode);
+            realQRData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimCode);
             logger_1.logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
         }
         catch (roamifyError) {
