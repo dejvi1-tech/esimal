@@ -44,6 +44,17 @@ export interface RoamifyApplyResponse {
   data: RoamifyEsimData;
 }
 
+type RoamifyEsimResponse = {
+  data?: {
+    esim?: {
+      qrCodeUrl?: string;
+      lpaCode?: string;
+      activationCode?: string;
+      iosQuickInstall?: string;
+    }
+  }
+};
+
 export class RoamifyService {
   private static apiKey = process.env.ROAMIFY_API_KEY;
   private static baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -388,7 +399,7 @@ export class RoamifyService {
     let tries = 0;
     while (!qrCodeUrl && tries < 10) {
       await new Promise(r => setTimeout(r, 5000));
-      const statusRes = await axios.get(`${this.baseUrl}/api/esim`, {
+      const statusRes = await axios.get<RoamifyEsimResponse>(`${this.baseUrl}/api/esim`, {
         params: { esimId },
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -396,12 +407,15 @@ export class RoamifyService {
         },
         timeout: 15000,
       });
-      const statusData: any = statusRes.data;
-      esimData = statusData?.data?.esim || {};
-      qrCodeUrl = esimData.qrCodeUrl;
-      lpaCode = esimData.lpaCode || '';
-      activationCode = esimData.activationCode || '';
-      iosQuickInstall = esimData.iosQuickInstall || '';
+      const esim = statusRes.data?.data?.esim;
+      if (esim?.qrCodeUrl) {
+        qrCodeUrl = esim.qrCodeUrl;
+        lpaCode = esim.lpaCode || '';
+        activationCode = esim.activationCode || '';
+        iosQuickInstall = esim.iosQuickInstall || '';
+      } else {
+        logger.error('QR code not found in response while polling', { tries, esimId, response: statusRes.data });
+      }
       tries++;
       logger.info(`[ROAMIFY POLL] Poll attempt ${tries}: qrCodeUrl=${qrCodeUrl ? 'READY' : 'pending'}`);
     }
