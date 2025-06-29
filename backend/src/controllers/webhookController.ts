@@ -266,103 +266,56 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       .eq('id', packageId)
       .single();
 
-    // If not found by UUID in packages table, try to find by slug in my_packages table first
     if (packageError || !packageData) {
-      logger.info(`Package not found by UUID ${packageId} in packages table, trying my_packages table...`);
-      
-      // First, try to find by UUID in my_packages
-      let { data: myPackageData, error: myPackageError } = await supabase
-        .from('my_packages')
-        .select('*')
-        .eq('id', packageId)
-        .single();
-
-      // If not found by UUID, try by location_slug in my_packages
-      if (myPackageError || !myPackageData) {
-        logger.info(`Package not found by UUID ${packageId} in my_packages, trying location_slug...`);
-        
-        const { data: myPackageBySlug, error: mySlugError } = await supabase
-          .from('my_packages')
-          .select('*')
-          .eq('location_slug', packageId)
-          .single();
-
-        if (mySlugError || !myPackageBySlug) {
-          logger.error(`Package not found by UUID or slug: ${packageId}`, { 
-            packageError, 
-            myPackageError, 
-            mySlugError 
-          });
-          throw new Error(`Package not found: ${packageId}`);
-        }
-
-        myPackageData = myPackageBySlug;
-        logger.info(`Package found by slug in my_packages: ${packageId} -> UUID: ${myPackageData.id}`);
-      } else {
-        logger.info(`Package found by UUID in my_packages: ${packageId}`);
-      }
-
-      // Check if the myPackageData.id is a valid UUID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      const isValidUuid = uuidRegex.test(myPackageData.id);
-
-      if (isValidUuid) {
-        // Now use the UUID from my_packages to find the real package in packages table
-        const { data: realPackageData, error: realPackageError } = await supabase
-          .from('packages')
-          .select('*')
-          .eq('id', myPackageData.id)
-          .single();
-
-        if (realPackageError || !realPackageData) {
-          logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
-          throw new Error(`Real package not found for: ${packageId}`);
-        }
-
-        packageData = realPackageData;
-        logger.info(`Real package found in packages table: ${packageData.id}`);
-      } else {
-        // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
-        logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
-        
-        // --- NEW LOGIC: Get real Roamify packageId from packages table ---
-        let realRoamifyPackageId = null;
-        
-        // First try to get the real Roamify packageId from the packages table using reseller_id
-        if (myPackageData.reseller_id) {
-          const { data: packageMapping } = await supabase
-            .from('packages')
-            .select('features')
-            .eq('reseller_id', myPackageData.reseller_id)
-            .single();
-          
-          if (packageMapping && packageMapping.features && packageMapping.features.packageId) {
-            realRoamifyPackageId = packageMapping.features.packageId;
-            logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
-          }
-        }
-        
-        // If not found in packages table, use the reseller_id directly as it might be the real Roamify packageId
-        if (!realRoamifyPackageId && myPackageData.reseller_id) {
-          realRoamifyPackageId = myPackageData.reseller_id;
-          logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
-        }
-        
-        // Fallback to a known working package ID
-        if (!realRoamifyPackageId) {
-          logger.warn(`Could not find real Roamify packageId for reseller_id: ${myPackageData.reseller_id}. Using fallback.`);
-          // Use a real working Roamify packageId as fallback
-          realRoamifyPackageId = 'esim-europe-30days-3gb-all';
-          logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
-        }
-        // --- END NEW LOGIC ---
-      }
+      logger.info(`Package not found in packages table, will use fallback logic`);
     } else {
       logger.info(`Package found by UUID in packages table: ${packageId}`);
     }
 
-    // Use the working Roamify API method with the packageId from features
-    const roamifyPackageId = packageData.features?.packageId || packageId;
+    // --- NEW LOGIC: Get real Roamify packageId from packages table ---
+    let realRoamifyPackageId = null;
+    
+    // If packageData comes from my_packages (no features column), get real Roamify packageId
+    if (packageData && !packageData.features) {
+      // The myPackageData.id is not a valid UUID, so we need to use the reseller_id or create a mock package
+      logger.info(`Package ID ${packageData.id} is not a valid UUID, using reseller_id: ${packageData.reseller_id}`);
+      
+      // First try to get the real Roamify packageId from the packages table using reseller_id
+      if (packageData.reseller_id) {
+        const { data: packageMapping } = await supabase
+          .from('packages')
+          .select('features')
+          .eq('reseller_id', packageData.reseller_id)
+          .single();
+        
+        if (packageMapping && packageMapping.features && packageMapping.features.packageId) {
+          realRoamifyPackageId = packageMapping.features.packageId;
+          logger.info(`Found real Roamify packageId in packages table: ${realRoamifyPackageId}`);
+        }
+      }
+      
+      // If not found in packages table, use the reseller_id directly as it might be the real Roamify packageId
+      if (!realRoamifyPackageId && packageData.reseller_id) {
+        realRoamifyPackageId = packageData.reseller_id;
+        logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
+      }
+      
+      // Fallback to a known working package ID
+      if (!realRoamifyPackageId) {
+        logger.warn(`Could not find real Roamify packageId for reseller_id: ${packageData.reseller_id}. Using fallback.`);
+        // Use a real working Roamify packageId as fallback
+        realRoamifyPackageId = 'esim-europe-30days-3gb-all';
+        logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
+      }
+    } else if (packageData && packageData.features) {
+      // Package comes from packages table, use features.packageId
+      realRoamifyPackageId = packageData.features.packageId;
+      logger.info(`Using packageId from features: ${realRoamifyPackageId}`);
+    }
+    // --- END NEW LOGIC ---
+
+    // Use the working Roamify API method with the real Roamify packageId
+    const roamifyPackageId = realRoamifyPackageId || packageId;
     
     logger.info(`[ROAMIFY DEBUG] Creating eSIM order with working API`, {
       orderId,
