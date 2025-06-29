@@ -56,28 +56,44 @@ async function syncPackagesWithServiceRole() {
     });
 
     const roamifyPackages = response.data?.data?.packages || [];
-    console.log(`✅ Fetched ${roamifyPackages.length} packages from Roamify`);
+    console.log(`✅ Fetched ${roamifyPackages.length} countries from Roamify`);
+
+    // Flatten all packages from all countries
+    const allPackages = roamifyPackages.reduce((acc, country) => {
+      if (country.packages && Array.isArray(country.packages)) {
+        return acc.concat(country.packages);
+      }
+      return acc;
+    }, []);
+    
+    console.log(`📦 Extracted ${allPackages.length} packages from ${roamifyPackages.length} countries`);
 
     // Debug: print first 5 raw packages
-    roamifyPackages.slice(0, 5).forEach((pkg, idx) => {
+    allPackages.slice(0, 5).forEach((pkg, idx) => {
       console.log(`\n[DEBUG] Raw package #${idx + 1}:`);
       console.dir(pkg, { depth: null });
     });
 
-    console.log(`[DEBUG] typeof roamifyPackages: ${typeof roamifyPackages}`);
-    console.log(`[DEBUG] Array.isArray(roamifyPackages): ${Array.isArray(roamifyPackages)}`);
-
-    if (roamifyPackages.length === 0) {
+    if (allPackages.length === 0) {
       console.log('⚠️  No packages found in Roamify API');
       return;
     }
 
+    if (allPackages.length > 0) {
+      console.log(`[DEBUG] Keys of first element: ${Object.keys(allPackages[0])}`);
+      console.log(`[DEBUG] typeof allPackages[0]: ${typeof allPackages[0]}`);
+      for (let i = 0; i < Math.min(5, allPackages.length); i++) {
+        const pid = allPackages[i].packageId;
+        console.log(`[DEBUG] allPackages[${i}].packageId:`, pid, '| type:', typeof pid, '| length:', pid && pid.length);
+      }
+    }
+
     // Move filter and debug output here
     console.log('[DEBUG] About to filter validPackages...');
-    const validPackages = roamifyPackages.filter(pkg => String(pkg.packageId).trim().length > 0);
+    const validPackages = allPackages.filter(pkg => String(pkg.packageId).trim().length > 0);
     console.log('[DEBUG] After filter. validPackages.length:', validPackages.length);
     console.log(`[DEBUG] Count of packages with non-empty packageId: ${validPackages.length}`);
-    console.log(`📦 Found ${validPackages.length} packages with valid packageId (filtered out ${roamifyPackages.length - validPackages.length} invalid packages)`);
+    console.log(`📦 Found ${validPackages.length} packages with valid packageId (filtered out ${allPackages.length - validPackages.length} invalid packages)`);
 
     if (validPackages.length === 0) {
       console.log('❌ No valid packages found after filtering');
@@ -239,15 +255,6 @@ async function syncPackagesWithServiceRole() {
     } else {
       console.log('❌ No packages were synced');
       console.log('❌ Customers will still use fallback packages');
-    }
-
-    if (roamifyPackages.length > 0) {
-      console.log(`[DEBUG] Keys of first element: ${Object.keys(roamifyPackages[0])}`);
-      console.log(`[DEBUG] typeof roamifyPackages[0]: ${typeof roamifyPackages[0]}`);
-      for (let i = 0; i < Math.min(5, roamifyPackages.length); i++) {
-        const pid = roamifyPackages[i].packageId;
-        console.log(`[DEBUG] roamifyPackages[${i}].packageId:`, pid, '| type:', typeof pid, '| length:', pid && pid.length);
-      }
     }
 
   } catch (error) {
