@@ -66,11 +66,12 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Parse JSON (except Stripe raw body)
-app.use(express.json());
-
-// Raw body parser for Stripe webhook
+// Stripe webhook route FIRST, with raw body parser
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
+
+// THEN your other middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting for public API
 const limiter = rateLimit({
