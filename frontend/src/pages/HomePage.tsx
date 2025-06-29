@@ -49,7 +49,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchMostPopularPackages = async () => {
       try {
-        const response = await fetch('/api/packages/most-popular');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=most-popular`);
         if (response.ok) {
           const data = await response.json();
           setMostPopularPackages(data.slice(0, 3)); // Show only 3 packages
