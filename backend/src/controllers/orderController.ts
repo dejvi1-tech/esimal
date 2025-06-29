@@ -208,6 +208,26 @@ export const createMyPackageOrder = async (
       logger.info(`Package found by UUID: ${packageId}`);
     }
 
+    // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+    let realRoamifyPackageId: string | undefined;
+    let realPackageData: any;
+    if (packageData.reseller_id) {
+      const { data: foundPackage, error: foundError } = await supabaseAdmin
+        .from('packages')
+        .select('features')
+        .eq('reseller_id', packageData.reseller_id)
+        .single();
+      if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
+        realRoamifyPackageId = foundPackage.features.packageId;
+        realPackageData = foundPackage;
+      }
+    }
+    if (!realRoamifyPackageId) {
+      logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
+      throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+    }
+    // --- END NEW LOGIC ---
+
     let esimCode: string;
     let roamifyOrderId: string;
     let realQRData: {
@@ -218,10 +238,10 @@ export const createMyPackageOrder = async (
     };
 
     // Step 1: Create eSIM order with Roamify (with fallback)
-    logger.info(`Creating Roamify order for package: ${packageData.name} (${packageData.reseller_id})`);
+    logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
     
     try {
-      const roamifyOrder = await RoamifyService.createEsimOrder(packageData.reseller_id, 1);
+      const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
