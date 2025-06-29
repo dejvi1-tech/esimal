@@ -241,30 +241,58 @@ async function deliverEsim(order, paymentIntent, metadata) {
         paymentIntentId: paymentIntent.id,
     });
     try {
-        // Get package details to get the reseller_id from the packages table
-        // First, try to find package by UUID (id field)
+        // First, try to find package by UUID in the packages table
         let { data: packageData, error: packageError } = await supabase_1.supabase
             .from('packages')
             .select('*')
             .eq('id', packageId)
             .single();
-        // If not found by UUID, try to find by location_slug (slug)
+        // If not found by UUID in packages table, try to find by slug in my_packages table first
         if (packageError || !packageData) {
-            logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
-            const { data: packageBySlug, error: slugError } = await supabase_1.supabase
+            logger_1.logger.info(`Package not found by UUID ${packageId} in packages table, trying my_packages table...`);
+            // First, try to find by UUID in my_packages
+            let { data: myPackageData, error: myPackageError } = await supabase_1.supabase
+                .from('my_packages')
+                .select('*')
+                .eq('id', packageId)
+                .single();
+            // If not found by UUID, try by location_slug in my_packages
+            if (myPackageError || !myPackageData) {
+                logger_1.logger.info(`Package not found by UUID ${packageId} in my_packages, trying location_slug...`);
+                const { data: myPackageBySlug, error: mySlugError } = await supabase_1.supabase
+                    .from('my_packages')
+                    .select('*')
+                    .eq('location_slug', packageId)
+                    .single();
+                if (mySlugError || !myPackageBySlug) {
+                    logger_1.logger.error(`Package not found by UUID or slug: ${packageId}`, {
+                        packageError,
+                        myPackageError,
+                        mySlugError
+                    });
+                    throw new Error(`Package not found: ${packageId}`);
+                }
+                myPackageData = myPackageBySlug;
+                logger_1.logger.info(`Package found by slug in my_packages: ${packageId} -> UUID: ${myPackageData.id}`);
+            }
+            else {
+                logger_1.logger.info(`Package found by UUID in my_packages: ${packageId}`);
+            }
+            // Now use the UUID from my_packages to find the real package in packages table
+            const { data: realPackageData, error: realPackageError } = await supabase_1.supabase
                 .from('packages')
                 .select('*')
-                .eq('location_slug', packageId)
+                .eq('id', myPackageData.id)
                 .single();
-            if (slugError || !packageBySlug) {
-                logger_1.logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
-                throw new Error(`Package not found: ${packageId}`);
+            if (realPackageError || !realPackageData) {
+                logger_1.logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
+                throw new Error(`Real package not found for: ${packageId}`);
             }
-            packageData = packageBySlug;
-            logger_1.logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+            packageData = realPackageData;
+            logger_1.logger.info(`Real package found in packages table: ${packageData.id}`);
         }
         else {
-            logger_1.logger.info(`Package found by UUID: ${packageId}`);
+            logger_1.logger.info(`Package found by UUID in packages table: ${packageId}`);
         }
         // Use the working Roamify API method with the packageId from features
         const roamifyPackageId = packageData.features?.packageId || packageId;

@@ -259,33 +259,65 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
   });
 
   try {
-    // Get package details to get the reseller_id from the packages table
-    // First, try to find package by UUID (id field)
+    // First, try to find package by UUID in the packages table
     let { data: packageData, error: packageError } = await supabase
       .from('packages')
       .select('*')
       .eq('id', packageId)
       .single();
 
-    // If not found by UUID, try to find by location_slug (slug)
+    // If not found by UUID in packages table, try to find by slug in my_packages table first
     if (packageError || !packageData) {
-      logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
+      logger.info(`Package not found by UUID ${packageId} in packages table, trying my_packages table...`);
       
-      const { data: packageBySlug, error: slugError } = await supabase
-        .from('packages')
+      // First, try to find by UUID in my_packages
+      let { data: myPackageData, error: myPackageError } = await supabase
+        .from('my_packages')
         .select('*')
-        .eq('location_slug', packageId)
+        .eq('id', packageId)
         .single();
 
-      if (slugError || !packageBySlug) {
-        logger.error(`Package not found by UUID or slug: ${packageId}`, { packageError, slugError });
-        throw new Error(`Package not found: ${packageId}`);
+      // If not found by UUID, try by location_slug in my_packages
+      if (myPackageError || !myPackageData) {
+        logger.info(`Package not found by UUID ${packageId} in my_packages, trying location_slug...`);
+        
+        const { data: myPackageBySlug, error: mySlugError } = await supabase
+          .from('my_packages')
+          .select('*')
+          .eq('location_slug', packageId)
+          .single();
+
+        if (mySlugError || !myPackageBySlug) {
+          logger.error(`Package not found by UUID or slug: ${packageId}`, { 
+            packageError, 
+            myPackageError, 
+            mySlugError 
+          });
+          throw new Error(`Package not found: ${packageId}`);
+        }
+
+        myPackageData = myPackageBySlug;
+        logger.info(`Package found by slug in my_packages: ${packageId} -> UUID: ${myPackageData.id}`);
+      } else {
+        logger.info(`Package found by UUID in my_packages: ${packageId}`);
       }
 
-      packageData = packageBySlug;
-      logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
+      // Now use the UUID from my_packages to find the real package in packages table
+      const { data: realPackageData, error: realPackageError } = await supabase
+        .from('packages')
+        .select('*')
+        .eq('id', myPackageData.id)
+        .single();
+
+      if (realPackageError || !realPackageData) {
+        logger.error(`Real package not found in packages table for UUID: ${myPackageData.id}`, { realPackageError });
+        throw new Error(`Real package not found for: ${packageId}`);
+      }
+
+      packageData = realPackageData;
+      logger.info(`Real package found in packages table: ${packageData.id}`);
     } else {
-      logger.info(`Package found by UUID: ${packageId}`);
+      logger.info(`Package found by UUID in packages table: ${packageId}`);
     }
 
     // Use the working Roamify API method with the packageId from features
