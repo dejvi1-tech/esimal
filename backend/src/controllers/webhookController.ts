@@ -446,17 +446,12 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
 
         // Generate eSIM QR code/profile
         try {
-          const esimProfile = await RoamifyService.generateEsimProfile(esimId);
-          logger.info(`eSIM profile generated successfully`, {
-            orderId,
-            esimId,
-            profileData: esimProfile,
-          });
-
-          // Pass the eSIM profile data to the email function
+          const qrData = await RoamifyService.getQrCodeWithPolling(esimId);
+          logger.info(`QR code polled and ready`, { orderId, esimId, qrCodeUrl: qrData.qrCodeUrl });
+          // Pass qrData to sendConfirmationEmail
           await sendConfirmationEmail(order, paymentIntent, {
             ...metadata,
-            esimProfile: esimProfile,
+            esimProfile: qrData,
             esimId: esimId,
           });
         } catch (profileError) {
@@ -613,7 +608,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       roamifyOrderId = roamifyOrder.orderId;
       
       // Generate real QR code
-      realQRData = await RoamifyService.generateRealQRCode(esimCode);
+      realQRData = await RoamifyService.getQrCodeWithPolling(esimCode);
       
       logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
     } catch (roamifyError) {

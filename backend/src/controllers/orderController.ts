@@ -239,8 +239,8 @@ export const createMyPackageOrder = async (
     logger.info(`Generating real QR code for eSIM: ${esimCode}`);
     
     try {
-      realQRData = await RoamifyService.generateRealQRCode(esimCode);
-      logger.info(`Real QR code generated. LPA Code: ${realQRData.lpaCode}`);
+      realQRData = await RoamifyService.getQrCodeWithPolling(esimCode);
+      logger.info(`QR code polled and ready for order`, { orderId: order?.id, esimId: esimCode, qrCodeUrl: realQRData.qrCodeUrl });
     } catch (qrError) {
       logger.error('Failed to generate real QR code, using fallback:', qrError);
       

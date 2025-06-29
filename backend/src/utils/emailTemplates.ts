@@ -135,7 +135,7 @@ const baseTemplate = (content: string) => `
 
 export const emailTemplates: Record<string, EmailTemplate> = {
   orderConfirmation: {
-    subject: 'Your eSIM is Ready! - Order Confirmation',
+    subject: 'eSIM juaj është gati! - Konfirmimi i porosisë',
     html: async (data: EmailTemplateData): Promise<string> => {
       // Use the real LPA format QR code data from Roamify
       const lpaData = data.qrCodeData || QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
@@ -143,74 +143,31 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       // Generate QR code as data URL for email embedding
       let qrCodeDataUrl = '';
       try {
-        // If we have a real QR code URL from Roamify, use it
         if (data.qrCodeUrl) {
           qrCodeDataUrl = data.qrCodeUrl;
         } else {
-          // Fallback to generating our own QR code
           qrCodeDataUrl = await QRCodeService.generateQRCodeDataURL(
             data.esimCode || '', 
             data.packageName || ''
           );
         }
       } catch (error) {
-        console.error('Failed to generate QR code:', error);
-        // Fallback to external QR code service
         qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
       }
+
+      // Compose the greeting
+      const greetingName = data.firstName ? data.firstName : '';
       
       return baseTemplate(`
-        <h2>🎉 Your eSIM is Ready!</h2>
-        <p>Thank you for your order! Your eSIM package has been activated and is ready to use.</p>
-        
-        <div class="order-details">
-          <h3>📋 Order Details:</h3>
-          <ul>
-            <li><strong>Order ID:</strong> ${data.orderId}</li>
-            <li><strong>Package:</strong> ${data.packageName}</li>
-            <li><strong>Amount:</strong> $${data.amount}</li>
-            <li><strong>Data:</strong> ${data.dataAmount}</li>
-            <li><strong>Validity:</strong> ${data.validityDays} days</li>
-          </ul>
-        </div>
-
-        <div class="activation-steps">
-          <h3>📱 How to Activate Your eSIM:</h3>
-          <ol>
-            <li><strong>Open Settings</strong> on your device</li>
-            <li><strong>Go to Cellular/Mobile Data</strong></li>
-            <li><strong>Tap "Add Cellular Plan"</strong> or "Add eSIM"</li>
-            <li><strong>Scan the QR code below</strong> or enter the activation code manually</li>
-            <li><strong>Follow the on-screen instructions</strong> to complete setup</li>
-          </ol>
-        </div>
-
-        <h3>🔗 Your eSIM Activation Code:</h3>
-        <div class="code">${data.esimCode}</div>
-        
+        <p>Përshëndetje ${greetingName},</p>
+        <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
         <div class="qr-code">
-          <h3>📱 Scan QR Code to Activate:</h3>
           <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto;" />
-          <p><small>If the QR code doesn't work, use the activation code above or copy this LPA data: <code>${lpaData}</code></small></p>
         </div>
-
-        <h3>💡 Important Notes:</h3>
-        <ul>
-          <li>Your eSIM will be active immediately after activation</li>
-          <li>You can use this eSIM alongside your existing SIM card</li>
-          <li>Data usage will start counting from the moment of activation</li>
-          <li>Keep this email safe - you may need the activation code later</li>
-        </ul>
-        
-        ${data.isGuestOrder ? `
-          <p><strong>Create an account</strong> to manage your eSIM and view your order details:</p>
-          <a href="${data.signupUrl}" class="button">Create Account</a>
-        ` : `
-          <p>You can manage your eSIM and view your order details in your account dashboard.</p>
-          <a href="${data.dashboardUrl}" class="button">View Order</a>
-        `}
-
-        <p><strong>Need help?</strong> Contact our support team if you have any questions about activating your eSIM.</p>
+        <p><strong>Nr. eSim:</strong> ${data.iccid || data.esimCode || ''}</p>
+        <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
+        <p><strong>Iphone:</strong> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni <b>"Add eSIM"</b> (funksionon me iOS 17.4 e sipër).</p>
+        <p>Nëse nuk ju del &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
       `);
     },
   },
