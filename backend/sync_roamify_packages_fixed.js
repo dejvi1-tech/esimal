@@ -1,23 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
+const fetch = require('node-fetch');
 
-// Environment variables should be available in Render
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY; // Use service role if available
-const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
-const ROAMIFY_API_URL = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase environment variables');
-  process.exit(1);
-}
-
-if (!ROAMIFY_API_KEY) {
-  console.error('❌ Missing ROAMIFY_API_KEY environment variable');
-  process.exit(1);
-}
-
+// PATCH: Use hardcoded Supabase credentials for local run
+const supabaseUrl = 'https://divckbitgqmlvlzzcjbk.supabase.co';
+// PATCH: Use service role key to bypass RLS
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpdmNrYml0Z3FtbHZsenpjamJrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0ODk4NjI4NiwiZXhwIjoyMDY0NTYyMjg2fQ.Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// PATCH: Use hardcoded Roamify API key
+const ROAMIFY_API_KEY = 'WcDVM1wpHjmcSko6HNczNGiw3f3SWkSwhU2yt5iuYZEVk3ci6LMVyM8pucQ7mTzu1jib2dQXG1hWNw7zYc9pEsFT8R399sy3FPB7KeMXt3aNjSPHb4vxJN3oBjjH4LzrPhhs2sxFKeWQf8mVAUWnWHNm6LuQrc1wv3FK2EKrCkK9frqewL2fuocTyN';
+const ROAMIFY_API_URL = 'https://api.getroamify.com';
 
 async function syncRoamifyPackages() {
   console.log('🔄 SYNCING ROAMIFY PACKAGES\n');

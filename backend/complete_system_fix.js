@@ -1,16 +1,11 @@
 const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 
-// Environment variables should be available in Render
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-const ROAMIFY_API_KEY = process.env.ROAMIFY_API_KEY;
-const ROAMIFY_API_URL = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
-
-if (!supabaseUrl || !supabaseKey || !ROAMIFY_API_KEY) {
-  console.error('❌ Missing environment variables');
-  process.exit(1);
-}
+// PATCH: Use hardcoded credentials for local run
+const supabaseUrl = 'https://divckbitgqmlvlzzcjbk.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpdmNrYml0Z3FtbHZsenpjamJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5ODYyODYsImV4cCI6MjA2NDU2MjI4Nn0.rsef9b_QohgdEMjO7rFiDcTwkU4BAqSJbiwLuhvxvDM';
+const ROAMIFY_API_KEY = 'WcDVM1wpHjmcSko6HNczNGiw3f3SWkSwhU2yt5iuYZEVk3ci6LMVyM8pucQ7mTzu1jib2dQXG1hWNw7zYc9pEsFT8R399sy3FPB7KeMXt3aNjSPHb4vxJN3oBjjH4LzrPhhs2sxFKeWQf8mVAUWnWHNm6LuQrc1wv3FK2EKrCkK9frqewL2fuocTyN';
+const ROAMIFY_API_URL = 'https://api.getroamify.com';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

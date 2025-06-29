@@ -1,76 +1,36 @@
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  console.error('Missing Supabase environment variables');
-  process.exit(1);
-}
+const supabaseUrl = 'https://divckbitgqmlvlzzcjbk.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpdmNrYml0Z3FtbHZsenpjamJrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg5ODYyODYsImV4cCI6MjA2NDU2MjI4Nn0.rsef9b_QohgdEMjO7rFiDcTwkU4BAqSJbiwLuhvxvDM';
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkPackagesTable() {
-  console.log('Checking packages table...\n');
-
   try {
-    // Get all packages from the packages table
-    const { data: packages, error: packagesError } = await supabase
+    console.log('Checking packages table...');
+    const { data, error } = await supabase
       .from('packages')
-      .select('*');
-
-    if (packagesError) {
-      console.error('Error fetching packages:', packagesError);
+      .select('*')
+      .limit(10);
+    if (error) {
+      console.error('Error:', error);
       return;
     }
-
-    console.log(`Found ${packages.length} packages in packages table:`);
-    
-    if (packages.length === 0) {
-      console.log('The packages table is empty!');
-      console.log('This table should contain the real Roamify packages.');
-      console.log('You need to sync the packages from Roamify API to this table.');
+    if (!data || data.length === 0) {
+      console.log('No packages found!');
       return;
     }
-
-    packages.forEach((pkg, index) => {
-      console.log(`${index + 1}. ID: ${pkg.id}`);
-      console.log(`   Name: ${pkg.name}`);
-      console.log(`   Slug: ${pkg.slug}`);
-      console.log(`   Reseller ID: ${pkg.reseller_id || 'NULL'}`);
-      console.log(`   Features: ${JSON.stringify(pkg.features, null, 2)}`);
-      console.log(`   Package ID from features: ${pkg.features?.packageId || 'NULL'}`);
-      console.log('   ---');
+    console.log(`Found ${data.length} packages. Sample:`);
+    data.forEach((pkg, i) => {
+      console.log(`\n${i + 1}.`);
+      console.log('  packageId:', pkg.packageId);
+      console.log('  slug:', pkg.slug);
+      console.log('  reseller_id:', pkg.reseller_id);
+      console.log('  All fields:', JSON.stringify(pkg, null, 2));
     });
-
-    // Check for packages with real Roamify packageIds
-    console.log('\n=== PACKAGES WITH REAL ROAMIFY PACKAGE IDs ===');
-    const packagesWithRealIds = packages.filter(pkg => pkg.features?.packageId);
-    console.log(`Found ${packagesWithRealIds.length} packages with real Roamify packageIds:`);
-    
-    packagesWithRealIds.forEach((pkg, index) => {
-      console.log(`${index + 1}. ${pkg.name}`);
-      console.log(`   Slug: ${pkg.slug}`);
-      console.log(`   Reseller ID: ${pkg.reseller_id || 'NULL'}`);
-      console.log(`   Real Roamify Package ID: ${pkg.features.packageId}`);
-      console.log('   ---');
-    });
-
-    // Check for packages with reseller_id that might be real Roamify IDs
-    console.log('\n=== PACKAGES WITH RESELLER_ID ===');
-    const packagesWithResellerId = packages.filter(pkg => pkg.reseller_id);
-    console.log(`Found ${packagesWithResellerId.length} packages with reseller_id:`);
-    
-    packagesWithResellerId.slice(0, 10).forEach((pkg, index) => {
-      console.log(`${index + 1}. ${pkg.name}`);
-      console.log(`   Slug: ${pkg.slug}`);
-      console.log(`   Reseller ID: ${pkg.reseller_id}`);
-      console.log('   ---');
-    });
-
-  } catch (error) {
-    console.error('Error checking packages table:', error);
+  } catch (err) {
+    console.error('Error:', err);
   }
 }
 
-checkPackagesTable().catch(console.error); 
+checkPackagesTable(); 
