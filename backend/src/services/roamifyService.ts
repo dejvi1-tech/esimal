@@ -323,4 +323,39 @@ export class RoamifyService {
       return false;
     }
   }
+
+  /**
+   * Generate eSIM profile/QR code
+   */
+  static async generateEsimProfile(esimId: string): Promise<any> {
+    const url = `${this.baseUrl}/api/esim/apply`;
+    const payload = {
+      esimId: esimId
+    };
+    const headers = {
+      'Authorization': `Bearer ${this.apiKey}`,
+      'Content-Type': 'application/json',
+    };
+
+    logger.info('[ROAMIFY DEBUG] Generating eSIM profile:', {
+      url,
+      esimId,
+    });
+
+    try {
+      const response = await axios.post(url, payload, { headers });
+      logger.info('[ROAMIFY DEBUG] eSIM profile generated successfully:', {
+        esimId,
+        status: response.status,
+      });
+      return response.data;
+    } catch (error: any) {
+      logger.error('[ROAMIFY DEBUG] Error generating eSIM profile:', {
+        esimId,
+        error: error.response?.data || error.message,
+        status: error.response?.status,
+      });
+      throw error;
+    }
+  }
 } 

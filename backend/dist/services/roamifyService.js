@@ -227,6 +227,39 @@ class RoamifyService {
             return false;
         }
     }
+    /**
+     * Generate eSIM profile/QR code
+     */
+    static async generateEsimProfile(esimId) {
+        const url = `${this.baseUrl}/api/esim/apply`;
+        const payload = {
+            esimId: esimId
+        };
+        const headers = {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+        };
+        logger_1.logger.info('[ROAMIFY DEBUG] Generating eSIM profile:', {
+            url,
+            esimId,
+        });
+        try {
+            const response = await axios_1.default.post(url, payload, { headers });
+            logger_1.logger.info('[ROAMIFY DEBUG] eSIM profile generated successfully:', {
+                esimId,
+                status: response.status,
+            });
+            return response.data;
+        }
+        catch (error) {
+            logger_1.logger.error('[ROAMIFY DEBUG] Error generating eSIM profile:', {
+                esimId,
+                error: error.response?.data || error.message,
+                status: error.response?.status,
+            });
+            throw error;
+        }
+    }
 }
 exports.RoamifyService = RoamifyService;
 RoamifyService.apiKey = process.env.ROAMIFY_API_KEY;
