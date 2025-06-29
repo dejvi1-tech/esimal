@@ -449,14 +449,15 @@ export const createMyPackageOrder = async (
     let realRoamifyPackageId = null;
     if (packageData.reseller_id) {
       // Try to get the mapped Roamify package ID
-      realRoamifyPackageId = packageMapping[packageData.reseller_id];
+      const resellerId = packageData.reseller_id as string;
+      realRoamifyPackageId = packageMapping[resellerId as keyof typeof packageMapping];
       
       if (realRoamifyPackageId) {
-        logger.info(`Mapped package ${packageData.reseller_id} to Roamify ID: ${realRoamifyPackageId}`);
+        logger.info(`Mapped package ${resellerId} to Roamify ID: ${realRoamifyPackageId}`);
       } else {
         // Fallback to using reseller_id directly
-        realRoamifyPackageId = packageData.reseller_id;
-        logger.warn(`No mapping found for ${packageData.reseller_id}, using as fallback`);
+        realRoamifyPackageId = resellerId;
+        logger.warn(`No mapping found for ${resellerId}, using as fallback`);
       }
     } else {
       logger.error('No reseller_id found in my_packages entry.');

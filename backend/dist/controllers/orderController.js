@@ -13,6 +13,244 @@ const esimUtils_1 = require("../utils/esimUtils");
 const errors_1 = require("../utils/errors");
 const emailTemplates_1 = require("../utils/emailTemplates");
 const roamifyService_1 = require("../services/roamifyService");
+// Package mapping for Roamify integration
+const packageMapping = {
+    "esim-italy-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-italy-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-italy-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-italy-30days-15gb-all": "esim-asia-30days-15gb-all",
+    "esim-italy-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-europe-us-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-andorra-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-belgium-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-europe-us-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-europe-us-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-europe-us-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-europe-us-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-europe-us-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-germany-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-germany-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-united-states-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-united-arab-emirates-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-united-arab-emirates-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-united-arab-emirates-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-united-arab-emirates-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-united-states-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-united-states-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-united-states-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-france-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-france-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-france-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-france-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-france-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-albania-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-germany-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-italy-7days-1gb-all": "esim-afghanistan-7days-1gb-all",
+    "esim-germany-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-france-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-germany-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-germany-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-greece-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-greece-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-greece-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-greece-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-greece-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-greece-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-spain-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-spain-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-spain-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-spain-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-spain-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-spain-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-united-kingdom-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-united-kingdom-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-united-kingdom-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-united-kingdom-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-united-kingdom-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-united-kingdom-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-albania-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-albania-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-albania-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-albania-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-albania-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-andorra-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-andorra-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-andorra-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-austria-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-austria-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-austria-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-austria-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-austria-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-belarus-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-belarus-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-belarus-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-estonia-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-estonia-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-belarus-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-belarus-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-belarus-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-bosnia-and-herzegovina-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-bosnia-and-herzegovina-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-bosnia-and-herzegovina-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-bosnia-and-herzegovina-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-bulgaria-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-bulgaria-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-bulgaria-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-bulgaria-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-bulgaria-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-croatia-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-croatia-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-croatia-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-croatia-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-croatia-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-cyprus-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-cyprus-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-cyprus-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-cyprus-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-cyprus-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-czech-republic-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-czech-republic-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-czech-republic-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-czech-republic-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-czech-republic-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-czech-republic-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-estonia-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-denmark-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-croatia-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-cyprus-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-bulgaria-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-austria-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-denmark-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-denmark-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-denmark-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-denmark-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-denmark-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-estonia-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-estonia-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-estonia-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-finland-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-finland-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-finland-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-finland-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-finland-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-finland-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-hungary-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-hungary-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-hungary-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-hungary-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-hungary-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-hungary-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-iceland-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-iceland-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-iceland-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-iceland-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-iceland-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-iceland-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-ireland-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-ireland-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-ireland-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-ireland-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-ireland-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-ireland-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-afghanistan-7days-1gb-all": "esim-afghanistan-7days-1gb-all",
+    "esim-afghanistan-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-afghanistan-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-afghanistan-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-afghanistan-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-afghanistan-30days-1gb-50sms-10min-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-africa-3days-1gb-all": "esim-africa-3days-1gb-all",
+    "esim-africa-5days-1gb-all": "esim-africa-5days-1gb-all",
+    "esim-africa-7days-1gb-all": "esim-afghanistan-7days-1gb-all",
+    "esim-africa-10days-1gb-all": "esim-africa-10days-1gb-all",
+    "esim-africa-15days-1gb-all": "esim-africa-15days-1gb-all",
+    "esim-africa-30days-1gb-all": "esim-afghanistan-30days-1gb-50sms-10min-all",
+    "esim-africa-3days-3gb-all": "esim-africa-3days-3gb-all",
+    "esim-africa-5days-3gb-all": "esim-africa-5days-3gb-all",
+    "esim-africa-7days-3gb-all": "esim-africa-7days-3gb-all",
+    "esim-africa-10days-3gb-all": "esim-africa-10days-3gb-all",
+    "esim-africa-15days-3gb-all": "esim-africa-15days-3gb-all",
+    "esim-africa-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-africa-3days-5gb-all": "esim-africa-3days-5gb-all",
+    "esim-africa-5days-5gb-all": "esim-africa-5days-5gb-all",
+    "esim-africa-7days-5gb-all": "esim-africa-7days-5gb-all",
+    "esim-africa-10days-5gb-all": "esim-africa-10days-5gb-all",
+    "esim-africa-15days-5gb-all": "esim-africa-15days-5gb-all",
+    "esim-africa-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-africa-3days-10gb-all": "esim-africa-3days-10gb-all",
+    "esim-africa-5days-10gb-all": "esim-africa-5days-10gb-all",
+    "esim-africa-7days-10gb-all": "esim-africa-7days-10gb-all",
+    "esim-africa-10days-10gb-all": "esim-africa-10days-10gb-all",
+    "esim-africa-15days-10gb-all": "esim-africa-15days-10gb-all",
+    "esim-africa-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-africa-3days-20gb-all": "esim-africa-3days-20gb-all",
+    "esim-africa-5days-20gb-all": "esim-africa-5days-20gb-all",
+    "esim-africa-7days-20gb-all": "esim-africa-7days-20gb-all",
+    "esim-africa-10days-20gb-all": "esim-africa-10days-20gb-all",
+    "esim-africa-15days-20gb-all": "esim-africa-15days-20gb-all",
+    "esim-africa-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-africa-3days-30gb-all": "esim-africa-3days-30gb-all",
+    "esim-africa-5days-30gb-all": "esim-africa-5days-30gb-all",
+    "esim-africa-7days-30gb-all": "esim-africa-7days-30gb-all",
+    "esim-africa-10days-30gb-all": "esim-africa-10days-30gb-all",
+    "esim-africa-15days-30gb-all": "esim-africa-15days-30gb-all",
+    "esim-africa-30days-30gb-all": "esim-africa-30days-30gb-all",
+    "esim-africa-3days-50gb-all": "esim-africa-3days-50gb-all",
+    "esim-africa-5days-50gb-all": "esim-africa-5days-50gb-all",
+    "esim-africa-7days-50gb-all": "esim-africa-7days-50gb-all",
+    "esim-africa-10days-50gb-all": "esim-africa-10days-50gb-all",
+    "esim-africa-15days-50gb-all": "esim-africa-15days-50gb-all",
+    "esim-africa-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-africa-1days-un1gb-all": "esim-africa-1days-un1gb-all",
+    "esim-africa-3days-un1gb-all": "esim-africa-3days-un1gb-all",
+    "esim-africa-5days-un1gb-all": "esim-africa-5days-un1gb-all",
+    "esim-africa-7days-un1gb-all": "esim-africa-7days-un1gb-all",
+    "esim-africa-10days-un1gb-all": "esim-africa-10days-un1gb-all",
+    "esim-africa-15days-un1gb-all": "esim-africa-15days-un1gb-all",
+    "esim-africa-20days-un1gb-all": "esim-africa-20days-un1gb-all",
+    "esim-africa-30days-un1gb-all": "esim-africa-30days-un1gb-all",
+    "esim-africa-1days-un2gb-all": "esim-africa-1days-un1gb-all",
+    "esim-africa-3days-un2gb-all": "esim-africa-3days-un1gb-all",
+    "esim-africa-5days-un2gb-all": "esim-africa-5days-un1gb-all",
+    "esim-africa-7days-un2gb-all": "esim-africa-7days-un1gb-all",
+    "esim-africa-10days-un2gb-all": "esim-africa-10days-un1gb-all",
+    "esim-africa-15days-un2gb-all": "esim-africa-15days-un1gb-all",
+    "esim-africa-20days-un2gb-all": "esim-africa-20days-un1gb-all",
+    "esim-africa-30days-un2gb-all": "esim-africa-30days-un1gb-all",
+    "esim-africa-1days-ungb-all": "esim-africa-1days-un1gb-all",
+    "esim-africa-3days-ungb-all": "esim-africa-3days-un1gb-all",
+    "esim-africa-5days-ungb-all": "esim-africa-5days-un1gb-all",
+    "esim-africa-7days-ungb-all": "esim-africa-7days-un1gb-all",
+    "esim-africa-10days-ungb-all": "esim-africa-10days-un1gb-all",
+    "esim-africa-15days-ungb-all": "esim-africa-15days-un1gb-all",
+    "esim-africa-20days-ungb-all": "esim-africa-20days-un1gb-all",
+    "esim-africa-30days-ungb-all": "esim-africa-30days-un1gb-all",
+    "esim-aland-island-7days-1gb-all": "esim-afghanistan-7days-1gb-all",
+    "esim-aland-island-15days-2gb-all": "esim-aland-island-15days-2gb-all",
+    "esim-aland-island-30days-3gb-all": "esim-afghanistan-30days-3gb-all",
+    "esim-aland-island-30days-5gb-all": "esim-afghanistan-30days-5gb-all",
+    "esim-aland-island-30days-10gb-all": "esim-afghanistan-30days-10gb-all",
+    "esim-aland-island-30days-20gb-all": "esim-afghanistan-30days-20gb-all",
+    "esim-aland-island-30days-50gb-all": "esim-africa-30days-50gb-all",
+    "esim-aland-island-30days-100gb-all": "esim-aland-island-30days-100gb-all",
+    "esim-aland-island-30days-12gb-200sms-unmin-all": "esim-aland-island-30days-12gb-200sms-unmin-all",
+    "esim-aland-island-30days-20gb-50sms-15min-all": "esim-afghanistan-30days-20gb-all",
+    "esim-aland-island-30days-30gb-unsms-unmin-all": "esim-africa-30days-30gb-all",
+    "esim-aland-island-30days-100gb-unsms-unmin-all": "esim-aland-island-30days-100gb-all",
+    "esim-albania-3days-3gb-all": "esim-africa-3days-3gb-all",
+    "esim-albania-5days-3gb-all": "esim-africa-5days-3gb-all",
+    "esim-albania-7days-3gb-all": "esim-africa-7days-3gb-all",
+    "esim-albania-10days-3gb-all": "esim-africa-10days-3gb-all",
+    "esim-albania-15days-3gb-all": "esim-africa-15days-3gb-all",
+    "esim-albania-3days-5gb-all": "esim-africa-3days-5gb-all",
+    "esim-albania-5days-5gb-all": "esim-africa-5days-5gb-all",
+    "esim-albania-7days-5gb-all": "esim-africa-7days-5gb-all",
+    "esim-albania-10days-5gb-all": "esim-africa-10days-5gb-all",
+    "esim-albania-15days-5gb-all": "esim-africa-15days-5gb-all",
+    "esim-albania-3days-10gb-all": "esim-africa-3days-10gb-all",
+    "esim-albania-5days-10gb-all": "esim-africa-5days-10gb-all",
+    "esim-albania-7days-10gb-all": "esim-africa-7days-10gb-all",
+    "esim-albania-10days-10gb-all": "esim-africa-10days-10gb-all"
+};
 const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || '', {
     apiVersion: '2025-05-28.basil',
 });
@@ -168,26 +406,24 @@ const createMyPackageOrder = async (req, res, next) => {
         else {
             logger_1.logger.info(`Package found by UUID: ${packageId}`);
         }
-        // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
-        let realRoamifyPackageId;
-        let realPackageData;
+        // --- NEW LOGIC: Use package mapping for Roamify package ID ---
+        let realRoamifyPackageId = null;
         if (packageData.reseller_id) {
-            const { data: foundPackage, error: foundError } = await supabaseAdmin
-                .from('packages')
-                .select('features')
-                .eq('reseller_id', packageData.reseller_id)
-                .single();
-            if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
-                realRoamifyPackageId = foundPackage.features.packageId;
-                realPackageData = foundPackage;
+            // Try to get the mapped Roamify package ID
+            const resellerId = packageData.reseller_id;
+            realRoamifyPackageId = packageMapping[resellerId];
+            if (realRoamifyPackageId) {
+                logger_1.logger.info(`Mapped package ${resellerId} to Roamify ID: ${realRoamifyPackageId}`);
+            }
+            else {
+                // Fallback to using reseller_id directly
+                realRoamifyPackageId = resellerId;
+                logger_1.logger.warn(`No mapping found for ${resellerId}, using as fallback`);
             }
         }
-        if (!realRoamifyPackageId) {
-            logger_1.logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
-            // Fallback to a known working package ID
-            const fallbackPackageId = 'esim-europe-30days-3gb-all'; // Use a confirmed existing package
-            logger_1.logger.info(`Using fallback Roamify packageId: ${fallbackPackageId}`);
-            realRoamifyPackageId = fallbackPackageId;
+        else {
+            logger_1.logger.error('No reseller_id found in my_packages entry.');
+            throw new errors_1.NotFoundError('No reseller_id found for this package. Please contact support.');
         }
         // --- END NEW LOGIC ---
         let esimCode;
@@ -196,6 +432,7 @@ const createMyPackageOrder = async (req, res, next) => {
         // Step 1: Create eSIM order with Roamify (with fallback)
         logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
         try {
+            // Use the correct Roamify API payload format with items array
             const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
@@ -227,7 +464,7 @@ const createMyPackageOrder = async (req, res, next) => {
         }
         // Step 3: Create order in database with real Roamify data and user info
         const orderData = {
-            packageId: packageData.id, // Use the actual UUID
+            package_id: packageData.id, // Use the actual UUID
             user_email: userEmail,
             user_name: userName || `${name} ${surname}`,
             name,
