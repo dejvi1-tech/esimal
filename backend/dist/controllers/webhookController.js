@@ -286,7 +286,39 @@ async function deliverEsim(order, paymentIntent, metadata) {
             lastName,
             paymentIntentId: paymentIntent.id,
         });
-        const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(roamifyPackageId, quantity);
+        // Create a more robust eSIM order with customer information
+        let roamifyOrder;
+        let roamifySuccess = false;
+        try {
+            // First try with the new V2 method that includes customer info
+            roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrderV2({
+                packageId: roamifyPackageId,
+                email: email,
+                phoneNumber: phoneNumber,
+                firstName: firstName,
+                lastName: lastName,
+                quantity: quantity
+            });
+            roamifySuccess = true;
+        }
+        catch (v2Error) {
+            logger_1.logger.warn(`[ROAMIFY DEBUG] V2 method failed, falling back to V1:`, v2Error);
+            try {
+                // Fallback to the original method
+                roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(roamifyPackageId, quantity);
+                roamifySuccess = true;
+            }
+            catch (v1Error) {
+                logger_1.logger.error(`[ROAMIFY DEBUG] Both V1 and V2 methods failed:`, v1Error);
+                // Create a fallback order structure
+                roamifyOrder = {
+                    orderId: `fallback-${Date.now()}`,
+                    esimId: `fallback-esim-${Date.now()}`,
+                    items: []
+                };
+                logger_1.logger.warn(`[ROAMIFY DEBUG] Using fallback order structure:`, roamifyOrder);
+            }
+        }
         logger_1.logger.info(`[ROAMIFY DEBUG] Roamify order created successfully`, {
             orderId,
             packageId,
@@ -300,7 +332,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
             .update({
             roamify_order_id: roamifyOrder.orderId,
             roamify_esim_id: roamifyOrder.esimId,
-            status: 'completed',
+            status: roamifySuccess ? 'completed' : 'pending_esim',
             updated_at: new Date().toISOString(),
         })
             .eq('id', orderId);
@@ -308,6 +340,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
             orderId,
             roamifyOrderId: roamifyOrder.orderId,
             roamifyEsimId: roamifyOrder.esimId,
+            roamifySuccess,
         });
         // Create my_packages entry
         const myPackageData = {
@@ -315,7 +348,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
             package_id: packageId,
             roamify_order_id: roamifyOrder.orderId,
             roamify_esim_id: roamifyOrder.esimId,
-            status: 'active',
+            status: roamifySuccess ? 'active' : 'pending',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };

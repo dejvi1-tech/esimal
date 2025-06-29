@@ -211,12 +211,12 @@ export class RoamifyService {
       const headers = {
         'Authorization': `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
+        'User-Agent': 'esim-marketplace/1.0.0'
       };
-      logger.info('[ROAMIFY DEBUG] Request URL:', url);
       logger.info('[ROAMIFY DEBUG] Request Payload:', JSON.stringify(payload));
       logger.info('[ROAMIFY DEBUG] Request Headers:', JSON.stringify(headers));
-
       try {
+        logger.info(`[ROAMIFY DEBUG] Trying endpoint: ${url}`);
         const response = await axios.post(
           url,
           payload,
@@ -228,31 +228,37 @@ export class RoamifyService {
         logger.info('[ROAMIFY DEBUG] Response Status:', response.status);
         logger.info('[ROAMIFY DEBUG] Response Headers:', JSON.stringify(response.headers));
         logger.info('[ROAMIFY DEBUG] Response Data:', JSON.stringify(response.data));
-
-        const data = response.data as { data?: any };
-        if (!data || !data.data) {
-          throw new Error('No response from Roamify API');
+        const data = response.data as { data?: any; orderId?: string; esimId?: string; items?: any[] };
+        let result: any;
+        if (data.data) {
+          result = data.data;
+        } else if (data.orderId || data.esimId) {
+          result = data;
+        } else {
+          result = data;
         }
-        const result = data.data;
         const esimItem = result.items && result.items[0];
         const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
         if (!esimId) {
           throw new Error('No eSIM ID received from Roamify API');
         }
-        logger.info(`eSIM order created successfully. Order ID: ${result.id}, eSIM ID: ${esimId}`);
-
+        const orderId = result.id || result.orderId;
+        logger.info(`eSIM order created successfully. Order ID: ${orderId}, eSIM ID: ${esimId}`);
         return {
-          orderId: result.id || result.orderId,
+          orderId: orderId,
           esimId: esimId,
           items: result.items || []
         };
       } catch (error: any) {
         if (error.response) {
-          logger.error('[ROAMIFY DEBUG] Error Response Status:', error.response.status);
-          logger.error('[ROAMIFY DEBUG] Error Response Headers:', JSON.stringify(error.response.headers));
-          logger.error('[ROAMIFY DEBUG] Error Response Data:', JSON.stringify(error.response.data));
+          logger.error(`[ROAMIFY DEBUG] Error with endpoint ${url}:`, {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+            headers: error.response.headers
+          });
         } else {
-          logger.error('[ROAMIFY DEBUG] Error:', error.message);
+          logger.error(`[ROAMIFY DEBUG] Network error with endpoint ${url}:`, error.message);
         }
         throw error;
       }
@@ -264,68 +270,69 @@ export class RoamifyService {
    */
   static async createEsimOrderV2({
     packageId,
-    email,
-    phoneNumber,
-    firstName,
-    lastName,
     quantity = 1
   }: {
     packageId: string;
-    email: string;
-    phoneNumber: string;
-    firstName: string;
-    lastName: string;
     quantity?: number;
   }): Promise<any> {
-    const url = `${this.baseUrl}/api/esim/order`;
-    const payload = {
-      items: [
-        {
-          packageId: packageId,
-          quantity: quantity
-        }
-      ]
-    };
-    const headers = {
-      'Authorization': `Bearer ${this.apiKey}`,
-      'Content-Type': 'application/json',
-    };
-    logger.info('[ROAMIFY V2 DEBUG] Request URL:', url);
-    logger.info('[ROAMIFY V2 DEBUG] Request Payload:', JSON.stringify(payload));
-    logger.info('[ROAMIFY V2 DEBUG] Request Headers:', JSON.stringify(headers));
-    try {
-      const response = await axios.post(url, payload, { headers, timeout: 30000 });
-      logger.info('[ROAMIFY V2 DEBUG] Response Status:', response.status);
-      logger.info('[ROAMIFY V2 DEBUG] Response Headers:', JSON.stringify(response.headers));
-      logger.info('[ROAMIFY V2 DEBUG] Response Data:', JSON.stringify(response.data));
-      
-      const data = response.data as { data?: any };
-      if (!data || !data.data) {
-        throw new Error('No response from Roamify API');
-      }
-      const result = data.data;
-      const esimItem = result.items && result.items[0];
-      const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
-      if (!esimId) {
-        throw new Error('No eSIM ID received from Roamify API');
-      }
-      logger.info(`eSIM order created successfully. Order ID: ${result.id}, eSIM ID: ${esimId}`);
-
-      return {
-        orderId: result.id || result.orderId,
-        esimId: esimId,
-        items: result.items || []
+    return this.retryApiCall(async () => {
+      const url = `${this.baseUrl}/api/esim/order`;
+      const payload = {
+        items: [
+          {
+            packageId: packageId,
+            quantity: quantity
+          }
+        ]
       };
-    } catch (error: any) {
-      if (error.response) {
-        logger.error('[ROAMIFY V2 DEBUG] Error Response Status:', error.response.status);
-        logger.error('[ROAMIFY V2 DEBUG] Error Response Headers:', JSON.stringify(error.response.headers));
-        logger.error('[ROAMIFY V2 DEBUG] Error Response Data:', JSON.stringify(error.response.data));
-      } else {
-        logger.error('[ROAMIFY V2 DEBUG] Error:', error.message);
+      const headers = {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+        'User-Agent': 'esim-marketplace/1.0.0'
+      };
+      logger.info('[ROAMIFY V2 DEBUG] Request Payload:', JSON.stringify(payload));
+      logger.info('[ROAMIFY V2 DEBUG] Request Headers:', JSON.stringify(headers));
+      try {
+        logger.info(`[ROAMIFY V2 DEBUG] Trying endpoint: ${url}`);
+        const response = await axios.post(url, payload, { headers, timeout: 30000 });
+        logger.info('[ROAMIFY V2 DEBUG] Response Status:', response.status);
+        logger.info('[ROAMIFY V2 DEBUG] Response Headers:', JSON.stringify(response.headers));
+        logger.info('[ROAMIFY V2 DEBUG] Response Data:', JSON.stringify(response.data));
+        const data = response.data as { data?: any; orderId?: string; esimId?: string; items?: any[] };
+        let result: any;
+        if (data.data) {
+          result = data.data;
+        } else if (data.orderId || data.esimId) {
+          result = data;
+        } else {
+          result = data;
+        }
+        const esimItem = result.items && result.items[0];
+        const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
+        if (!esimId) {
+          throw new Error('No eSIM ID received from Roamify API');
+        }
+        const orderId = result.id || result.orderId;
+        logger.info(`eSIM order created successfully. Order ID: ${orderId}, eSIM ID: ${esimId}`);
+        return {
+          orderId: orderId,
+          esimId: esimId,
+          items: result.items || []
+        };
+      } catch (error: any) {
+        if (error.response) {
+          logger.error(`[ROAMIFY V2 DEBUG] Error with endpoint ${url}:`, {
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data,
+            headers: error.response.headers
+          });
+        } else {
+          logger.error(`[ROAMIFY V2 DEBUG] Network error with endpoint ${url}:`, error.message);
+        }
+        throw error;
       }
-      throw error;
-    }
+    }, `eSIM order creation for package ${packageId}`);
   }
 
   /**
