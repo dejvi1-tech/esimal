@@ -223,8 +223,9 @@ export const createMyPackageOrder = async (
       }
     }
     if (!realRoamifyPackageId) {
-      logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
-      throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+      logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
+      realRoamifyPackageId = packageData.reseller_id || packageData.id;
+      logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
     }
     // --- END NEW LOGIC ---
 
@@ -241,7 +242,7 @@ export const createMyPackageOrder = async (
     logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
     
     try {
-      const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
+      const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId!, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);

@@ -300,6 +300,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 logger_1.logger.info(`Package ID ${myPackageData.id} is not a valid UUID, using reseller_id: ${myPackageData.reseller_id}`);
                 // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
                 let realRoamifyPackageId;
+                let realPackageData;
                 if (myPackageData.reseller_id) {
                     const { data: foundPackage, error: foundError } = await supabase_1.supabase
                         .from('packages')
@@ -308,11 +309,14 @@ async function deliverEsim(order, paymentIntent, metadata) {
                         .single();
                     if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
                         realRoamifyPackageId = foundPackage.features.packageId;
+                        realPackageData = foundPackage;
                     }
                 }
+                // FALLBACK: If no real Roamify packageId found, use the package ID itself
                 if (!realRoamifyPackageId) {
-                    logger_1.logger.error('Could not find real Roamify packageId in packages table for reseller_id:', myPackageData.reseller_id);
-                    throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+                    logger_1.logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${myPackageData.reseller_id}. Using fallback.`);
+                    realRoamifyPackageId = myPackageData.reseller_id || myPackageData.id;
+                    logger_1.logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
                 }
                 // Create package data structure using the real Roamify package data
                 packageData = {
@@ -322,7 +326,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
                         packageId: realRoamifyPackageId
                     }
                 };
-                logger_1.logger.info(`Created package data using real Roamify packageId: ${realRoamifyPackageId}`);
+                logger_1.logger.info(`Created package data using Roamify packageId: ${realRoamifyPackageId}`);
                 // --- END NEW LOGIC ---
             }
         }
@@ -581,9 +585,11 @@ async function handleCheckoutSessionCompleted(session) {
                     realRoamifyPackageId = foundPackage.features.packageId;
                 }
             }
+            // FALLBACK: If no real Roamify packageId found, use the package ID itself
             if (!realRoamifyPackageId) {
-                logger_1.logger.error('Could not find real Roamify packageId in packages table for reseller_id:', packageData.reseller_id);
-                throw new Error('Could not find real Roamify packageId for this package. Please contact support.');
+                logger_1.logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
+                realRoamifyPackageId = packageData.reseller_id || packageData.id;
+                logger_1.logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
             }
             // --- END NEW LOGIC ---
             logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
