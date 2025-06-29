@@ -1,4 +1,3 @@
-import { motion } from "motion/react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -89,72 +88,54 @@ const FAQSection = () => {
   ];
 
   return (
-    <section id="faq" className="py-20" data-id="zra9fqsgc" data-path="src/components/FAQSection.tsx">
-      <div className="container mx-auto px-4" data-id="kz30wdlar" data-path="src/components/FAQSection.tsx">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16" data-id="fftq2ki47" data-path="src/components/FAQSection.tsx">
-
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 dark:text-gray-200" data-id="acvzlm0jq" data-path="src/components/FAQSection.tsx">
+    <section id="faq" className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 dark:text-gray-200">
             {t('faq_title')}
           </h2>
-          <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto" data-id="my837zimh" data-path="src/components/FAQSection.tsx">
+          <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
             {t('faq_desc')}
           </p>
-        </motion.div>
+        </div>
         
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto" data-id="h9dosv2ql" data-path="src/components/FAQSection.tsx">
-
-          <Accordion type="single" collapsible className="space-y-4" data-id="bk1mnjxpk" data-path="src/components/FAQSection.tsx">
+        <div className="max-w-4xl mx-auto">
+          <Accordion type="single" collapsible className="space-y-4">
             {faqs.map((faq, index) =>
             <AccordionItem
               key={index}
               value={`item-${index}`}
-              className="bg-white/30 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow" data-id="6lyc12esu" data-path="src/components/FAQSection.tsx">
+              className="bg-white/30 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 rounded-lg px-6 shadow-sm hover:shadow-md transition-shadow">
 
-                <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 py-6" data-id="t6re9lppx" data-path="src/components/FAQSection.tsx">
+                <AccordionTrigger className="text-left text-lg font-semibold text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 py-6">
                   {faq.question[language]}
                 </AccordionTrigger>
-                <AccordionContent className="text-gray-700 dark:text-gray-300 leading-relaxed pb-6" data-id="jtywpr2zt" data-path="src/components/FAQSection.tsx">
+                <AccordionContent className="text-gray-700 dark:text-gray-300 leading-relaxed pb-6">
                   {faq.answer[language]}
                 </AccordionContent>
               </AccordionItem>
             )}
           </Accordion>
-        </motion.div>
+        </div>
         
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mt-12" data-id="mwyog46sl" data-path="src/components/FAQSection.tsx">
-
-          <div className="bg-white/30 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-2xl mx-auto" data-id="wf0d7jad2" data-path="src/components/FAQSection.tsx">
-            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100" data-id="8qqb59ycl" data-path="src/components/FAQSection.tsx">
+        <div className="text-center mt-12">
+          <div className="bg-white/30 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-2xl mx-auto">
+            <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">
               {t('faq_still_questions')}
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-6" data-id="1mwtvm2pn" data-path="src/components/FAQSection.tsx">
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
               {t('faq_still_questions_desc')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center" data-id="pts26pz0t" data-path="src/components/FAQSection.tsx">
-              <button className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-700 transition-colors" data-id="99nhi9rk2" data-path="src/components/FAQSection.tsx">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-blue-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-700 transition-colors">
                 {t('faq_live_chat')}
               </button>
-              <button className="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-full hover:border-blue-600 hover:text-blue-600 transition-colors" data-id="j85bmq9t7" data-path="src/components/FAQSection.tsx">
+              <button className="border border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-full hover:border-blue-600 hover:text-blue-600 transition-colors">
                 {t('faq_email_support')}
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>);
 

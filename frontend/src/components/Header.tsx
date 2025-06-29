@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
-import { motion } from 'motion/react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link, useLocation } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -21,13 +20,9 @@ const Header = () => {
   ];
 
   return (
-    <motion.header
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="fixed top-0 left-0 right-0 z-50">
+    <header className="fixed top-0 left-0 right-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="ios-banner">
+        <div className="navbar-glassmorphism">
           <div className="flex items-center justify-between h-[4.5rem] gap-x-10">
             {/* Logo */}
             <Link
@@ -36,23 +31,23 @@ const Header = () => {
               onClick={e => {
                 if (location.pathname === "/") {
                   e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  window.scrollTo({ top: 0, behavior: 'auto' });
                 }
               }}
             >
-              <div className="glass-logo no-bg">
+              <div className="logo-container">
                 <img
                   src="/images/new-airplane-logo.png"
                   alt="e-SimFly Logo"
-                  className="h-14 w-14 object-contain drop-shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-xl rounded-2xl"
+                  className="h-14 w-14 object-contain rounded-2xl"
                   style={{ minWidth: 56 }}
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-orbitron" style={{ letterSpacing: '0.01em' }}>
+                <span className="text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>
                   e-<span className="font-black">SimFly</span>
                 </span>
-                <span className="text-xs text-gray-500 font-medium font-orbitron">Global eSIM Solutions</span>
+                <span className="text-xs text-gray-200 font-medium font-orbitron">Global eSIM Solutions</span>
               </div>
             </Link>
 
@@ -62,21 +57,17 @@ const Header = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`relative px-4 py-2 rounded-lg font-medium transition-all duration-200 group ${
+                  className={`relative px-4 py-2 rounded-lg font-medium glass ${
                     location.pathname === item.href 
-                      ? 'text-blue-600 bg-blue-50 shadow-sm' 
-                      : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                      ? 'bg-glass-medium' 
+                      : 'bg-glass'
                   }`}>
                   {item.name}
                   {location.pathname === item.href && (
-                    <motion.div
-                      layoutId="activeTab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
                     />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                 </Link>
               ))}
             </nav>
@@ -85,7 +76,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-4">
               <LanguageSwitcher />
               <Button 
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+                className="btn-glass bg-accent text-accent-foreground font-semibold"
                 size="sm"
               >
                 {t('hero_cta_main')}
@@ -95,11 +86,11 @@ const Header = () => {
             {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="hover:bg-gray-100">
+                <Button variant="ghost" size="icon" className="text-white glass">
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 bg-white/95 backdrop-blur-md">
+              <SheetContent side="right" className="w-80 navbar-mobile-glassmorphism">
                 <div className="flex items-center justify-between mb-8">
                   <Link
                     to="/"
@@ -107,24 +98,24 @@ const Header = () => {
                     onClick={e => {
                       if (location.pathname === "/") {
                         e.preventDefault();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        window.scrollTo({ top: 0, behavior: 'auto' });
                       }
                     }}
                   >
                     <img
                       src="/logo.png"
                       alt="e-SimFly Logo"
-                      className="h-14 w-14 object-contain drop-shadow-md transition-transform group-hover:scale-105"
+                      className="h-14 w-14 object-contain"
                       style={{ minWidth: 56 }}
                     />
                     <div className="flex flex-col">
-                      <span className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                      <span className="text-xl font-extrabold tracking-tight text-white">
                         e-<span className="font-black">SimFly</span>
                       </span>
-                      <span className="text-xs text-gray-500 font-medium">Global eSIM Solutions</span>
+                      <span className="text-xs text-gray-200 font-medium">Global eSIM Solutions</span>
                     </div>
                   </Link>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-gray-100">
+                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white glass">
                     <X className="w-6 h-6" />
                   </Button>
                 </div>
@@ -134,10 +125,10 @@ const Header = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium glass ${
                         location.pathname === item.href 
-                          ? 'text-blue-600 bg-blue-50 shadow-sm' 
-                          : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                          ? 'bg-glass-medium' 
+                          : 'bg-glass'
                       }`}
                       onClick={() => setIsOpen(false)}>
                       {item.name}
@@ -148,7 +139,7 @@ const Header = () => {
                 <div className="mt-8 space-y-4">
                   <LanguageSwitcher />
                   <Button 
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                    className="w-full btn-glass bg-accent text-accent-foreground font-semibold"
                     size="sm"
                   >
                     {t('hero_cta_main')}
@@ -159,7 +150,7 @@ const Header = () => {
           </div>
         </div>
       </div>
-    </motion.header>
+    </header>
   );
 };
 

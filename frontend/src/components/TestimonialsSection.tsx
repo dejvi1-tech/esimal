@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { Star as StarIcon, Quote } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -64,12 +63,8 @@ const TestimonialsSection: React.FC = () => {
         </h2>
         <div className="grid md:grid-cols-3 gap-8">
           {testimonials.map((t, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
               className="bg-white/30 dark:bg-slate-800/50 backdrop-blur-sm border border-white/20 rounded-2xl shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition-shadow duration-300"
             >
               <div className="flex items-center gap-1 mb-2">
@@ -78,7 +73,7 @@ const TestimonialsSection: React.FC = () => {
               <p className="text-gray-700 dark:text-gray-300 text-lg mb-4">"{t.review[language]}"</p>
               <div className="font-semibold text-blue-600 dark:text-blue-400">{t.name}</div>
               <div className="text-xs text-gray-500 dark:text-gray-400">{t.country[language]}</div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>

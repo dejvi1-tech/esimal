@@ -185,7 +185,7 @@ const translations: Translations = {
     en: "An error occurred while creating your account. Please try again."
   },
 
-  // About Us Page - Additional translations
+  // About Us Page - Platform Description
   about_platform_description: {
     al: "e-SIM Fly është një platformë moderne, e krijuar në vitin 2025, që sjell teknologjinë më të fundit të eSIM për përdoruesit e telefonisë mobile anembanë botës. Me ne, nuk ke më nevojë për karta fizike SIM – aktivizo internetin direkt në pajisjen tënde, në vetëm pak klikime.",
     en: "e-SIM Fly is a modern platform, created in 2025, bringing the latest eSIM technology to mobile phone users worldwide. With us, you no longer need physical SIM cards – activate the internet directly on your device in just a few clicks."
@@ -344,6 +344,20 @@ const translations: Translations = {
   phone_number_placeholder: { al: 'Numri i telefonit (04x xxx xxx)', en: 'Phone number (04x xxx xxx)' },
   pay_with_card: { al: 'Pagesë me kartelë online', en: 'Pay with card online' },
   all_banks: { al: 'Të gjitha bankat', en: 'All banks' },
+
+  // How To Use Section
+  how_to_use_title: { al: "Si të Përdorni eSIM", en: "How to Use eSIM" },
+  how_to_use_subtitle: { al: "Aktivizoni planin tuaj eSIM në vetëm 4 hapa të thjeshtë dhe filloni të gëzoni internetin e shpejtë menjëherë.", en: "Activate your eSIM plan in just 4 simple steps and start enjoying high-speed internet instantly." },
+  how_to_use_step1_title: { al: "Shkarkoni eSIM", en: "Download eSIM" },
+  how_to_use_step1_desc: { al: "Pas blerjes, do të merrni një email me QR kodin dhe udhëzimet për instalim.", en: "After purchase, you will receive an email with QR code and installation instructions." },
+  how_to_use_step2_title: { al: "Skanoni QR Kodin", en: "Scan QR Code" },
+  how_to_use_step2_desc: { al: "Hapni cilësimet e telefonit dhe zgjidhni 'Shtoni Plan Cellular'. Skanoni QR kodin.", en: "Open your phone settings and select 'Add Cellular Plan'. Scan the QR code." },
+  how_to_use_step3_title: { al: "Konfiguroni Planin", en: "Configure Plan" },
+  how_to_use_step3_desc: { al: "Ndiqni udhëzimet në ekran për të konfiguruar planin tuaj eSIM si planin kryesor ose dytësor.", en: "Follow the on-screen instructions to configure your eSIM plan as primary or secondary." },
+  how_to_use_step4_title: { al: "Lidhu me Internetin", en: "Connect to Internet" },
+  how_to_use_step4_desc: { al: "Aktivizoni të dhënat mobile për planin eSIM dhe gëzoni internetin e shpejtë kudo që të jeni.", en: "Turn on mobile data for your eSIM plan and enjoy high-speed internet wherever you are." },
+  how_to_use_compatible_title: { al: "Pajisje të Përshtatshme", en: "Compatible Devices" },
+  how_to_use_compatible_desc: { al: "eSIM funksionon me shumicën e pajisjeve moderne të Apple, Samsung, Google dhe të tjera.", en: "eSIM works with most modern Apple, Samsung, Google and other devices." },
 };
 
 interface LanguageContextType {

@@ -18,6 +18,7 @@ import BundlePage from './pages/BundlePage';
 import CheckBalancePage from './pages/CheckBalancePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import CheckoutCancelPage from './pages/CheckoutCancelPage';
+import IOS26Demo from './components/IOS26Demo';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
                 <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
                 <Route path="/checkout/*" element={<CheckoutPage />} />
+                <Route path="/ios26-demo" element={<IOS26Demo />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

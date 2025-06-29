@@ -1,4 +1,3 @@
-import { motion } from "motion/react";
 import { Download, Smartphone, Wifi, CheckCircle } from "lucide-react";
 
 const HowItWorksSection = () => {
@@ -50,79 +49,63 @@ const HowItWorksSection = () => {
   };
 
   return (
-    <section id="how-it-works" className="py-20" data-id="01wtbljz4" data-path="src/components/HowItWorksSection.tsx">
-      <div className="container mx-auto px-4" data-id="pw937g63v" data-path="src/components/HowItWorksSection.tsx">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-16" data-id="m6hxf0aak" data-path="src/components/HowItWorksSection.tsx">
-
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 dark:text-gray-200" data-id="ze4f0afgp" data-path="src/components/HowItWorksSection.tsx">
+    <section id="how-it-works" className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-800 dark:text-gray-200">
             Si Funksionon eSIM
           </h2>
-          <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto" data-id="agmzr3eo4" data-path="src/components/HowItWorksSection.tsx">
+          <p className="text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
             Lidhuni në minuta me procesin tonë të thjeshtë 4-hapeshore. Nuk kërkohet ekspertizë teknike.
           </p>
-        </motion.div>
+        </div>
         
-        <div className="max-w-6xl mx-auto" data-id="y37zx24y3" data-path="src/components/HowItWorksSection.tsx">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8" data-id="mvxusqap8" data-path="src/components/HowItWorksSection.tsx">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step, index) =>
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.2, duration: 0.6 }}
-              viewport={{ once: true }}
-              className="text-center relative p-6 bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl shadow-lg" data-id="a0wrkke03" data-path="src/components/HowItWorksSection.tsx">
+              className="text-center relative p-6 bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl shadow-lg">
 
                 {/* Connection Line */}
                 {index < steps.length - 1 &&
-              <div className="hidden lg:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-300 transform translate-x-4 translate-y-0.5" data-id="vndq2i236" data-path="src/components/HowItWorksSection.tsx" />
+              <div className="hidden lg:block absolute top-16 left-full w-full h-0.5 bg-gradient-to-r from-gray-200 to-gray-300 transform translate-x-4 translate-y-0.5" />
               }
                 
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl border-2 mb-6 ${getGlassColorClasses(step.color)}`} data-id="q4zi39qjj" data-path="src/components/HowItWorksSection.tsx">
-                  <step.icon className="w-8 h-8" data-id="bb4dphoev" data-path="src/components/HowItWorksSection.tsx" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl border-2 mb-6 ${getGlassColorClasses(step.color)}`}>
+                  <step.icon className="w-8 h-8" />
                 </div>
                 
-                <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200" data-id="jgdq8u0w7" data-path="src/components/HowItWorksSection.tsx">
+                <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-gray-200">
                   {step.title}
                 </h3>
                 
-                <p className="text-gray-700 dark:text-gray-300 leading-relaxed" data-id="qe55q748m" data-path="src/components/HowItWorksSection.tsx">
+                <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                   {step.description}
                 </p>
                 
                 {/* Step Number */}
-                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg" data-id="xsyceo3cc" data-path="src/components/HowItWorksSection.tsx">
+                <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg">
                   {index + 1}
                 </div>
-              </motion.div>
+              </div>
             )}
           </div>
         </div>
         
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mt-16" data-id="igiqaz484" data-path="src/components/HowItWorksSection.tsx">
-
-          <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-4xl mx-auto" data-id="klgrspy4s" data-path="src/components/HowItWorksSection.tsx">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200" data-id="lh5vv1r4d" data-path="src/components/HowItWorksSection.tsx">
+        <div className="text-center mt-16">
+          <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl p-8 max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-200">
               I Përputhshëm me Shumicën e Pajisjeve Moderne
             </h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-6" data-id="4adho4gwn" data-path="src/components/HowItWorksSection.tsx">
+            <p className="text-gray-700 dark:text-gray-300 mb-6">
               Funksionon me iPhone XS/XR dhe më të reja, Google Pixel 3 dhe më të reja, Samsung Galaxy S20 dhe më të reja, dhe shumë pajisje të tjera me eSIM.
             </p>
-            <button className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold underline transition-colors" data-id="rcp6m75gf" data-path="src/components/HowItWorksSection.tsx">
+            <button className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold underline transition-colors">
               Kontrollo përputhshmërinë e pajisjes
             </button>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>);
 

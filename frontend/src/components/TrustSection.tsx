@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const badges = [
@@ -34,13 +33,7 @@ const TrustSection: React.FC = () => {
   
   return (
     <section className="py-10">
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
-        className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8"
-      >
+      <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="flex flex-col items-center md:items-start gap-4 flex-1">
           <div className="flex gap-6 mb-2">
             {badges.map((b, i) => (
@@ -63,7 +56,7 @@ const TrustSection: React.FC = () => {
           </div>
           <div className="text-gray-500 dark:text-gray-500 text-xs mt-2">{t('trusted_partners')}</div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 };

@@ -5,7 +5,6 @@ import TestimonialsSection from '@/components/TestimonialsSection';
 import TrustSection from '@/components/TrustSection';
 import KudoSimSection from "@/components/KudoSimSection";
 import PaymentCardsSection from "@/components/PaymentCardsSection";
-import { motion } from "motion/react";
 import React, { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Helmet } from 'react-helmet-async';
@@ -29,10 +28,10 @@ interface MostPopularPackage {
 }
 
 const HomePage = () => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const [mostPopularPackages, setMostPopularPackages] = useState<MostPopularPackage[]>([]);
   const [loadingMostPopular, setLoadingMostPopular] = useState(true);
-  const [isCoverageModalOpen, setCoverageModalOpen] = useState(false);
+  const [isCoverageModalOpen, setIsCoverageModalOpen] = useState(false);
 
   // Operator logos - place your logo files in public/static/operators/
   const logos = [
@@ -50,12 +49,10 @@ const HomePage = () => {
   useEffect(() => {
     const fetchMostPopularPackages = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/get-section-packages?slug=most-popular`);
+        const response = await fetch('/api/packages/most-popular');
         if (response.ok) {
           const data = await response.json();
-          setMostPopularPackages(data);
-        } else {
-          console.error('Failed to fetch most popular packages');
+          setMostPopularPackages(data.slice(0, 3)); // Show only 3 packages
         }
       } catch (error) {
         console.error('Error fetching most popular packages:', error);
@@ -68,15 +65,15 @@ const HomePage = () => {
   }, []);
 
   const handleOpenCoverageModal = () => {
-    setCoverageModalOpen(true);
+    setIsCoverageModalOpen(true);
   };
 
   const handleCloseCoverageModal = () => {
-    setCoverageModalOpen(false);
+    setIsCoverageModalOpen(false);
   };
 
   return (
-    <div className="pt-16">
+    <div className="min-h-screen">
       <Helmet>
         <title>Home | e-SimFly</title>
       </Helmet>
@@ -85,44 +82,26 @@ const HomePage = () => {
       {/* Most Popular Section */}
       <section id="most-popular-packages" className="py-16">
         <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
               {t('most_popular_title')}
             </h2>
-            <h2 className="text-lg font-medium text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">
+            <h2 className="text-lg font-medium text-gray-200 mt-4 max-w-2xl mx-auto">
               {t('most_popular_description')}
             </h2>
             <div className="w-24 h-1 bg-white/50 mx-auto rounded-full mt-6"></div>
-          </motion.div>
+          </div>
 
           {/* Most Popular Packages Grid */}
           {loadingMostPopular ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/30 border-t-white"></div>
+              <div className="rounded-full h-12 w-12 border-4 border-white/30 border-t-white"></div>
             </div>
           ) : mostPopularPackages.length > 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
-                <motion.div
-                  key={pkg.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: 0.1 * index }}
-                >
-                  <div className="bg-slate-100/40 dark:bg-slate-800/60 backdrop-blur-md border border-white/20 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col h-full">
+                <div key={pkg.id}>
+                  <div className="card-glass flex flex-col h-full">
                     <div className="flex-grow">
                       <div className="flex items-center mb-4">
                         <div className="mr-4">
@@ -164,7 +143,7 @@ const HomePage = () => {
                               ></path>
                             </svg>
                           </div>
-                          <span className="text-slate-100 font-medium">
+                          <span className="text-white font-medium">
                             {pkg.data_amount === 0 ? t('unlimited_data') : `${parseFloat((pkg.data_amount / 1024).toFixed(2))} ${t('gb_internet')}`}
                           </span>
                         </li>
@@ -185,7 +164,7 @@ const HomePage = () => {
                               ></path>
                             </svg>
                           </div>
-                          <span className="text-slate-100 font-medium">
+                          <span className="text-white font-medium">
                             {pkg.validity_days} {t('days')}
                           </span>
                         </li>
@@ -208,58 +187,42 @@ const HomePage = () => {
                           </div>
                           <button 
                             onClick={handleOpenCoverageModal}
-                            className="text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg bg-white/10 hover:bg-white/20 p-2 transition-colors"
+                            className="text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg bg-white/10 p-2"
                           >
-                            <span className="text-slate-100 font-medium">{t('coverage_39_countries')}</span>
-                            <span className="block text-slate-300 text-xs">{t('albania_usa_included')}</span>
+                            <span className="text-white font-medium">{t('coverage_39_countries')}</span>
+                            <span className="block text-gray-300 text-xs">{t('albania_usa_included')}</span>
                           </button>
                         </li>
                       </ul>
                     </div>
                     <div className="text-center mt-6">
                       <div className="text-5xl font-extrabold text-white mb-4">
-                        {pkg.sale_price.toFixed(2)} €
+                        €{pkg.sale_price}
                       </div>
-                      <Link
-                        to={`/checkout?package=${pkg.id}`}
-                        className="w-full inline-block"
-                      >
-                        <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 text-lg rounded-xl transition-all hover:shadow-lg hover:scale-105">
-                          {t('activate')}
+                      <Link to={`/bundle/${pkg.id}`}>
+                        <Button className="btn-glass bg-accent text-accent-foreground font-semibold w-full">
+                          {t('buy_now')}
                         </Button>
                       </Link>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-center py-12"
-            >
-              <p className="text-gray-700 dark:text-gray-300 text-lg">{t('no_packages_available')}</p>
-            </motion.div>
+            <div className="text-center py-12">
+              <p className="text-white">{t('no_packages_available')}</p>
+            </div>
           )}
         </div>
       </section>
-
-      <CoverageModal isOpen={isCoverageModalOpen} onClose={handleCloseCoverageModal} />
 
       {/* eSIM Compatibility Section */}
       <section id="compatibility" className="py-16 overflow-hidden">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
             {/* Left side: Title & Text */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7 }}
-              className="w-full md:w-1/2 text-center md:text-left"
-            >
+            <div className="w-full md:w-1/2 text-center md:text-left">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-800 dark:text-gray-200 leading-tight mb-6">
                 {t('esim_compatibility_section_title')}
               </h2>
@@ -267,16 +230,10 @@ const HomePage = () => {
                 <p>{t('esim_compat_subtitle')}</p>
                 <p>{t('esim_compat_instructions')}</p>
               </div>
-            </motion.div>
+            </div>
             
             {/* Right side: Compatibility Card */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="w-full md:w-auto flex justify-center"
-            >
+            <div className="w-full md:w-auto flex justify-center">
               <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl p-2 w-full max-w-md">
                 <div
                   className="w-full p-4 flex flex-col items-center gap-4"
@@ -288,27 +245,17 @@ const HomePage = () => {
                     alt={t('esim_compatibility_alt')}
                     className="rounded-xl w-full shadow-lg border border-white/20 object-contain"
                   />
-                  <div className="flex flex-col sm:flex-row gap-2 w-full justify-center mt-2">
-                    <a
-                      href="/support"
-                      className="inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-center text-sm"
-                      tabIndex={0}
-                      aria-label={t('learn_more_aria')}
-                    >
-                      {t('learn_more')}
-                    </a>
-                    <a
-                      href="/support"
-                      className="inline-block px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold shadow hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-center text-sm"
-                      tabIndex={0}
-                      aria-label={t('see_packages_aria')}
-                    >
-                      {t('see_packages')}
-                    </a>
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                      {t('esim_compatibility_title')}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {t('esim_compatibility_description')}
+                    </p>
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -319,6 +266,12 @@ const HomePage = () => {
       <TestimonialsSection />
       <TrustSection />
       <FAQSection />
+
+      {/* Coverage Modal */}
+      <CoverageModal 
+        isOpen={isCoverageModalOpen} 
+        onClose={handleCloseCoverageModal} 
+      />
     </div>
   );
 };

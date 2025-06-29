@@ -1,46 +1,65 @@
-import PackageCard from "./PackageCard";
-import { motion } from "motion/react";
-import { globalPackages } from "@/data/countries";
 import { useLanguage } from "@/contexts/LanguageContext";
+import PackageCard from "./PackageCard";
 
 const PackagesSection = () => {
-  const { t, language } = useLanguage();
-  const packages = globalPackages.map((pkg, index) => ({
-    title: pkg.name[language],
-    price: pkg.price,
-    data: pkg.name[language],
-    validity: pkg.validity[language],
-    coverage: pkg.coverage[language],
-    description: pkg.description?.[language],
-    bonusData: pkg.bonusData?.[language],
-    isOffer: pkg.isOffer,
-    isPopular: index === 3,
-    specialFeatures: pkg.specialFeatures?.map(f => f[language]),
-    delay: index * 0.1,
-    flagUrl: pkg.id === 'uk-special' ? "https://flagcdn.com/w40/gb.png" : "https://flagcdn.com/w40/eu.png",
-    countryCode: "EU",
-    packageId: pkg.id
-  }));
+  const { t } = useLanguage();
+
+  const packages = [
+    {
+      title: "Europe 10GB",
+      price: "€15",
+      data: { en: "10GB", al: "10GB" },
+      validity: { en: "30 days", al: "30 ditë" },
+      coverage: { en: "Europe", al: "Europë" },
+      isPopular: true,
+      flagUrl: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg",
+      countryCode: "EU",
+      packageId: "europe-10gb"
+    },
+    {
+      title: "Global 5GB",
+      price: "€25",
+      data: { en: "5GB", al: "5GB" },
+      validity: { en: "30 days", al: "30 ditë" },
+      coverage: { en: "Worldwide", al: "Botërore" },
+      isPopular: false,
+      flagUrl: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Flag_of_the_United_Nations.svg",
+      countryCode: "GL",
+      packageId: "global-5gb"
+    },
+    {
+      title: "USA 15GB",
+      price: "€20",
+      data: { en: "15GB", al: "15GB" },
+      validity: { en: "30 days", al: "30 ditë" },
+      coverage: { en: "United States", al: "Shtetet e Bashkuara" },
+      isPopular: false,
+      flagUrl: "https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg",
+      countryCode: "US",
+      packageId: "usa-15gb"
+    }
+  ];
 
   return (
-    <section id="packages" className="py-16">
+    <section className="py-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30">
       <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center mb-12">
-          <div className="flex items-center justify-center gap-4 mb-6">
-            {/* Title and flag removed */}
-          </div>
-          <p className="text-gray-700 dark:text-gray-300 max-w-2xl mx-auto">
-            {/* Removed the description text as requested */}
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-purple-900 bg-clip-text text-transparent">
+            {t('packages_title')}
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {t('packages_subtitle')}
           </p>
-        </motion.div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {/* Package cards were here */}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {packages.map((pkg, index) => (
+            <PackageCard
+              key={index}
+              {...pkg}
+              delay={index * 0.1}
+            />
+          ))}
         </div>
       </div>
     </section>

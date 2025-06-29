@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // --- SVG Icons for Regions ---
@@ -90,10 +89,8 @@ const BundlePackagesSection: React.FC = () => {
                 } relative px-6 py-2 text-md font-bold rounded-lg transition-colors`}
               >
                 {activeTab === tab && (
-                  <motion.div
-                    layoutId="active-tab-indicator"
+                  <div
                     className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                   />
                 )}
                 <span className="relative z-10">{TABS[idx]}</span>
@@ -102,29 +99,22 @@ const BundlePackagesSection: React.FC = () => {
           </div>
         </div>
         {/* Content Grid */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
-          >
-            {bundleData[activeTab as keyof typeof bundleData].map((bundle) => (
-              <motion.div
-                key={bundle.id}
-                onClick={() => handleCardClick(bundle.id)}
-                className="text-center p-4 bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-violet-300 hover:-translate-y-1"
-              >
-                <div className="w-20 h-20 mx-auto bg-white/20 text-slate-800 dark:text-white rounded-full flex items-center justify-center mb-4">
-                  <div className="w-12 h-12">{bundle.icon}</div>
-                </div>
-                <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t(`bundle_${bundle.id}`) || bundle.name}</h3>
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        <div
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"
+        >
+          {bundleData[activeTab as keyof typeof bundleData].map((bundle) => (
+            <div
+              key={bundle.id}
+              onClick={() => handleCardClick(bundle.id)}
+              className="text-center p-4 bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-2xl cursor-pointer transition-all duration-300 hover:shadow-lg hover:border-violet-300 hover:-translate-y-1"
+            >
+              <div className="w-20 h-20 mx-auto bg-white/20 text-slate-800 dark:text-white rounded-full flex items-center justify-center mb-4">
+                <div className="w-12 h-12">{bundle.icon}</div>
+              </div>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-200">{t(`bundle_${bundle.id}`) || bundle.name}</h3>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

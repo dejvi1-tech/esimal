@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'motion/react';
 import { MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -14,30 +13,17 @@ const WhatsAppButton: React.FC = () => {
   };
 
   return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{
-        delay: 2,
-        type: "spring",
-        stiffness: 260,
-        damping: 20
-      }}
-      className="fixed bottom-6 right-6 z-50" data-id="7qfkrsw5h" data-path="src/components/WhatsAppButton.tsx">
-
-      <motion.button
+    <div className="fixed bottom-6 right-6 z-50">
+      <button
         onClick={handleWhatsAppClick}
         className="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg transition-all duration-300 flex items-center gap-2"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        title={t('contact_whatsapp')} data-id="qq89ochms" data-path="src/components/WhatsAppButton.tsx">
-
-        <MessageCircle className="w-6 h-6" data-id="5bhfu0bof" data-path="src/components/WhatsAppButton.tsx" />
-        <span className="hidden md:block text-sm font-medium" data-id="8ondqkvfg" data-path="src/components/WhatsAppButton.tsx">
+        title={t('contact_whatsapp')}>
+        <MessageCircle className="w-6 h-6" />
+        <span className="hidden md:block text-sm font-medium">
           {t('contact_whatsapp')}
         </span>
-      </motion.button>
-    </motion.div>);
+      </button>
+    </div>);
 
 };
 

@@ -1,5 +1,5 @@
 import { useLanguage } from '@/contexts/LanguageContext';
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 
 const kudosimImage = '/kudosim-logo.png';
 
@@ -16,22 +16,9 @@ const shapes = [
 
 const KudoSimSection: React.FC = () => {
   const { t } = useLanguage();
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const [scrollY, setScrollY] = useState(0);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!sectionRef.current) return;
-      const rect = sectionRef.current.getBoundingClientRect();
-      const offset = window.scrollY + rect.top;
-      setScrollY(window.scrollY - offset);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-20">
+    <section className="relative overflow-hidden py-20">
       <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-12 relative z-10">
         {/* Text above Logo Image */}
         <div className="flex-1 flex flex-col items-center justify-center mb-8 md:mb-0">
