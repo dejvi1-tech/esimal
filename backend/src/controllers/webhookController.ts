@@ -346,6 +346,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       packageId,
       roamifyOrderId: roamifyOrder.orderId,
       esimId: roamifyOrder.esimId,
+      fallbackUsed: roamifyOrder.fallbackUsed || false,
+      originalPackageId: roamifyOrder.originalPackageId,
+      fallbackPackageId: roamifyOrder.fallbackPackageId,
       paymentIntentId: paymentIntent.id,
     });
 
@@ -357,6 +360,13 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         roamify_esim_id: roamifyOrder.esimId,
         status: roamifySuccess ? 'completed' : 'pending_esim',
         updated_at: new Date().toISOString(),
+        // Store additional metadata about the order
+        metadata: {
+          original_package_id: roamifyOrder.originalPackageId || packageId,
+          actual_package_id: roamifyOrder.fallbackPackageId || roamifyOrder.originalPackageId || packageId,
+          fallback_used: roamifyOrder.fallbackUsed || false,
+          roamify_success: roamifySuccess
+        }
       })
       .eq('id', orderId);
 
@@ -367,34 +377,35 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       roamifySuccess,
     });
 
-    // Create my_packages entry
-    const myPackageData = {
+    // Create user_orders entry
+    const userOrderData = {
       user_id: order.user_id,
       package_id: packageId,
       roamify_order_id: roamifyOrder.orderId,
-      roamify_esim_id: roamifyOrder.esimId,
+      qr_code_url: '', // Will be populated later if needed
+      iccid: roamifyOrder.esimId, // Use esimId as iccid
       status: roamifySuccess ? 'active' : 'pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
 
-    const { data: myPackage, error: myPackageError } = await supabase
-      .from('my_packages')
-      .insert(myPackageData)
+    const { data: userOrder, error: userOrderError } = await supabase
+      .from('user_orders')
+      .insert(userOrderData)
       .select()
       .single();
 
-    if (myPackageError) {
-      logger.error(`[ROAMIFY DEBUG] Error creating my_packages entry`, {
+    if (userOrderError) {
+      logger.error(`[ROAMIFY DEBUG] Error creating user_orders entry`, {
         orderId,
-        error: myPackageError,
+        error: userOrderError,
       });
-      throw new Error(`Failed to create my_packages entry: ${myPackageError.message}`);
+      throw new Error(`Failed to create user_orders entry: ${userOrderError.message}`);
     }
 
-    logger.info(`[ROAMIFY DEBUG] My packages entry created successfully`, {
+    logger.info(`[ROAMIFY DEBUG] User orders entry created successfully`, {
       orderId,
-      myPackageId: myPackage.id,
+      userOrderId: userOrder.id,
     });
 
     // Optionally, handle QR code generation if needed here

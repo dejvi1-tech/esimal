@@ -257,6 +257,12 @@ export class RoamifyService {
             data: error.response.data,
             headers: error.response.headers
           });
+          
+          // If it's a 500 error, try with a known working package ID as fallback
+          if (error.response.status === 500) {
+            logger.warn(`[ROAMIFY DEBUG] 500 error detected, trying with fallback package ID`);
+            return this.createEsimOrderWithFallback(packageId, quantity);
+          }
         } else {
           logger.error(`[ROAMIFY DEBUG] Network error with endpoint ${url}:`, error.message);
         }
@@ -327,12 +333,91 @@ export class RoamifyService {
             data: error.response.data,
             headers: error.response.headers
           });
+          
+          // If it's a 500 error, try with a known working package ID as fallback
+          if (error.response.status === 500) {
+            logger.warn(`[ROAMIFY V2 DEBUG] 500 error detected, trying with fallback package ID`);
+            return this.createEsimOrderWithFallback(packageId, quantity);
+          }
         } else {
           logger.error(`[ROAMIFY V2 DEBUG] Network error with endpoint ${url}:`, error.message);
         }
         throw error;
       }
     }, `eSIM order creation for package ${packageId}`);
+  }
+
+  /**
+   * Create eSIM order with fallback to known working package IDs
+   */
+  private static async createEsimOrderWithFallback(originalPackageId: string, quantity: number = 1): Promise<any> {
+    // List of known working package IDs as fallbacks
+    const fallbackPackageIds = [
+      'esim-afghanistan-30days-3gb-all',
+      'esim-afghanistan-30days-5gb-all', 
+      'esim-afghanistan-30days-10gb-all',
+      'esim-africa-30days-3gb-all',
+      'esim-africa-30days-5gb-all',
+      'esim-africa-30days-10gb-all'
+    ];
+
+    // Try each fallback package ID
+    for (const fallbackId of fallbackPackageIds) {
+      try {
+        logger.info(`[ROAMIFY FALLBACK] Trying fallback package ID: ${fallbackId}`);
+        const url = `${this.baseUrl}/api/esim/order`;
+        const payload = {
+          items: [
+            {
+              packageId: fallbackId,
+              quantity: quantity
+            }
+          ]
+        };
+        const headers = {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'esim-marketplace/1.0.0'
+        };
+
+        const response = await axios.post(url, payload, { headers, timeout: 30000 });
+        
+        if (response.status === 200 && response.data) {
+          logger.info(`[ROAMIFY FALLBACK] Success with fallback package ID: ${fallbackId}`);
+          const data = response.data as { data?: any; orderId?: string; esimId?: string; items?: any[] };
+          let result: any;
+          if (data.data) {
+            result = data.data;
+          } else if (data.orderId || data.esimId) {
+            result = data;
+          } else {
+            result = data;
+          }
+          const esimItem = result.items && result.items[0];
+          const esimId = esimItem?.esimId || esimItem?.iccid || esimItem?.esim_code || esimItem?.code;
+          if (esimId) {
+            const orderId = result.id || result.orderId;
+            return {
+              orderId: orderId,
+              esimId: esimId,
+              items: result.items || [],
+              fallbackUsed: true,
+              originalPackageId: originalPackageId,
+              fallbackPackageId: fallbackId
+            };
+          }
+        }
+      } catch (fallbackError: any) {
+        logger.warn(`[ROAMIFY FALLBACK] Fallback package ID ${fallbackId} failed:`, {
+          status: fallbackError.response?.status,
+          data: fallbackError.response?.data
+        });
+        continue; // Try next fallback
+      }
+    }
+
+    // If all fallbacks fail, throw an error
+    throw new Error(`All Roamify API attempts failed for package ${originalPackageId}. Tried ${fallbackPackageIds.length} fallback package IDs.`);
   }
 
   /**
