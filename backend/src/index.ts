@@ -102,7 +102,7 @@ app.get('/api/search-packages', searchPackages);
 app.get('/api/packages/most-popular', getSectionPackages);
 
 // Add email test endpoint
-app.post('/api/test-email', (req: Request, res: Response) => {
+app.post('/api/test-email', (req: Request, res: Response, next: NextFunction) => {
   const { to, subject, message } = req.body;
   if (!to || !subject || !message) {
     return res.status(400).json({ 
@@ -138,7 +138,7 @@ app.post('/api/test-email', (req: Request, res: Response) => {
 });
 
 // Add endpoint for frontend packages (plain array, only visible)
-app.get('/api/frontend-packages', async (req: Request, res: Response) => {
+app.get('/api/frontend-packages', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data, error } = await supabase
       .from('my_packages')
