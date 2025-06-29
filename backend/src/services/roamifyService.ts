@@ -289,28 +289,6 @@ export class RoamifyService {
   }
 
   /**
-   * Get available packages from Roamify
-   */
-  static async getPackages(): Promise<any[]> {
-    return this.retryApiCall(async () => {
-      logger.info('Fetching available packages from Roamify');
-
-      const response = await axios.get(`${this.baseUrl}/api/packages`, {
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        timeout: 15000, // 15 second timeout
-      });
-
-      const packages = response.data.data || [];
-      logger.info(`Fetched ${packages.length} packages from Roamify`);
-      
-      return packages;
-    }, 'packages fetch');
-  }
-
-  /**
    * Check if Roamify API is healthy
    */
   static async checkApiHealth(): Promise<boolean> {
