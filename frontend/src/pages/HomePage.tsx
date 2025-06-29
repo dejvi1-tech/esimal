@@ -199,7 +199,7 @@ const HomePage = () => {
                       <div className="text-5xl font-extrabold text-white mb-4">
                         €{pkg.sale_price}
                       </div>
-                      <Link to={`/bundle/${pkg.id}`}>
+                      <Link to={`/checkout?country=EU&package=${pkg.id}`}>
                         <Button className="btn-glass bg-accent text-accent-foreground font-semibold w-full">
                           {t('buy_now')}
                         </Button>

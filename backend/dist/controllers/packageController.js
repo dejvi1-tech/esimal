@@ -228,12 +228,23 @@ const searchPackages = async (req, res, next) => {
             });
             return;
         }
-        // Query packages by country name (case-insensitive)
-        const { data: packages, error } = await supabase_1.supabase
-            .from('my_packages')
-            .select('*')
-            .ilike('country_name', `%${country}%`)
-            .order('sale_price', { ascending: true });
+        let packages, error;
+        if (country === 'EU') {
+            // For Europe, match by country_code
+            ({ data: packages, error } = await supabase_1.supabase
+                .from('my_packages')
+                .select('*')
+                .eq('country_code', 'EU')
+                .order('sale_price', { ascending: true }));
+        }
+        else {
+            // For other countries, match by country_name
+            ({ data: packages, error } = await supabase_1.supabase
+                .from('my_packages')
+                .select('*')
+                .ilike('country_name', `%${country}%`)
+                .order('sale_price', { ascending: true }));
+        }
         if (error) {
             console.error('Database error:', error);
             throw error;

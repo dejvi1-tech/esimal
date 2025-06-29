@@ -112,6 +112,42 @@ app.get('/api/packages/most-popular', (req, res, next) => {
   return controller.getSectionPackages(req, res, next);
 });
 
+// Add email test endpoint
+app.post('/api/test-email', (req: Request, res: Response) => {
+  const { to, subject, message } = req.body;
+  if (!to || !subject || !message) {
+    return res.status(400).json({ 
+      status: 'error', 
+      message: 'Missing required fields: to, subject, message' 
+    });
+  }
+  const { sendEmail } = require('./services/emailService');
+  sendEmail({
+    to,
+    subject,
+    html: `
+      <h2>Test Email</h2>
+      <p>${message}</p>
+      <p>Sent at: ${new Date().toISOString()}</p>
+      <p>SMTP Host: ${process.env.SMTP_HOST || 'Not set'}</p>
+      <p>SMTP User: ${process.env.SMTP_USER || 'Not set'}</p>
+    `
+  })
+    .then(() => {
+      res.json({ 
+        status: 'success', 
+        message: 'Test email sent successfully' 
+      });
+    })
+    .catch((error: any) => {
+      console.error('Email test failed:', error);
+      res.status(500).json({ 
+        status: 'error', 
+        message: 'Email test failed: ' + (error.message || 'Unknown error') 
+      });
+    });
+});
+
 // Add endpoint for frontend packages (plain array, only visible)
 app.get('/api/frontend-packages', async (req: Request, res: Response) => {
   try {
