@@ -514,7 +514,9 @@ async function handleCheckoutSessionCompleted(session: any) {
     logger.info(`Order created successfully: ${order.id}`);
 
     // Step 3: Send confirmation email with real eSIM data
+    logger.info(`[EMAIL DEBUG] customerEmail value:`, customerEmail);
     if (customerEmail) {
+      logger.info(`[EMAIL DEBUG] Attempting to send order confirmation email to ${customerEmail} for order ${order.id}`);
       try {
         await sendEmail({
           to: customerEmail,
@@ -536,10 +538,12 @@ async function handleCheckoutSessionCompleted(session: any) {
             email: customerEmail,
           }),
         });
-        logger.info(`Order confirmation email sent to ${customerEmail} for order ${order.id}`);
+        logger.info(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
       } catch (emailError) {
-        logger.error('Error sending checkout success email:', emailError);
+        logger.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
       }
+    } else {
+      logger.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
     }
   } catch (error) {
     logger.error('Error handling checkout session completion:', error);
