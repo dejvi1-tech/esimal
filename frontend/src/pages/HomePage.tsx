@@ -52,7 +52,7 @@ const HomePage = () => {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=most-popular`);
         if (response.ok) {
           const data = await response.json();
-          setMostPopularPackages(data.slice(0, 3)); // Show only 3 packages
+          setMostPopularPackages(data); // Show all packages
         }
       } catch (error) {
         console.error('Error fetching most popular packages:', error);

@@ -55,8 +55,8 @@ const BundlePage: React.FC = () => {
     if (!bundleId) return;
 
     setLoading(true);
-    // Fetch packages for the country specified in bundleId
-    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(bundleId)}&lang=${language}`)
+    // Fetch the specific package by ID since bundleId is actually a package ID
+    fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=most-popular`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
@@ -64,20 +64,29 @@ const BundlePage: React.FC = () => {
       .then((data: Package[]) => {
         console.log('Raw packages from API:', data);
         
-        // Deduplicate packages based on content (not just ID)
-        const uniquePackages = data.filter((pkg, index, self) =>
-          index === self.findIndex((p) => (
-            p.data_amount === pkg.data_amount &&
-            p.validity_days === pkg.validity_days &&
-            p.sale_price === pkg.sale_price &&
-            p.country_name === pkg.country_name
-          ))
-        );
+        // Find the specific package by ID
+        const specificPackage = data.find(pkg => pkg.id === bundleId);
         
-        console.log('Deduplicated packages:', uniquePackages);
-        setPackages(uniquePackages);
-        if (uniquePackages.length > 0) {
-          setSelectedId(uniquePackages[0].id);
+        if (specificPackage) {
+          // Create a packages array with just this package
+          setPackages([specificPackage]);
+          setSelectedId(specificPackage.id);
+        } else {
+          // If specific package not found, show all packages as fallback
+          const uniquePackages = data.filter((pkg, index, self) =>
+            index === self.findIndex((p) => (
+              p.data_amount === pkg.data_amount &&
+              p.validity_days === pkg.validity_days &&
+              p.sale_price === pkg.sale_price &&
+              p.country_name === pkg.country_name
+            ))
+          );
+          
+          console.log('Deduplicated packages:', uniquePackages);
+          setPackages(uniquePackages);
+          if (uniquePackages.length > 0) {
+            setSelectedId(uniquePackages[0].id);
+          }
         }
         setLoading(false);
       })
@@ -86,13 +95,13 @@ const BundlePage: React.FC = () => {
         setLoading(false);
       });
     
-    // Get country info for display
-    const countryObj = europeanCountries.find(c => c.code.toLowerCase() === bundleId.toLowerCase() || c.name.en.toLowerCase() === bundleId.toLowerCase());
+    // Get country info for display - use the package's country info
+    const countryObj = europeanCountries.find(c => c.code.toLowerCase() === 'eu' || c.name.en.toLowerCase() === 'europe');
     if (countryObj) {
       setBundleInfo({ name: countryObj.name[language], flag: countryObj.flag });
     } else {
-        // Fallback for names not in the list like 'illyria'
-        setBundleInfo({ name: t(`bundle_${bundleId}`) || (bundleId.charAt(0).toUpperCase() + bundleId.slice(1)), flag: '' });
+        // Fallback for names not in the list
+        setBundleInfo({ name: t(`bundle_${bundleId}`) || 'Europe Package', flag: '' });
     }
 
   }, [bundleId, language]);
