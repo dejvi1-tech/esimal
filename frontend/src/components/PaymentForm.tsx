@@ -19,14 +19,14 @@ interface PaymentFormProps {
 const stripeInputStyle = {
   base: {
     fontSize: '17px',
-    color: '#222',
-    '::placeholder': { color: '#bbb' },
+    color: '#ffffff',
+    '::placeholder': { color: 'rgba(255, 255, 255, 0.5)' },
     fontFamily: 'inherit',
     letterSpacing: '0.03em',
     backgroundColor: 'transparent',
     padding: '12px 0',
   },
-  invalid: { color: '#e53e3e' },
+  invalid: { color: '#ff4444' },
 };
 
 export const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -118,6 +118,9 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       if (!usedClientSecret) {
         console.log('[DEBUG] No clientSecret, creating new payment intent...');
         usedClientSecret = await createPaymentIntent();
+        if (!usedClientSecret) {
+          throw new Error('Failed to create payment intent: No client secret received');
+        }
         setClientSecret(usedClientSecret);
         console.log('[DEBUG] Received clientSecret:', usedClientSecret);
       } else {
@@ -139,7 +142,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       const { error, paymentIntent } = await stripe.confirmCardPayment(usedClientSecret, {
         payment_method: {
           card: cardNumberElement,
-          billing_details: { email: safeEmail },
+          billing_details: { email: safeEmail || '' },
         },
       });
       if (error) {
@@ -167,34 +170,34 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-white rounded-xl shadow p-6">
-        <h3 className="text-lg font-bold mb-6 text-gray-900">{t('payment_details')}</h3>
+      <div className="glass-medium p-6 rounded-2xl">
+        <h3 className="text-lg font-bold mb-6 text-white">{t('payment_details')}</h3>
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('card_number')}</label>
-            <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
+            <label className="block text-sm font-medium text-white mb-1">{t('card_number')}</label>
+            <div className="input-glass w-full text-white" style={{height: 52}}>
               <CardNumberElement
                 options={{ style: stripeInputStyle }}
-                className="flex-1 bg-transparent outline-none text-lg"
+                className="flex-1 bg-transparent outline-none text-lg h-full"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('expiry')}</label>
-              <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
+              <label className="block text-sm font-medium text-white mb-1">{t('expiry')}</label>
+              <div className="input-glass w-full text-white" style={{height: 52}}>
                 <CardExpiryElement
                   options={{ style: stripeInputStyle }}
-                  className="flex-1 bg-transparent outline-none text-lg"
+                  className="flex-1 bg-transparent outline-none text-lg h-full"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{t('cvc')}</label>
-              <div className="relative flex items-center border border-gray-300 rounded-lg px-3 bg-white focus-within:ring-2 focus-within:ring-purple-500 transition-all" style={{height: 52}}>
+              <label className="block text-sm font-medium text-white mb-1">{t('cvc')}</label>
+              <div className="input-glass w-full text-white" style={{height: 52}}>
                 <CardCvcElement
                   options={{ style: stripeInputStyle }}
-                  className="flex-1 bg-transparent outline-none text-lg"
+                  className="flex-1 bg-transparent outline-none text-lg h-full"
                 />
               </div>
             </div>
@@ -205,12 +208,12 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
       <button
         type="submit"
         disabled={isProcessing || !stripe}
-        className="w-full bg-purple-600 text-white py-4 px-6 rounded-lg font-semibold text-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-glass w-full text-white py-4 px-6 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isProcessing ? t('processing') : `${t('pay')} ${currency.toUpperCase()} ${amount}`}
       </button>
 
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-white/80 text-center">
         {t('payment_terms_notice')}
       </p>
     </form>
