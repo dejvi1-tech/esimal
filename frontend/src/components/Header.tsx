@@ -20,9 +20,9 @@ const Header = () => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50">
-      <div className="container mx-auto px-4">
-        <div className="navbar-glassmorphism">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full">
+      <div className="w-full px-4">
+        <div className="navbar-glassmorphism-fixed">
           <div className="flex items-center justify-between h-[4.5rem] gap-x-10">
             {/* Logo */}
             <Link
