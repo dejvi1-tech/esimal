@@ -402,36 +402,34 @@ export const getCustomer = async (
 };
 
 export const createCheckoutSession = async (req: Request, res: Response, next: NextFunction) => {
-  const { packageId, email, name, surname } = req.body;
-
-  // 1. First, try to find package by UUID (id field)
+  const { packageId, email, name, surname, country_code } = req.body;
+  if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+    return res.status(400).json({ error: 'country_code is required and must be a valid ISO code' });
+  }
   let { data: pkg, error } = await supabase
     .from('my_packages')
     .select('*')
     .eq('id', packageId)
     .single();
-
-  // If not found by UUID, try to find by location_slug (slug)
   if (error || !pkg) {
     logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
-    
     const { data: packageBySlug, error: slugError } = await supabase
       .from('my_packages')
       .select('*')
       .eq('location_slug', packageId)
       .single();
-
     if (slugError || !packageBySlug) {
       logger.error(`Package not found by UUID or slug: ${packageId}`, { error, slugError });
       return res.status(404).json({ error: 'Package not found' });
     }
-
     pkg = packageBySlug;
     logger.info(`Package found by slug: ${packageId} -> UUID: ${pkg.id}`);
   } else {
     logger.info(`Package found by UUID: ${packageId}`);
   }
-
+  if (pkg.country_code !== country_code.toUpperCase()) {
+    return res.status(400).json({ error: 'Package-country mismatch' });
+  }
   // 2. Create Stripe Checkout Session
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],

@@ -41,8 +41,16 @@ const SimplePlanCard: React.FC<{
   );
 };
 
+// Utility to map slug to ISO country code
+const mapSlugToCode = (slug: string): string | null => {
+  const match = europeanCountries.find(
+    c => c.name.en.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
+  );
+  return match ? match.code : null;
+};
+
 const BundlePage: React.FC = () => {
-  const { bundleId } = useParams<{ bundleId: string }>();
+  const { country } = useParams<{ country: string }>();
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,59 +60,39 @@ const BundlePage: React.FC = () => {
   const { t, language } = useLanguage();
 
   useEffect(() => {
-    if (!bundleId) return;
-
+    if (!country) return;
     setLoading(true);
-    // Fetch the specific package by ID since bundleId is actually a package ID
-    fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=most-popular`)
+    const countryCode = mapSlugToCode(country);
+    if (!countryCode) {
+      setError('Invalid country');
+      setLoading(false);
+      return;
+    }
+    fetch(`${import.meta.env.VITE_API_URL}/api/packages?country_code=${countryCode}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
         return res.json();
       })
-      .then((data: Package[]) => {
-        console.log('Raw packages from API:', data);
-        
-        // Find the specific package by ID
-        const specificPackage = data.find(pkg => pkg.id === bundleId);
-        
-        if (specificPackage) {
-          // Create a packages array with just this package
-          setPackages([specificPackage]);
-          setSelectedId(specificPackage.id);
-        } else {
-          // If specific package not found, show all packages as fallback
-          const uniquePackages = data.filter((pkg, index, self) =>
-            index === self.findIndex((p) => (
-              p.data_amount === pkg.data_amount &&
-              p.validity_days === pkg.validity_days &&
-              p.sale_price === pkg.sale_price &&
-              p.country_name === pkg.country_name
-            ))
-          );
-          
-          console.log('Deduplicated packages:', uniquePackages);
-          setPackages(uniquePackages);
-          if (uniquePackages.length > 0) {
-            setSelectedId(uniquePackages[0].id);
-          }
-        }
+      .then((data) => {
+        const pkgs = data.data || [];
+        setPackages(pkgs);
+        if (pkgs.length > 0) setSelectedId(pkgs[0].id);
         setLoading(false);
       })
       .catch(() => {
-        setError(t('failed_to_fetch_packages'));
+        setError('Failed to fetch packages');
         setLoading(false);
       });
     
     // Get country info for display - use the package's country info
-    const countryObj = europeanCountries.find(c => c.code.toLowerCase() === 'eu' || c.name.en.toLowerCase() === 'europe');
+    const countryObj = europeanCountries.find(c => c.code.toLowerCase() === (countryCode || '').toLowerCase());
     if (countryObj) {
       setBundleInfo({ name: countryObj.name[language], flag: countryObj.flag });
     } else {
-        // Fallback for names not in the list
-        setBundleInfo({ name: t(`bundle_${bundleId}`) || 'Europe Package', flag: '' });
+      setBundleInfo({ name: country, flag: '' });
     }
 
-  }, [bundleId, language]);
+  }, [country, language]);
 
   if (loading) {
     return <div className="text-center py-20">{t('loading')}</div>;
@@ -148,7 +136,7 @@ const BundlePage: React.FC = () => {
               className="btn-glass bg-accent text-black w-full py-2 rounded-xl font-bold text-lg min-h-[48px] mt-2"
               onClick={() => {
                 if (selectedId) {
-                  navigate(`/checkout?country=${bundleId}&package=${selectedId}`);
+                  navigate(`/checkout?country=${country}&package=${selectedId}`);
                 }
               }}
               disabled={!selectedId}

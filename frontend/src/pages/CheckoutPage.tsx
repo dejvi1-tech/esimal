@@ -6,6 +6,7 @@ import { Elements } from '@stripe/react-stripe-js';
 import { Helmet } from 'react-helmet-async';
 import { toast } from '@/hooks/use-toast';
 import { PaymentForm } from '@/components/PaymentForm';
+import { europeanCountries } from '@/data/countries';
 
 console.log('VITE_STRIPE_PUBLIC_KEY:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -69,6 +70,13 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean; error: any
   }
 }
 
+const mapSlugToCode = (slug: string): string | null => {
+  const match = europeanCountries.find(
+    c => c.name.en.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase()
+  );
+  return match ? match.code : null;
+};
+
 const CheckoutPage: React.FC = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
@@ -103,6 +111,10 @@ const CheckoutPage: React.FC = () => {
   const effectivePackageId = packageId || storedPackageId || localStorage.getItem('checkout_package_id');
   
   console.log('[DEBUG] CheckoutPage render - packageId:', packageId, 'storedPackageId:', storedPackageId, 'effectivePackageId:', effectivePackageId);
+
+  // Get country from URL or search params
+  const countrySlug = searchParams.get('country');
+  const countryCode = countrySlug ? mapSlugToCode(countrySlug) : null;
 
   useEffect(() => {
     const fetchPackageData = async () => {
@@ -330,6 +342,7 @@ const CheckoutPage: React.FC = () => {
                   surname={surname}
                   phone={phone}
                   country={country}
+                  countryCode={countryCode}
                   onSuccess={handlePaymentSuccess}
                   onError={handlePaymentError}
                 />
