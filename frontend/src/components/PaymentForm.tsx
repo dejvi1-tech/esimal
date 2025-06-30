@@ -179,17 +179,17 @@ export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
   }));
 
   return (
-    <div className="bg-white border border-gray-200 shadow rounded-xl p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-6" />
-        <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-6" />
-        <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-6" />
-        <span className="ml-2 bg-gray-200 text-xs px-2 py-1 rounded">+1</span>
+    <div className="bg-gray-50 border-2 border-gray-200 shadow-md rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-8" />
+        <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-8" />
+        <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-8" />
+        <span className="ml-2 bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full border">+1</span>
       </div>
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-800 mb-1">{t('card_number')}</label>
-          <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+          <label className="block text-sm font-medium text-gray-800 mb-2">{t('card_number')}</label>
+          <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
             <CardNumberElement
               options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
               className="flex-1 bg-transparent outline-none text-lg h-full"
@@ -198,8 +198,8 @@ export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1">{t('expiry')}</label>
-            <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+            <label className="block text-sm font-medium text-gray-800 mb-2">{t('expiry')}</label>
+            <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
               <CardExpiryElement
                 options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                 className="flex-1 bg-transparent outline-none text-lg h-full"
@@ -207,8 +207,8 @@ export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1">{t('cvc')}</label>
-            <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+            <label className="block text-sm font-medium text-gray-800 mb-2">{t('cvc')}</label>
+            <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
               <CardCvcElement
                 options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                 className="flex-1 bg-transparent outline-none text-lg h-full"

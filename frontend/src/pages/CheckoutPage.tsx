@@ -257,26 +257,26 @@ const CheckoutPage: React.FC = () => {
         </Helmet>
         
         {/* Header with back button */}
-        <div className="w-full bg-white border-b border-gray-200 px-4 py-4">
+        <div className="w-full bg-white border-b-2 border-gray-200 px-4 py-4 shadow-sm">
           <div className="max-w-5xl mx-auto flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white hover:bg-gray-800 rounded-lg transition-colors font-medium shadow-md border border-gray-800"
             >
               <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Back</span>
+              <span>Back</span>
             </button>
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-4 md:gap-8 px-2 md:px-0">
+        <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-6 md:gap-8 px-4 md:px-0">
           {/* Left: Form */}
           <div className="flex-1 flex flex-col justify-between">
-            <form className="bg-white rounded-xl shadow p-6 md:p-8 flex flex-col gap-6" onSubmit={handleFormSubmit}>
+            <form className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:p-8 flex flex-col gap-8" onSubmit={handleFormSubmit}>
               {/* Credit Card Section at the top using Stripe Elements */}
-              <div>
-                <h2 className="text-xl font-bold mb-4 text-gray-900">Credit card</h2>
+              <div className="border-b border-gray-200 pb-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900 border-l-4 border-blue-600 pl-4">Credit card</h2>
                 <Elements stripe={stripePromise}>
                   <PaymentForm
                     ref={paymentFormRef}
@@ -294,56 +294,105 @@ const CheckoutPage: React.FC = () => {
                 </Elements>
               </div>
               {/* Billing Address Section */}
-              <div>
-                <h2 className="text-lg font-bold mb-2 text-gray-900">Billing address</h2>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    required
-                  />
+              <div className="border-b border-gray-200 pb-6">
+                <h2 className="text-lg font-bold mb-4 text-gray-900 border-l-4 border-green-600 pl-4">Billing address</h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Country/Region</label>
+                    <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                      <option value="">Select your country</option>
+                      {europeanCountries.map(c => (
+                        <option key={c.code} value={c.code}>{c.name.en}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First name *</label>
+                      <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="First name" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Last name *</label>
+                      <input type="text" value={surname} onChange={e => setSurname(e.target.value)} placeholder="Last name" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
+                    <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required />
+                  </div>
                 </div>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Country/Region</label>
-                  <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    <option value="">Select your country</option>
-                    {europeanCountries.map(c => (
-                      <option key={c.code} value={c.code}>{c.name.en}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="First name" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
-                  <input type="text" value={surname} onChange={e => setSurname(e.target.value)} placeholder="Last name" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
-                </div>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
               </div>
-              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg mt-4">Pay now</button>
+              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-lg font-semibold text-lg border-2 border-blue-600 hover:border-blue-700 shadow-lg transition-all duration-200 transform hover:scale-105">
+                Pay now
+              </button>
             </form>
           </div>
           {/* Right: Order Summary */}
-          <div className="w-full md:w-96 bg-white border border-gray-200 rounded-xl shadow p-6 flex flex-col">
-            <div className="flex items-center mb-4">
+          <div className="w-full md:w-96 bg-white border-2 border-gray-200 rounded-xl shadow-lg p-6 flex flex-col">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 border-b-2 border-gray-200 pb-3">Order Summary</h3>
+            <div className="flex items-center mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
               {(() => {
                 // Try to match the country name from packageData to a country in europeanCountries
                 let countryFlag = '';
                 let countryName = '';
+                
+                console.log('[DEBUG] Package data:', packageData);
+                console.log('[DEBUG] Package country_name:', packageData?.country_name);
+                
                 if (packageData && packageData.country_name) {
-                  const countryNameValue = typeof packageData.country_name === 'string' ? packageData.country_name : packageData.country_name.en;
-                  const found = europeanCountries.find(c => c.name.en.toLowerCase() === countryNameValue.toLowerCase() || c.name.al.toLowerCase() === countryNameValue.toLowerCase());
+                  const countryNameValue = typeof packageData.country_name === 'string' 
+                    ? packageData.country_name 
+                    : packageData.country_name[language] || packageData.country_name.en;
+                  
+                  console.log('[DEBUG] Country name value:', countryNameValue);
+                  
+                  // Try multiple matching strategies
+                  let found = europeanCountries.find(c => 
+                    c.name.en.toLowerCase() === countryNameValue.toLowerCase() || 
+                    c.name.al.toLowerCase() === countryNameValue.toLowerCase() ||
+                    c.code.toLowerCase() === countryNameValue.toLowerCase()
+                  );
+                  
+                  // If not found, try partial matching for common cases
+                  if (!found && countryNameValue.toLowerCase().includes('europe')) {
+                    found = europeanCountries.find(c => c.name.en.toLowerCase().includes('europe'));
+                  }
+                  
+                  // If still not found, try country code matching
+                  if (!found && country) {
+                    found = europeanCountries.find(c => c.code.toLowerCase() === country.toLowerCase());
+                  }
+                  
+                  console.log('[DEBUG] Found country:', found);
+                  
                   if (found) {
                     countryFlag = found.flag;
                     countryName = found.name.en;
                   }
                 }
+                
+                console.log('[DEBUG] Final flag URL:', countryFlag);
+                
                 if (countryFlag) {
                   return <img src={countryFlag} alt={countryName} className="w-14 h-14 rounded object-cover border border-gray-200" />;
                 } else {
-                  return <img src={packageData?.image || '/images/placeholder.svg'} alt={countryName} className="w-14 h-14 rounded object-cover border border-gray-200" />;
+                  // Fallback to a generic globe icon or placeholder
+                  return (
+                    <div className="w-14 h-14 rounded bg-gray-200 border border-gray-300 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">No Flag</span>
+                    </div>
+                  );
                 }
               })()}
               <div className="ml-4 flex-1">
@@ -357,20 +406,20 @@ const CheckoutPage: React.FC = () => {
               value={coupon}
               onChange={e => setCoupon(e.target.value)}
               placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
-              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-300 focus:border-transparent mb-4"
+              className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors mb-3"
               disabled={isCouponApplied}
             />
             <button
               type="button"
               onClick={handleApplyCoupon}
-              className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 mb-6"
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 mb-6 border-2 border-green-600 hover:border-green-700 shadow-sm"
               disabled={isCouponApplied}
             >
               {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
             </button>
-            <div className="flex justify-between items-center mt-2 border-t border-gray-200 pt-4">
-              <span className="font-bold text-2xl">Total</span>
-              <span className="font-bold text-2xl">ALL {total.toFixed(2)}</span>
+            <div className="flex justify-between items-center mt-4 border-t-2 border-gray-300 pt-6 bg-gray-50 p-4 rounded-lg">
+              <span className="font-bold text-xl text-gray-900">Total</span>
+              <span className="font-bold text-2xl text-blue-600">€{total.toFixed(2)}</span>
             </div>
           </div>
         </div>
