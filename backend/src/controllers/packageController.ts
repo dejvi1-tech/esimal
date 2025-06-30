@@ -143,6 +143,13 @@ export const getAllPackages = async (
       data: packages,
     });
   } catch (error) {
+    logger.error('[API] /api/packages error', {
+      error: error instanceof Error ? error.stack || error.message : error,
+      country_code: req.query.country_code,
+      path: req.path,
+      method: req.method,
+      time: new Date().toISOString(),
+    });
     next(error);
   }
 };
