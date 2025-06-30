@@ -132,7 +132,7 @@ export const getAllPackages = async (
       .select('*')
       .eq('country_code', countryCode.toUpperCase())
       .eq('visible', true)
-      .eq('is_active', true)
+      .eq('show_on_frontend', true)
       .order('sale_price', { ascending: true });
     if (error) {
       throw error;
