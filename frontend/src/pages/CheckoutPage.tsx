@@ -300,7 +300,7 @@ const CheckoutPage: React.FC = () => {
             </form>
           </div>
           {/* Right: Order Summary */}
-          <div className="w-full md:w-96 bg-gradient-to-b from-purple-800 to-purple-600 rounded-xl shadow p-4 md:p-8 text-white flex flex-col">
+          <div className="w-full md:w-96 bg-white border border-gray-200 rounded-xl shadow p-4 md:p-8 text-gray-900 flex flex-col">
             <h3 className="text-xl font-bold mb-4 md:mb-6">{t('your_order')}</h3>
             <div className="mb-2 md:mb-4">
               <div className="flex justify-between items-center">
@@ -320,19 +320,19 @@ const CheckoutPage: React.FC = () => {
                 value={coupon}
                 onChange={e => setCoupon(e.target.value)}
                 placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
-                className="w-full px-3 py-2 rounded-lg border border-purple-300 text-gray-900 focus:ring-2 focus:ring-purple-300 focus:border-transparent mb-2"
+                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-300 focus:border-transparent mb-2"
                 disabled={isCouponApplied}
               />
               <button
                 type="button"
                 onClick={handleApplyCoupon}
-                className="w-full bg-purple-700 hover:bg-purple-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
                 disabled={isCouponApplied}
               >
                 {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
               </button>
             </div>
-            <div className="flex justify-between items-center mt-2 md:mt-4 border-t border-purple-400 pt-2 md:pt-4">
+            <div className="flex justify-between items-center mt-2 md:mt-4 border-t border-gray-200 pt-2 md:pt-4">
               <span className="font-semibold text-lg">Total</span>
               <span className="font-bold text-2xl">€{total.toFixed(2)}</span>
             </div>
