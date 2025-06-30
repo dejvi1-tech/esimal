@@ -148,6 +148,8 @@ const AdminPanel: React.FC = () => {
     fetchAllData();
   }, [country, currentPage]);
 
+
+
   const fetchAllCountries = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/package-countries`, {
@@ -340,10 +342,6 @@ const AdminPanel: React.FC = () => {
         }
         
         setRoamifyPackages(data);
-        
-        // Update duplicate analysis
-        const analysis = analyzePackagesForDuplicates(data);
-        setDuplicateAnalysis(analysis);
       } else {
         if (handleAuthError(response)) return;
         const text = await response.text();
@@ -859,8 +857,8 @@ const AdminPanel: React.FC = () => {
             {loading ? (
               <div className="text-center text-xl">Loading packages...</div>
             ) : (
-              <div className="glass p-4 rounded-2xl overflow-x-auto">
-                <table className="min-w-full text-left text-white">
+              <div className="glass p-4 rounded-2xl overflow-x-auto bg-black/20">
+                <table className="min-w-full text-left text-white bg-transparent">
                   <thead>
                     <tr>
                       <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
@@ -881,7 +879,7 @@ const AdminPanel: React.FC = () => {
                         pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())
                       )
                       .map((pkg) => (
-                      <tr key={pkg.id} className="hover:bg-white/5 border-b border-white/10">
+                      <tr key={pkg.id} className="hover:bg-white/5 border-b border-white/10 text-white">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
@@ -1214,19 +1212,24 @@ const AdminPanel: React.FC = () => {
               </p>
             </div>
 
+
+
             {/* Roamify Packages Table */}
             {roamifyLoading ? (
               <div className="text-center text-xl text-white mt-8">Loading Roamify packages...</div>
+            ) : roamifyPackages.length === 0 ? (
+              <div className="text-center text-xl text-white mt-8">
+                <p>No packages loaded from database.</p>
+                <p className="text-sm text-gray-300 mt-2">Click "Sync from Roamify API" to fetch packages.</p>
+              </div>
             ) : filteredRoamifyPackages.length === 0 ? (
               <div className="text-center text-xl text-white mt-8">
-                {selectedRoamifyCountry ? 
-                  `No packages found for ${selectedRoamifyCountry}` : 
-                  'No packages found. Try syncing from Roamify API.'
-                }
+                <p>No packages found for country: "{selectedRoamifyCountry}"</p>
+                <p className="text-sm text-gray-300 mt-2">Try selecting "All Countries" or a different country.</p>
               </div>
             ) : (
-              <div className="glass p-4 rounded-2xl overflow-x-auto mt-6">
-                <table className="min-w-full text-left text-white">
+              <div className="glass p-4 rounded-2xl overflow-x-auto mt-6 bg-black/20">
+                <table className="min-w-full text-left text-white bg-transparent">
                   <thead>
                     <tr>
                       <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
@@ -1249,7 +1252,7 @@ const AdminPanel: React.FC = () => {
                       return (
                         <tr 
                           key={pkg.id || pkg.packageId} 
-                          className={`hover:bg-white/5 border-b border-white/10 ${
+                          className={`hover:bg-white/5 border-b border-white/10 text-white ${
                             isDuplicateId || isDuplicateCombo ? 'bg-red-900/20' : ''
                           }`}
                         >
