@@ -170,33 +170,38 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-medium p-6 rounded-2xl">
-        <h3 className="text-lg font-bold mb-6 text-white">{t('payment_details')}</h3>
+      <div className="bg-white border border-gray-200 shadow rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-6" />
+          <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-6" />
+          <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-6" />
+          <span className="ml-2 bg-gray-200 text-xs px-2 py-1 rounded">+1</span>
+        </div>
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-white mb-1">{t('card_number')}</label>
-            <div className="input-glass w-full text-white" style={{height: 52}}>
+            <label className="block text-sm font-medium text-gray-800 mb-1">{t('card_number')}</label>
+            <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
               <CardNumberElement
-                options={{ style: stripeInputStyle }}
+                options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                 className="flex-1 bg-transparent outline-none text-lg h-full"
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white mb-1">{t('expiry')}</label>
-              <div className="input-glass w-full text-white" style={{height: 52}}>
+              <label className="block text-sm font-medium text-gray-800 mb-1">{t('expiry')}</label>
+              <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
                 <CardExpiryElement
-                  options={{ style: stripeInputStyle }}
+                  options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                   className="flex-1 bg-transparent outline-none text-lg h-full"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-white mb-1">{t('cvc')}</label>
-              <div className="input-glass w-full text-white" style={{height: 52}}>
+              <label className="block text-sm font-medium text-gray-800 mb-1">{t('cvc')}</label>
+              <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
                 <CardCvcElement
-                  options={{ style: stripeInputStyle }}
+                  options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                   className="flex-1 bg-transparent outline-none text-lg h-full"
                 />
               </div>
@@ -204,18 +209,13 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
           </div>
         </div>
       </div>
-
       <button
         type="submit"
         disabled={isProcessing || !stripe}
-        className="btn-glass w-full text-white py-4 px-6 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {isProcessing ? t('processing') : `${t('pay')} ${currency.toUpperCase()} ${amount}`}
+        {isProcessing ? t('processing') : `${t('pay_now')}`}
       </button>
-
-      <p className="text-xs text-white/80 text-center">
-        {t('payment_terms_notice')}
-      </p>
     </form>
   );
 }; 

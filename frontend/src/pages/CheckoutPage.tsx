@@ -241,7 +241,7 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <Helmet>
           <title>{t('checkout')} - eSIMFly</title>
           <meta name="description" content={t('checkout_description')} />
@@ -271,6 +271,17 @@ const CheckoutPage: React.FC = () => {
               {/* Billing Address Section */}
               <div>
                 <h2 className="text-lg font-bold mb-2 text-gray-900">Billing address</h2>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    required
+                  />
+                </div>
                 <div className="mb-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Country/Region</label>
                   <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
