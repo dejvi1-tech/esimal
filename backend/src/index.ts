@@ -34,15 +34,22 @@ const app = express();
 app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
 
 // Enhanced CORS configuration
+const allowedOrigins = [
+  'https://esimfly.al',
+  'http://localhost:8080',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000'
+];
 const corsOptions = {
-  origin: [
-    'https://esimfly.al',
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
-  ],
+  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Origin',
@@ -53,7 +60,7 @@ const corsOptions = {
     'X-API-Key'
   ],
   credentials: true,
-  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
