@@ -15,7 +15,8 @@
     "migration:revert": "npm run typeorm migration:revert",
     "migration:sql": "ts-node src/scripts/runMigration.ts",
     "test:email": "ts-node src/scripts/testEmail.ts",
-    "test:email:simple": "ts-node src/scripts/simpleEmailTest.ts"
+    "test:email:simple": "ts-node src/scripts/simpleEmailTest.ts",
+    "validate:packages": "ts-node src/scripts/validatePackages.ts"
   },
   "keywords": [],
   "author": "",

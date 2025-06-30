@@ -267,34 +267,34 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       .single();
 
     if (packageError || !packageData) {
-      logger.info(`Package not found in packages table, will use fallback logic`);
+      logger.error(`Package ID ${packageId} not found in Supabase`);
+      throw new Error(`Package ID ${packageId} not found in Supabase`);
     } else {
       logger.info(`Package found by UUID in packages table: ${packageId}`);
     }
 
-    // --- NEW LOGIC ---
+    // --- STRICT LOGIC ---
     let realRoamifyPackageId: string | null = null;
 
     if (packageData && !packageData.features) {
-      // Package comes from my_packages table, use reseller_id directly as it appears to be the real Roamify packageId
       if (packageData.reseller_id) {
         realRoamifyPackageId = packageData.reseller_id;
         logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
       } else {
-        logger.warn(`No reseller_id found for package: ${packageData.id}. Using fallback.`);
-        // Use a real working Roamify packageId as fallback
-        realRoamifyPackageId = 'esim-europe-30days-3gb-all';
-        logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
+        logger.error(`No reseller_id found for package: ${packageData.id}`);
+        throw new Error(`No reseller_id found for package: ${packageData.id}`);
       }
     } else if (packageData && packageData.features) {
-      // Package comes from packages table, use features.packageId
       realRoamifyPackageId = packageData.features.packageId;
       logger.info(`Using packageId from features: ${realRoamifyPackageId}`);
     }
-    // --- END NEW LOGIC ---
+    // --- END STRICT LOGIC ---
 
-    // Use the working Roamify API method with the real Roamify packageId
-    const roamifyPackageId = realRoamifyPackageId || packageId;
+    const roamifyPackageId = realRoamifyPackageId;
+    if (!roamifyPackageId) {
+      logger.error(`No Roamify packageId found for package: ${packageId}`);
+      throw new Error(`No Roamify packageId found for package: ${packageId}`);
+    }
     
     logger.info(`[ROAMIFY DEBUG] Creating eSIM order with working API`, {
       orderId,
@@ -312,33 +312,14 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     let roamifySuccess = false;
     
     try {
-      // First try with the new V2 method that includes only packageId and quantity
       roamifyOrder = await RoamifyService.createEsimOrderV2({
         packageId: roamifyPackageId,
         quantity: quantity
       });
       roamifySuccess = true;
     } catch (v2Error) {
-      logger.warn(`[ROAMIFY DEBUG] V2 method failed, falling back to V1:`, v2Error);
-      try {
-        // Fallback to the original method
-        roamifyOrder = await RoamifyService.createEsimOrder(
-          roamifyPackageId,
-          quantity
-        );
-        roamifySuccess = true;
-      } catch (v1Error) {
-        logger.error(`[ROAMIFY DEBUG] Both V1 and V2 methods failed:`, v1Error);
-        
-        // Create a fallback order structure
-        roamifyOrder = {
-          orderId: `fallback-${Date.now()}`,
-          esimId: `fallback-esim-${Date.now()}`,
-          items: []
-        };
-        
-        logger.warn(`[ROAMIFY DEBUG] Using fallback order structure:`, roamifyOrder);
-      }
+      logger.error(`[ROAMIFY DEBUG] V2 method failed:`, v2Error);
+      throw new Error(`[ROAMIFY DEBUG] V2 method failed: ${v2Error}`);
     }
 
     logger.info(`[ROAMIFY DEBUG] Roamify order created successfully`, {

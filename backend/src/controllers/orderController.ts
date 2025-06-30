@@ -295,25 +295,26 @@ export const createOrder = async (
   next: NextFunction
 ) => {
   try {
-    const { packageId, userEmail, userName, userId } = req.body;
-
-    // Validate required fields
+    const { packageId, userEmail, userName, userId, country_code } = req.body;
     if (!packageId) {
       throw new ValidationError('Package ID is required');
     }
     if (!userEmail) {
       throw new ValidationError('User email is required');
     }
-
-    // Get package details
+    if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+      throw new ValidationError('country_code is required and must be a valid ISO code');
+    }
     const { data: packageData, error: packageError } = await supabase
       .from('my_packages')
       .select('*')
       .eq('id', packageId)
       .single();
-
     if (packageError || !packageData) {
       throw new NotFoundError('Package not found');
+    }
+    if (packageData.country_code !== country_code.toUpperCase()) {
+      return res.status(400).json({ status: 'error', message: 'Package-country mismatch' });
     }
 
     // Generate unique eSIM code
@@ -407,9 +408,7 @@ export const createMyPackageOrder = async (
   next: NextFunction
 ) => {
   try {
-    const { packageId, userEmail, userName, name, surname } = req.body;
-
-    // Validate required fields
+    const { packageId, userEmail, userName, name, surname, country_code } = req.body;
     if (!packageId) {
       throw new ValidationError('Package ID is required');
     }
@@ -419,15 +418,14 @@ export const createMyPackageOrder = async (
     if (!name || !surname) {
       throw new ValidationError('Name and surname are required');
     }
-
-    // First, try to find package by UUID (id field)
+    if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+      throw new ValidationError('country_code is required and must be a valid ISO code');
+    }
     let { data: packageData, error: packageError } = await supabaseAdmin
       .from('my_packages')
       .select('*')
       .eq('id', packageId)
       .single();
-
-    // If not found by UUID, try to find by location_slug (slug)
     if (packageError || !packageData) {
       logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
       const { data: packageBySlug, error: slugError } = await supabaseAdmin
@@ -443,6 +441,9 @@ export const createMyPackageOrder = async (
       logger.info(`Package found by slug: ${packageId} -> UUID: ${packageData.id}`);
     } else {
       logger.info(`Package found by UUID: ${packageId}`);
+    }
+    if (packageData.country_code !== country_code.toUpperCase()) {
+      return res.status(400).json({ status: 'error', message: 'Package-country mismatch' });
     }
 
     // --- NEW LOGIC: Use package mapping for Roamify package ID ---

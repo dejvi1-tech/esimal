@@ -157,7 +157,7 @@ const CheckoutPage: React.FC = () => {
     if (coupon.trim().toLowerCase() === 'nice') {
       setDiscount(2); // €2 discount
       setIsCouponApplied(true);
-      toast({ title: t('coupon_applied'), description: '-2€', variant: 'success' });
+      toast({ title: t('coupon_applied'), description: '-2€', variant: 'default' });
     } else {
       setDiscount(0);
       setIsCouponApplied(false);
@@ -241,99 +241,107 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Helmet>
           <title>{t('checkout')} - eSIMFly</title>
           <meta name="description" content={t('checkout_description')} />
         </Helmet>
         <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-4 md:gap-8 px-2 md:px-0">
           {/* Left: Form */}
-          <div className="flex-1 glass bg-white/10 border border-white/20 rounded-2xl shadow-2xl p-6 md:p-10 mb-4 md:mb-0 backdrop-blur-md">
-            <h2 className="text-3xl font-bold mb-8 text-white text-center tracking-tight">{t('checkout')}</h2>
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex-1 bg-white rounded-xl shadow p-4 md:p-8 mb-4 md:mb-0">
+            <h2 className="text-2xl font-bold mb-6 md:mb-8 text-gray-900">{t('checkout')}</h2>
+            <form className="space-y-4 md:space-y-6" onSubmit={handleFormSubmit}>
+              {/* Billing Information at the top */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-purple-200 mb-1">{t('first_name')} *</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full px-4 py-3 border border-purple-400 bg-white/10 text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-purple-300" placeholder={t('enter_first_name')} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('first_name')} *</label>
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_first_name')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-purple-200 mb-1">{t('last_name')} *</label>
-                  <input type="text" value={surname} onChange={e => setSurname(e.target.value)} required className="w-full px-4 py-3 border border-purple-400 bg-white/10 text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-purple-300" placeholder={t('enter_last_name')} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('last_name')} *</label>
+                  <input type="text" value={surname} onChange={e => setSurname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_last_name')} />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-purple-200 mb-1">{t('phone_number')} ({t('kosovo_only')})</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full px-4 py-3 border border-purple-400 bg-white/10 text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-purple-300" placeholder="XXX XXX XXX" />
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('phone_number')} ({t('kosovo_only')})</label>
+                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="XXX XXX XXX" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-purple-200 mb-1">{t('country')}</label>
-                  <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-4 py-3 border border-purple-400 bg-white/10 text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('country')}</label>
+                  <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
                     {countryList.map(c => (
                       <option key={c.code} value={c.code}>{c.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-purple-200 mb-1">Email *</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-4 py-3 border border-purple-400 bg-white/10 text-white rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent placeholder-purple-300" placeholder={t('enter_email')} />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_email')} />
                 </div>
               </div>
-              {/* Stripe Elements Payment Form */}
-              <Elements stripe={stripePromise}>
-                <PaymentForm
-                  amount={total}
-                  currency="eur"
-                  email={email}
-                  packageId={packageData.id}
-                  name={name}
-                  surname={surname}
-                  phone={phone}
-                  country={country}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                />
-              </Elements>
-            </div>
+              {/* Payment Platform below billing info */}
+              <div className="mt-6">
+                <Elements stripe={stripePromise}>
+                  <PaymentForm
+                    amount={total}
+                    currency="eur"
+                    email={email}
+                    packageId={packageData.id}
+                    name={name}
+                    surname={surname}
+                    phone={phone}
+                    country={country}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </Elements>
+                {/* Powered by Stripe branding */}
+                <div className="flex justify-center items-center mt-4">
+                  <img src="https://stripe.com/img/v3/home/social.png" alt="Stripe logo" className="h-6 mr-2" style={{height: '24px'}} />
+                  <span className="text-xs text-gray-500">Powered by Stripe</span>
+                </div>
+              </div>
+            </form>
           </div>
           {/* Right: Order Summary */}
-          <div className="w-full md:w-96 glass bg-gradient-to-b from-purple-800/80 to-blue-700/80 border border-white/20 rounded-2xl shadow-2xl p-6 md:p-10 text-white flex flex-col">
-            <h3 className="text-2xl font-bold mb-6 text-center tracking-tight">{t('your_order')}</h3>
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
+          <div className="w-full md:w-96 bg-gradient-to-b from-purple-800 to-purple-600 rounded-xl shadow p-4 md:p-8 text-white flex flex-col">
+            <h3 className="text-xl font-bold mb-4 md:mb-6">{t('your_order')}</h3>
+            <div className="mb-2 md:mb-4">
+              <div className="flex justify-between items-center">
                 <span className="font-semibold text-lg">
                   {typeof packageData.name === 'string' ? packageData.name : packageData.name[language]}
                 </span>
                 <span className="font-bold text-lg">€{packageData.sale_price.toFixed(2)}</span>
               </div>
-              <div className="text-sm opacity-80">
+              <div className="text-sm opacity-80 mt-1">
                 {packageData.data_amount}GB eSIM {packageData.country_name && (typeof packageData.country_name === 'string' ? packageData.country_name : packageData.country_name[language])} / {packageData.validity_days} {t('days')}
               </div>
-              <div className="text-sm opacity-80">Qty 1</div>
+              <div className="text-sm opacity-80 mt-1">Qty 1</div>
             </div>
-            <div className="mb-4">
+            <div className="mb-2 md:mb-4">
               <input
                 type="text"
                 value={coupon}
                 onChange={e => setCoupon(e.target.value)}
                 placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
-                className="w-full px-4 py-3 rounded-xl border border-purple-400 bg-white/10 text-white focus:ring-2 focus:ring-purple-300 focus:border-transparent mb-2 placeholder-purple-300"
+                className="w-full px-3 py-2 rounded-lg border border-purple-300 text-gray-900 focus:ring-2 focus:ring-purple-300 focus:border-transparent mb-2"
                 disabled={isCouponApplied}
               />
               <button
                 type="button"
                 onClick={handleApplyCoupon}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50"
+                className="w-full bg-purple-700 hover:bg-purple-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
                 disabled={isCouponApplied}
               >
                 {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
               </button>
             </div>
-            <div className="flex justify-between items-center mt-4 border-t border-purple-400 pt-4">
+            <div className="flex justify-between items-center mt-2 md:mt-4 border-t border-purple-400 pt-2 md:pt-4">
               <span className="font-semibold text-lg">Total</span>
               <span className="font-bold text-2xl">€{total.toFixed(2)}</span>
             </div>
-            <div className="text-xs opacity-80 mt-4">EUR</div>
+            <div className="text-xs opacity-80 mt-2 md:mt-4">EUR</div>
           </div>
         </div>
       </div>

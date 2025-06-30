@@ -779,48 +779,40 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#4B0082] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <header className="glass-medium p-4 flex justify-between items-center rounded-b-2xl mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-            <p className="text-gray-600">eSIM Package Management</p>
+            <h1 className="text-3xl font-bold text-white">Admin Panel</h1>
+            <p className="text-gray-200">eSIM Package Management</p>
           </div>
           <button
             onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+            className="btn-glass bg-accent text-black px-4 py-2 rounded-xl"
           >
             Logout
           </button>
-        </div>
+        </header>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="modal-glass p-4 rounded-2xl max-w-lg mx-auto mb-4 text-red-400 border border-red-400">
             {error}
           </div>
         )}
 
         {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
+        <div className="glass-light rounded-2xl p-2 mb-6">
+          <nav className="flex space-x-8">
             <button
               onClick={() => setActiveTab('my-packages-only')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'my-packages-only'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`btn-glass px-4 py-2 rounded-xl ${activeTab === 'my-packages-only' ? 'bg-accent text-black' : 'bg-white/10 text-white'}`}
             >
               My Packages Only ({myPackages.length})
             </button>
             <button
               onClick={() => setActiveTab('roamify-packages')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'roamify-packages'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`btn-glass px-4 py-2 rounded-xl ${activeTab === 'roamify-packages' ? 'bg-accent text-black' : 'bg-white/10 text-white'}`}
             >
               Roamify Packages ({totalCount ? totalCount.toLocaleString() : roamifyPackages.length.toLocaleString()})
             </button>
@@ -829,83 +821,57 @@ const AdminPanel: React.FC = () => {
 
         {/* My Packages Only Tab */}
         {activeTab === 'my-packages-only' && (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">
-                My eSIM Packages Only ({myPackages.length})
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Manage your eSIM packages with edit and delete functionality
-              </p>
-              
-              {/* Country Search */}
-              <div className="mt-4">
-                <label htmlFor="my-packages-country-search" className="block text-sm font-medium text-gray-700">
-                  Search by Country:
-                </label>
-                <div className="mt-1 flex gap-2">
-                  <input
-                    type="text"
-                    id="my-packages-country-search"
-                    placeholder="Search country..."
-                    value={countrySearch}
-                    onChange={e => setCountrySearch(e.target.value)}
-                    className="flex-1 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                  />
-                  {countrySearch && (
-                    <button
-                      onClick={() => setCountrySearch('')}
-                      className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
+          <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">My eSIM Packages Only ({myPackages.length})</h2>
+            <p className="text-gray-200 mb-4">Manage your eSIM packages with edit and delete functionality</p>
+            
+            {/* Country Search */}
+            <div className="mb-4">
+              <label htmlFor="my-packages-country-search" className="block text-sm font-medium text-white">Search by Country:</label>
+              <div className="mt-1 flex gap-2">
+                <input
+                  type="text"
+                  id="my-packages-country-search"
+                  placeholder="Search country..."
+                  value={countrySearch}
+                  onChange={e => setCountrySearch(e.target.value)}
+                  className="input-glass w-full text-white placeholder-gray-300"
+                />
                 {countrySearch && (
-                  <p className="mt-1 text-sm text-gray-600">
-                    Showing {myPackages.filter(pkg => pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())).length} of {myPackages.length} packages
-                  </p>
+                  <button
+                    onClick={() => setCountrySearch('')}
+                    className="btn-glass bg-white/20 text-white px-4 py-2 rounded-xl"
+                  >
+                    Clear
+                  </button>
                 )}
               </div>
+              {countrySearch && (
+                <p className="mt-1 text-sm text-gray-200">
+                  Showing {myPackages.filter(pkg => pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())).length} of {myPackages.length} packages
+                </p>
+              )}
             </div>
             
             {loading ? (
-              <div className="px-6 py-8 text-center text-xl">Loading packages...</div>
+              <div className="text-center text-xl">Loading packages...</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="glass p-4 rounded-2xl overflow-x-auto">
+                <table className="min-w-full text-left text-white">
+                  <thead>
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Package
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Country
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Country Code
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Data (GB)
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Days
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Base Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Sale Price
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Profit
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country Code</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Data (GB)</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Days</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Base Price</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Sale Price</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Profit</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody>
                     {myPackages
                       .filter(pkg => 
                         !countrySearch || 
@@ -1074,331 +1040,178 @@ const AdminPanel: React.FC = () => {
 
         {/* Roamify Packages Tab */}
         {activeTab === 'roamify-packages' && (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900">
-                Roamify Packages ({roamifyPackages.length})
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Available packages from Roamify API - Edit sale price and save to your inventory
-              </p>
-              
-              {/* Duplicate Analysis Display */}
-              {!roamifyLoading && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Package Analysis</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="bg-white p-3 rounded border">
-                      <div className="font-medium text-gray-700">Total Packages</div>
-                      <div className="text-2xl font-bold text-blue-600">{duplicateAnalysis.totalPackages}</div>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <div className="font-medium text-gray-700">Duplicate IDs</div>
-                      <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
-                        {Object.keys(duplicateAnalysis.duplicateIds).length}
-                      </div>
-                    </div>
-                    <div className="bg-white p-3 rounded border">
-                      <div className="font-medium text-gray-700">Duplicate Combinations</div>
-                      <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
-                        {Object.keys(duplicateAnalysis.duplicateCombinations).length}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {duplicateAnalysis.hasDuplicates && (
-                    <div className="mt-4">
-                      <details className="bg-white p-3 rounded border">
-                        <summary className="cursor-pointer font-medium text-red-700 hover:text-red-800">
-                          🔍 View Duplicate Details (Click to expand)
-                        </summary>
-                        <div className="mt-3 space-y-4">
-                          {Object.keys(duplicateAnalysis.duplicateIds).length > 0 && (
-                            <div>
-                              <h4 className="font-semibold text-gray-800 mb-2">Duplicate IDs:</h4>
-                              <div className="space-y-2">
-                                {Object.entries(duplicateAnalysis.duplicateIds).map(([id, packages]) => (
-                                  <div key={id} className="bg-red-50 p-2 rounded border-l-4 border-red-400">
-                                    <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
-                                    {packages.map((pkg, index) => (
-                                      <div key={index} className="text-sm text-red-700 ml-4">
-                                        {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          
-                          {Object.keys(duplicateAnalysis.duplicateCombinations).length > 0 && (
-                            <div>
-                              <h4 className="font-semibold text-gray-800 mb-2">Duplicate Combinations (Country + Data + Days + Price):</h4>
-                              <div className="space-y-2">
-                                {Object.entries(duplicateAnalysis.duplicateCombinations).map(([key, packages]) => (
-                                  <div key={key} className="bg-orange-50 p-2 rounded border-l-4 border-orange-400">
-                                    <div className="font-medium text-orange-800">Combination: {key} (appears {packages.length} times)</div>
-                                    {packages.map((pkg, index) => (
-                                      <div key={index} className="text-sm text-orange-700 ml-4">
-                                        {index + 1}. ID: {pkg.id || pkg.packageId} - {pkg.description || pkg.packageName || pkg.name || pkg.package}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </details>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Legend for duplicate indicators */}
-              {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
-                <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                  <h4 className="text-sm font-medium text-yellow-800 mb-2">📋 Duplicate Indicators Legend:</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
-                    <div className="flex items-center">
-                      <div className="w-3 h-3 bg-red-50 border-l-4 border-red-400 mr-2"></div>
-                      <span className="text-yellow-700">Red background = Duplicate package</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-2">Duplicate ID</span>
-                      <span className="text-yellow-700">Same package ID appears multiple times</span>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-2">Duplicate Combo</span>
-                      <span className="text-yellow-700">Same country + data + days + price combination</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Country Filter */}
-              <div className="mt-4">
-                <label htmlFor="country-filter" className="block text-sm font-medium text-gray-700">
-                  Filter by Country:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Search country..."
-                  value={countrySearch}
-                  onChange={e => setCountrySearch(e.target.value)}
-                  className="mt-1 mb-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                />
-                <select
-                  id="country-filter"
-                  value={selectedRoamifyCountry}
-                  onChange={(e) => setSelectedRoamifyCountry(e.target.value)}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="">All Countries ({roamifyCountries.length})</option>
-                  {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
-                    <option key={country} value={country}>{country}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Remove Duplicates Button */}
-              {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
-                <div className="mt-4">
-                  <button
-                    onClick={handleRemoveDuplicates}
-                    disabled={deduplicating}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {deduplicating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Removing Duplicates...
-                      </>
-                    ) : (
-                      <>
-                        🗑️ Remove Duplicates
-                        <span className="text-xs bg-red-700 px-2 py-1 rounded">
-                          {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
-                        </span>
-                      </>
-                    )}
-                  </button>
-                  <p className="mt-1 text-sm text-gray-600">
-                    This will remove duplicate packages based on ID and combination matches
-                  </p>
-                </div>
-              )}
-
-              {/* Sync Roamify Packages Button */}
-              <div className="mt-4">
-                <button
-                  onClick={handleSyncRoamifyPackages}
-                  disabled={syncing}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {syncing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Syncing from Roamify API...
-                    </>
-                  ) : (
-                    <>
-                      🔄 Sync from Roamify API
-                    </>
-                  )}
-                </button>
-                <p className="mt-1 text-sm text-gray-600">
-                  This will fetch fresh data directly from Roamify API and sync to database
-                </p>
-              </div>
-            </div>
+          <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">Roamify Packages ({roamifyPackages.length})</h2>
+            <p className="text-gray-200 mb-4">Available packages from Roamify API - Edit sale price and save to your inventory</p>
             
-            {roamifyLoading ? (
-              <div className="px-6 py-8 text-center text-xl">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-                Loading Roamify packages... This may take a moment for 22,000+ packages.
-              </div>
-            ) : (
-              <div className="overflow-x-auto" style={{ maxHeight: 600, overflowY: 'auto' }}>
-                {/* Package Summary */}
-                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-700">
-                      <span className="font-medium">Total Packages Loaded:</span> {roamifyPackages.length.toLocaleString()}
-                      {selectedRoamifyCountry && (
-                        <span className="ml-4">
-                          <span className="font-medium">Filtered:</span> {filteredRoamifyPackages.length.toLocaleString()} for {selectedRoamifyCountry}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      Showing {Math.min(roamifyVisibleCount, filteredRoamifyPackages.length).toLocaleString()} packages
+            {/* Duplicate Analysis Display */}
+            {!roamifyLoading && (
+              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Package Analysis</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-700">Total Packages</div>
+                    <div className="text-2xl font-bold text-blue-600">{duplicateAnalysis.totalPackages}</div>
+                  </div>
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-700">Duplicate IDs</div>
+                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
+                      {Object.keys(duplicateAnalysis.duplicateIds).length}
                     </div>
                   </div>
-                  {/* Debug information */}
-                  <div className="mt-2 text-xs text-gray-500">
-                    All packages loaded in single request - use country filter to see specific packages
+                  <div className="bg-white p-3 rounded border">
+                    <div className="font-medium text-gray-700">Duplicate Combinations</div>
+                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
+                      {Object.keys(duplicateAnalysis.duplicateCombinations).length}
+                    </div>
                   </div>
                 </div>
                 
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country Code</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data (GB)</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Base Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale Price</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profit</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredRoamifyPackages.slice(0, roamifyVisibleCount).map((pkg) => {
-                      const basePrice = pkg.price || pkg.base_price || 0;
-                      const salePrice = parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] ?? basePrice.toString());
-                      const profit = salePrice - basePrice;
-                      
-                      // Check if this package is a duplicate using new mapped fields
-                      const packageId = pkg.id || pkg.packageId || 'unknown';
-                      const country = pkg.country || pkg.country_name || 'unknown';
-                      const data = pkg.data || pkg.dataAmount || 'unknown';
-                      const validity = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown';
-                      const price = pkg.price || pkg.base_price || 'unknown';
-                      const combinationKey = `${country}|${data}|${validity}|${price}`;
-                      
-                      const isDuplicateId = duplicateAnalysis.duplicateIds[packageId] && duplicateAnalysis.duplicateIds[packageId].length > 1;
-                      const isDuplicateCombination = duplicateAnalysis.duplicateCombinations[combinationKey] && duplicateAnalysis.duplicateCombinations[combinationKey].length > 1;
-                      const isDuplicate = isDuplicateId || isDuplicateCombination;
-                      
-                      return (
-                        <tr 
-                          key={pkg.id || pkg.packageId} 
-                          className={`hover:bg-gray-50 ${isDuplicate ? 'bg-red-50 border-l-4 border-red-400' : ''}`}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
-                              {pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package'}
-                              {isDuplicate && (
-                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                  {isDuplicateId && isDuplicateCombination ? 'Duplicate ID & Combo' : 
-                                   isDuplicateId ? 'Duplicate ID' : 'Duplicate Combo'}
-                                </span>
-                              )}
+                {duplicateAnalysis.hasDuplicates && (
+                  <div className="mt-4">
+                    <details className="bg-white p-3 rounded border">
+                      <summary className="cursor-pointer font-medium text-red-700 hover:text-red-800">
+                        🔍 View Duplicate Details (Click to expand)
+                      </summary>
+                      <div className="mt-3 space-y-4">
+                        {Object.keys(duplicateAnalysis.duplicateIds).length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-800 mb-2">Duplicate IDs:</h4>
+                            <div className="space-y-2">
+                              {Object.entries(duplicateAnalysis.duplicateIds).map(([id, packages]) => (
+                                <div key={id} className="bg-red-50 p-2 rounded border-l-4 border-red-400">
+                                  <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
+                                  {packages.map((pkg, index) => (
+                                    <div key={index} className="text-sm text-red-700 ml-4">
+                                      {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
                             </div>
-                            <div className="text-sm text-gray-500">ID: {pkg.id || pkg.packageId}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.country || pkg.country_name}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.country_code || 'N/A'}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.data || pkg.dataAmount || 'N/A'}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">{pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'N/A'}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm text-gray-900">${basePrice.toFixed(2)}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={
-                                roamifySalePrices[pkg.id || pkg.packageId || ''] !== undefined
-                                  ? roamifySalePrices[pkg.id || pkg.packageId || '']
-                                  : basePrice.toString()
-                              }
-                              onChange={e => {
-                                // Only allow numbers and decimal point
-                                const val = e.target.value;
-                                if (/^\d*\.?\d*$/.test(val)) {
-                                  setRoamifySalePrices({ ...roamifySalePrices, [pkg.id || pkg.packageId || '']: val });
-                                }
-                              }}
-                              className="w-32 px-4 py-2 border-2 border-indigo-500 rounded-lg text-lg font-semibold text-center focus:ring-2 focus:ring-indigo-400 focus:border-indigo-600 transition-all"
-                              placeholder="Sale Price"
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`text-sm ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>${profit.toFixed(2)}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <button
-                              onClick={() => handleSaveAsMostPopular(pkg)}
-                              disabled={updating === (pkg.id || pkg.packageId)}
-                              className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
-                            >
-                              {updating === (pkg.id || pkg.packageId) ? 'Saving...' : 'Save'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {filteredRoamifyPackages.length > roamifyVisibleCount && (
-                  <div className="text-center my-4">
-                    <button
-                      className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                      onClick={() => setRoamifyVisibleCount(c => c + 5000)}
-                    >
-                      Show More ({roamifyVisibleCount} of {filteredRoamifyPackages.length} packages)
-                    </button>
-                  </div>
-                )}
-                {filteredRoamifyPackages.length > 0 && roamifyVisibleCount >= filteredRoamifyPackages.length && (
-                  <div className="text-center my-4 text-sm text-gray-600">
-                    Showing all {filteredRoamifyPackages.length} packages
+                          </div>
+                        )}
+                        
+                        {Object.keys(duplicateAnalysis.duplicateCombinations).length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-gray-800 mb-2">Duplicate Combinations (Country + Data + Days + Price):</h4>
+                            <div className="space-y-2">
+                              {Object.entries(duplicateAnalysis.duplicateCombinations).map(([key, packages]) => (
+                                <div key={key} className="bg-orange-50 p-2 rounded border-l-4 border-orange-400">
+                                  <div className="font-medium text-orange-800">Combination: {key} (appears {packages.length} times)</div>
+                                  {packages.map((pkg, index) => (
+                                    <div key={index} className="text-sm text-orange-700 ml-4">
+                                      {index + 1}. ID: {pkg.id || pkg.packageId} - {pkg.description || pkg.packageName || pkg.name || pkg.package}
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </details>
                   </div>
                 )}
               </div>
             )}
+            
+            {/* Legend for duplicate indicators */}
+            {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
+              <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                <h4 className="text-sm font-medium text-yellow-800 mb-2">📋 Duplicate Indicators Legend:</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                  <div className="flex items-center">
+                    <div className="w-3 h-3 bg-red-50 border-l-4 border-red-400 mr-2"></div>
+                    <span className="text-yellow-700">Red background = Duplicate package</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-2">Duplicate ID</span>
+                    <span className="text-yellow-700">Same package ID appears multiple times</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mr-2">Duplicate Combo</span>
+                    <span className="text-yellow-700">Same country + data + days + price combination</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Country Filter */}
+            <div className="mt-4">
+              <label htmlFor="country-filter" className="block text-sm font-medium text-gray-700">
+                Filter by Country:
+              </label>
+              <input
+                type="text"
+                placeholder="Search country..."
+                value={countrySearch}
+                onChange={e => setCountrySearch(e.target.value)}
+                className="mt-1 mb-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              />
+              <select
+                id="country-filter"
+                value={selectedRoamifyCountry}
+                onChange={(e) => setSelectedRoamifyCountry(e.target.value)}
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+              >
+                <option value="">All Countries ({roamifyCountries.length})</option>
+                {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
+                  <option key={country} value={country}>{country}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Remove Duplicates Button */}
+            {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
+              <div className="mt-4">
+                <button
+                  onClick={handleRemoveDuplicates}
+                  disabled={deduplicating}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deduplicating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Removing Duplicates...
+                    </>
+                  ) : (
+                    <>
+                      🗑️ Remove Duplicates
+                      <span className="text-xs bg-red-700 px-2 py-1 rounded">
+                        {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
+                      </span>
+                    </>
+                  )}
+                </button>
+                <p className="mt-1 text-sm text-gray-600">
+                  This will remove duplicate packages based on ID and combination matches
+                </p>
+              </div>
+            )}
+
+            {/* Sync Roamify Packages Button */}
+            <div className="mt-4">
+              <button
+                onClick={handleSyncRoamifyPackages}
+                disabled={syncing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {syncing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Syncing from Roamify API...
+                  </>
+                ) : (
+                  <>
+                    🔄 Sync from Roamify API
+                  </>
+                )}
+              </button>
+              <p className="mt-1 text-sm text-gray-600">
+                This will fetch fresh data directly from Roamify API and sync to database
+              </p>
+            </div>
           </div>
         )}
       </div>

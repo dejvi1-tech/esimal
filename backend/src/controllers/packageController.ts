@@ -122,15 +122,18 @@ export const getAllPackages = async (
   next: NextFunction
 ) => {
   try {
+    const countryCode = req.query.country_code as string;
+    if (!countryCode || typeof countryCode !== 'string' || countryCode.length !== 2) {
+      return res.status(400).json({ status: 'error', message: 'Missing or invalid country_code' });
+    }
     const { data: packages, error } = await supabaseAdmin
       .from('packages')
       .select('*')
+      .eq('country_code', countryCode.toUpperCase())
       .order('created_at', { ascending: false });
-
     if (error) {
       throw error;
     }
-
     res.status(200).json({
       status: 'success',
       data: packages,
