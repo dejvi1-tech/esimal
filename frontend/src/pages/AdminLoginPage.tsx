@@ -63,72 +63,56 @@ const AdminLoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Admin Login
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Access the admin panel
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter username"
-                />
-              </div>
+    <div className="min-h-screen bg-[#4B0082] text-white flex items-center justify-center">
+      <div className="glass-medium p-8 md:p-12 rounded-2xl mx-auto max-w-md w-full text-white">
+        <h2 className="text-3xl font-bold text-white text-center mb-2">Admin Login</h2>
+        <p className="text-gray-200 text-center mb-6">Access the admin panel</p>
+        <form className="space-y-6" onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-white">Username</label>
+            <div className="mt-1">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="input-glass w-full text-white placeholder-gray-300"
+                placeholder="Enter username"
+              />
             </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Enter password"
-                />
-              </div>
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-white">Password</label>
+            <div className="mt-1">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-glass w-full text-white placeholder-gray-300"
+                placeholder="Enter password"
+              />
             </div>
-
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
+          </div>
+          {error && (
+            <div className="modal-glass p-4 rounded-2xl max-w-lg mx-auto text-red-400">
+              {error}
             </div>
-          </form>
-        </div>
+          )}
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-glass bg-accent text-black w-full py-3 rounded-xl text-center"
+            >
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
