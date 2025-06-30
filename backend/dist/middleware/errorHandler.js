@@ -5,6 +5,16 @@ const errors_1 = require("../utils/errors");
 const logger_1 = require("../utils/logger");
 const errorHandler = (err, req, res, next) => {
     logger_1.logger.error('Error:', err);
+    // Enhanced error logging
+    logger_1.logger.error('API Error', {
+        message: err.message,
+        stack: err.stack,
+        method: req.method,
+        url: req.originalUrl,
+        query: req.query,
+        body: req.body,
+        user: req.user || null,
+    });
     // Also log to console for debugging
     console.error('API Error:', err);
     if (err && err.stack) {

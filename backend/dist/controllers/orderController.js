@@ -267,18 +267,26 @@ const VALID_STATUS_TRANSITIONS = {
 };
 // Maximum refund period in hours
 const MAX_REFUND_PERIOD_HOURS = 24;
+const GUEST_USER_ID = process.env.GUEST_USER_ID || '00000000-0000-0000-0000-000000000000'; // Set this in your env
+function validateUserOrderStatus(status) {
+    const allowed = ['pending', 'active', 'expired', 'cancelled'];
+    if (!allowed.includes(status)) {
+        throw new errors_1.ValidationError(`Invalid status: ${status}`);
+    }
+}
 // Create order and send confirmation email
 const createOrder = async (req, res, next) => {
     try {
-        const { packageId, userEmail, userName, userId } = req.body;
-        // Validate required fields
+        const { packageId, userEmail, userName, userId, country_code } = req.body;
         if (!packageId) {
             throw new errors_1.ValidationError('Package ID is required');
         }
         if (!userEmail) {
             throw new errors_1.ValidationError('User email is required');
         }
-        // Get package details
+        if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+            throw new errors_1.ValidationError('country_code is required and must be a valid ISO code');
+        }
         const { data: packageData, error: packageError } = await supabase_1.supabase
             .from('my_packages')
             .select('*')
@@ -287,19 +295,27 @@ const createOrder = async (req, res, next) => {
         if (packageError || !packageData) {
             throw new errors_1.NotFoundError('Package not found');
         }
+        if (packageData.country_code !== country_code.toUpperCase()) {
+            return res.status(400).json({ status: 'error', message: 'Package-country mismatch' });
+        }
         // Generate unique eSIM code
         const esimCode = await (0, esimUtils_1.generateEsimCode)();
         // Generate QR code data
         const qrCodeData = (0, esimUtils_1.generateQRCodeData)(esimCode, packageData.name);
         // Create order in database
+        const safeUserId = userId || GUEST_USER_ID;
+        if (!safeUserId)
+            throw new errors_1.ValidationError('user_id is required');
+        const status = 'pending'; // or as appropriate
+        validateUserOrderStatus(status);
         const orderData = {
             packageId: packageId,
-            user_id: userId || null,
+            user_id: safeUserId,
             user_email: userEmail,
             user_name: userName || userEmail,
             esim_code: esimCode,
             qr_code_data: qrCodeData,
-            status: 'paid', // Assuming immediate payment or you can change this based on your flow
+            status: status,
             amount: packageData.sale_price,
             data_amount: packageData.data_amount,
             validity_days: packageData.validity_days,
@@ -371,8 +387,7 @@ exports.createOrder = createOrder;
 // Create order for my_packages (frontend packages) - WITH REAL ROAMIFY API and user info
 const createMyPackageOrder = async (req, res, next) => {
     try {
-        const { packageId, userEmail, userName, name, surname } = req.body;
-        // Validate required fields
+        const { packageId, userEmail, userName, name, surname, country_code, userId } = req.body;
         if (!packageId) {
             throw new errors_1.ValidationError('Package ID is required');
         }
@@ -382,13 +397,14 @@ const createMyPackageOrder = async (req, res, next) => {
         if (!name || !surname) {
             throw new errors_1.ValidationError('Name and surname are required');
         }
-        // First, try to find package by UUID (id field)
+        if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+            throw new errors_1.ValidationError('country_code is required and must be a valid ISO code');
+        }
         let { data: packageData, error: packageError } = await supabaseAdmin
             .from('my_packages')
             .select('*')
             .eq('id', packageId)
             .single();
-        // If not found by UUID, try to find by location_slug (slug)
         if (packageError || !packageData) {
             logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
             const { data: packageBySlug, error: slugError } = await supabaseAdmin
@@ -405,6 +421,9 @@ const createMyPackageOrder = async (req, res, next) => {
         }
         else {
             logger_1.logger.info(`Package found by UUID: ${packageId}`);
+        }
+        if (packageData.country_code !== country_code.toUpperCase()) {
+            return res.status(400).json({ status: 'error', message: 'Package-country mismatch' });
         }
         // --- NEW LOGIC: Use package mapping for Roamify package ID ---
         let realRoamifyPackageId = null;
@@ -463,6 +482,11 @@ const createMyPackageOrder = async (req, res, next) => {
             logger_1.logger.info(`Using fallback QR code. LPA Code: ${fallbackLpaCode}`);
         }
         // Step 3: Create order in database with real Roamify data and user info
+        const safeUserId = userId || GUEST_USER_ID;
+        if (!safeUserId)
+            throw new errors_1.ValidationError('user_id is required');
+        const status = 'pending'; // or as appropriate
+        validateUserOrderStatus(status);
         const orderData = {
             package_id: packageData.id, // Use the actual UUID
             user_email: userEmail,
@@ -472,7 +496,7 @@ const createMyPackageOrder = async (req, res, next) => {
             esim_code: esimCode,
             qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
             roamify_order_id: roamifyOrderId,
-            status: 'paid',
+            status: status,
             amount: packageData.sale_price,
             data_amount: packageData.data_amount,
             validity_days: packageData.validity_days,

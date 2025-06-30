@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
+const logger_1 = require("../utils/logger");
 const errors_1 = require("../utils/errors");
 const uuid_1 = require("uuid");
 // At top of file
@@ -69,19 +70,35 @@ exports.createPackage = createPackage;
 // Admin-only function to get all packages
 const getAllPackages = async (req, res, next) => {
     try {
+        const countryCode = req.query.country_code;
+        console.log(`[API] /api/packages received country_code:`, countryCode); // DEBUG LOG
+        if (!countryCode || typeof countryCode !== 'string' || countryCode.length !== 2) {
+            return res.status(400).json({ status: 'error', message: 'Missing or invalid country_code' });
+        }
         const { data: packages, error } = await supabaseAdmin
-            .from('packages')
+            .from('my_packages')
             .select('*')
-            .order('created_at', { ascending: false });
+            .eq('country_code', countryCode.toUpperCase())
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('sale_price', { ascending: true });
         if (error) {
             throw error;
         }
+        console.log(`[API] /api/packages returning ${packages?.length || 0} packages for country_code:`, countryCode); // DEBUG LOG
         res.status(200).json({
             status: 'success',
             data: packages,
         });
     }
     catch (error) {
+        logger_1.logger.error('[API] /api/packages error', {
+            error: error instanceof Error ? error.stack || error.message : error,
+            country_code: req.query.country_code,
+            path: req.path,
+            method: req.method,
+            time: new Date().toISOString(),
+        });
         next(error);
     }
 };

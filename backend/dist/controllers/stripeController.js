@@ -330,14 +330,15 @@ const getCustomer = async (req, res, next) => {
 };
 exports.getCustomer = getCustomer;
 const createCheckoutSession = async (req, res, next) => {
-    const { packageId, email, name, surname } = req.body;
-    // 1. First, try to find package by UUID (id field)
+    const { packageId, email, name, surname, country_code } = req.body;
+    if (!country_code || typeof country_code !== 'string' || country_code.length !== 2) {
+        return res.status(400).json({ error: 'country_code is required and must be a valid ISO code' });
+    }
     let { data: pkg, error } = await supabase_1.supabase
         .from('my_packages')
         .select('*')
         .eq('id', packageId)
         .single();
-    // If not found by UUID, try to find by location_slug (slug)
     if (error || !pkg) {
         logger_1.logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
         const { data: packageBySlug, error: slugError } = await supabase_1.supabase
@@ -354,6 +355,9 @@ const createCheckoutSession = async (req, res, next) => {
     }
     else {
         logger_1.logger.info(`Package found by UUID: ${packageId}`);
+    }
+    if (pkg.country_code !== country_code.toUpperCase()) {
+        return res.status(400).json({ error: 'Package-country mismatch' });
     }
     // 2. Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({

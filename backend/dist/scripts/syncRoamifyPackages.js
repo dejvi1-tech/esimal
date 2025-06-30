@@ -50,6 +50,24 @@ if (!supabaseUrl || !supabaseServiceKey || !roamifyApiKey) {
     process.exit(1);
 }
 const supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceKey);
+// --- Country name to ISO2 code mapping (auto-generated from frontend/src/data/countries.ts) ---
+const countryNameToISO2 = {
+    'Albania': 'AL', 'Andorra': 'AD', 'Austria': 'AT', 'Belarus': 'BY', 'Belgium': 'BE',
+    'Bosnia and Herzegovina': 'BA', 'Bulgaria': 'BG', 'Croatia': 'HR', 'Cyprus': 'CY',
+    'Czech Republic': 'CZ', 'Denmark': 'DK', 'Estonia': 'EE', 'Finland': 'FI', 'France': 'FR',
+    'Georgia': 'GE', 'Germany': 'DE', 'Greece': 'GR', 'Hungary': 'HU', 'Iceland': 'IS',
+    'Ireland': 'IE', 'Italy': 'IT', 'Kosovo': 'XK', 'Latvia': 'LV', 'Liechtenstein': 'LI',
+    'Lithuania': 'LT', 'Luxembourg': 'LU', 'Malta': 'MT', 'Moldova': 'MD', 'Monaco': 'MC',
+    'Montenegro': 'ME', 'Netherlands': 'NL', 'North Macedonia': 'MK', 'Norway': 'NO',
+    'Poland': 'PL', 'Portugal': 'PT', 'Romania': 'RO', 'Russia': 'RU', 'San Marino': 'SM',
+    'Serbia': 'RS', 'Slovakia': 'SK', 'Slovenia': 'SI', 'Spain': 'ES', 'Sweden': 'SE',
+    'Switzerland': 'CH', 'Turkey': 'TR', 'Ukraine': 'UA', 'United Kingdom': 'GB',
+    'Vatican City': 'VA', 'United States': 'US', 'Canada': 'CA', 'Mexico': 'MX',
+    'Japan': 'JP', 'South Korea': 'KR', 'China': 'CN', 'India': 'IN', 'Thailand': 'TH',
+    'Singapore': 'SG', 'Australia': 'AU', 'New Zealand': 'NZ', 'South Africa': 'ZA',
+    'Egypt': 'EG', 'United Arab Emirates': 'AE', 'Dubai': 'DUBAI', 'Saudi Arabia': 'SA',
+    'Israel': 'IL'
+};
 async function fetchAllRoamifyPackages() {
     try {
         console.log('Fetching packages from Roamify API...');
@@ -187,18 +205,32 @@ async function syncPackagesToDatabase(packages) {
     console.log(`✗ Failed to sync: ${failureCount} packages`);
     console.log(`Total processed: ${packages.length} packages`);
 }
+function normalizePackage(pkg) {
+    const countryName = pkg.country || 'Unknown';
+    const countryCode = countryNameToISO2[countryName] || 'XX';
+    return {
+        id: pkg.id,
+        country_name: countryName,
+        country_code: countryCode,
+        region: pkg.region,
+        description: pkg.description,
+        data: pkg.data,
+        validity: pkg.validity,
+        price: pkg.price,
+        withDataRoaming: pkg.withDataRoaming
+        // Add other fields as needed
+    };
+}
 async function main() {
     try {
         // Fetch all packages from Roamify
         const roamifyPackages = await fetchAllRoamifyPackages();
         // Deduplicate packages
         const uniquePackages = deduplicatePackages(roamifyPackages);
-        // Map to our database structure
-        const myPackages = uniquePackages.map(pkg => {
-            return mapRoamifyToMyPackage(pkg);
-        });
+        // Normalize and filter out any with null country fields
+        const normalizedPackages = uniquePackages.map(normalizePackage).filter(pkg => pkg.country_name !== null && pkg.country_code !== null);
         // Sync to database
-        await syncPackagesToDatabase(myPackages);
+        await syncPackagesToDatabase(normalizedPackages);
     }
     catch (error) {
         console.error('Error in main process:', error);

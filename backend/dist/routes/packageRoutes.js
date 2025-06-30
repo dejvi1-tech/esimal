@@ -7,12 +7,61 @@ const express_1 = __importDefault(require("express"));
 const packageController_1 = require("../controllers/packageController");
 const router = express_1.default.Router();
 // Admin-only routes for package management
-router.get('/', packageController_1.getAllPackages);
-router.post('/', packageController_1.createPackage);
-router.get('/get-section-packages', packageController_1.getSectionPackages);
-router.get('/search-packages', packageController_1.searchPackages);
-router.get('/:id', packageController_1.getPackage);
-router.put('/:id', packageController_1.updatePackage);
-router.delete('/:id', packageController_1.deletePackage);
+router.get('/', async (req, res, next) => {
+    try {
+        await (0, packageController_1.getAllPackages)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.post('/', async (req, res, next) => {
+    try {
+        await (0, packageController_1.createPackage)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.get('/get-section-packages', async (req, res, next) => {
+    try {
+        await (0, packageController_1.getSectionPackages)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.get('/search-packages', async (req, res, next) => {
+    try {
+        await (0, packageController_1.searchPackages)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.get('/:id', async (req, res, next) => {
+    try {
+        await (0, packageController_1.getPackage)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.put('/:id', async (req, res, next) => {
+    try {
+        await (0, packageController_1.updatePackage)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.delete('/:id', async (req, res, next) => {
+    try {
+        await (0, packageController_1.deletePackage)(req, res, next);
+    }
+    catch (err) {
+        next(err);
+    }
+});
 exports.default = router;
 //# sourceMappingURL=packageRoutes.js.map
