@@ -422,7 +422,7 @@ export const createMyPackageOrder = async (
   next: NextFunction
 ) => {
   try {
-    const { packageId, userEmail, userName, name, surname, country_code } = req.body;
+    const { packageId, userEmail, userName, name, surname, country_code, userId } = req.body;
     if (!packageId) {
       throw new ValidationError('Package ID is required');
     }
