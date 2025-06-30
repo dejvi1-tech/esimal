@@ -4,6 +4,10 @@
 - Update frontend to use mapSlugToCode and pass country_code
 - Add Pytest tests for country-package consistency
 - [x] Fix TS2769 errors in orderRoutes.ts & packageRoutes.ts: Refactored all route handlers to use express-async-handler, matching Express's RequestHandler signature and eliminating TS2769 errors. (2024-06-29)
+- Eliminate "Package not found" fallback and enforce strict package lookup (2024-06-30): COMPLETED
+  - Seeded Supabase packages table with country-specific Roamify IDs (migration 20250630_seed_packages.sql)
+  - Removed all fallback logic in delivery and Roamify services/controllers
+  - Added /backend/src/scripts/validatePackages.ts and package.json script for daily validation
 
 ## Discovered During Work
 // Add any new sub-tasks or TODOs here as they arise. 
