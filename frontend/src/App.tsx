@@ -29,31 +29,38 @@ function App() {
       <HelmetProvider>
         <LanguageProvider>
           <Router>
-            <Layout>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/about" element={<AboutUsPage />} />
-                <Route path="/packages" element={<PackagesPage />} />
-                <Route path="/how-it-works" element={<HowItWorksPage />} />
-                <Route path="/reviews" element={<ReviewsPage />} />
-                <Route path="/support" element={<SupportPage />} />
-                <Route path="/admin/login" element={<AdminLoginPage />} />
-                <Route path="/admin" element={
-                  <ProtectedAdminRoute>
-                    <AdminPanel />
-                  </ProtectedAdminRoute>
-                } />
-                <Route path="/country/:code" element={<CountryPage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/bundle/:bundleId" element={<BundlePage />} />
-                <Route path="/balance" element={<CheckBalancePage />} />
-                <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
-                <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
-                <Route path="/checkout/*" element={<CheckoutPage />} />
-                <Route path="/ios26-demo" element={<IOS26Demo />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Layout>
+            <Routes>
+              {/* Checkout routes without Layout */}
+              <Route path="/checkout/*" element={<CheckoutPage />} />
+              <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+              <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
+              
+              {/* All other routes with Layout */}
+              <Route path="/*" element={
+                <Layout>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/about" element={<AboutUsPage />} />
+                    <Route path="/packages" element={<PackagesPage />} />
+                    <Route path="/how-it-works" element={<HowItWorksPage />} />
+                    <Route path="/reviews" element={<ReviewsPage />} />
+                    <Route path="/support" element={<SupportPage />} />
+                    <Route path="/admin/login" element={<AdminLoginPage />} />
+                    <Route path="/admin" element={
+                      <ProtectedAdminRoute>
+                        <AdminPanel />
+                      </ProtectedAdminRoute>
+                    } />
+                    <Route path="/country/:code" element={<CountryPage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/bundle/:bundleId" element={<BundlePage />} />
+                    <Route path="/balance" element={<CheckBalancePage />} />
+                    <Route path="/ios26-demo" element={<IOS26Demo />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              } />
+            </Routes>
           </Router>
         </LanguageProvider>
       </HelmetProvider>

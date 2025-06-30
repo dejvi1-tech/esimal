@@ -50,7 +50,7 @@ const mapSlugToCode = (slug: string): string | null => {
 };
 
 const BundlePage: React.FC = () => {
-  const { country } = useParams<{ country: string }>();
+  const { bundleId } = useParams<{ bundleId: string }>();
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,9 +60,9 @@ const BundlePage: React.FC = () => {
   const { t, language } = useLanguage();
 
   useEffect(() => {
-    if (!country) return;
+    if (!bundleId) return;
     setLoading(true);
-    const countryCode = mapSlugToCode(country);
+    const countryCode = mapSlugToCode(bundleId);
     if (!countryCode) {
       setError('Invalid country');
       setLoading(false);
@@ -89,10 +89,10 @@ const BundlePage: React.FC = () => {
     if (countryObj) {
       setBundleInfo({ name: countryObj.name[language], flag: countryObj.flag });
     } else {
-      setBundleInfo({ name: country, flag: '' });
+      setBundleInfo({ name: bundleId, flag: '' });
     }
 
-  }, [country, language]);
+  }, [bundleId, language]);
 
   if (loading) {
     return <div className="text-center py-20">{t('loading')}</div>;
@@ -136,7 +136,7 @@ const BundlePage: React.FC = () => {
               className="btn-glass bg-accent text-black w-full py-2 rounded-xl font-bold text-lg min-h-[48px] mt-2"
               onClick={() => {
                 if (selectedId) {
-                  navigate(`/checkout?country=${country}&package=${selectedId}`);
+                  navigate(`/checkout?country=${bundleId}&package=${selectedId}`);
                 }
               }}
               disabled={!selectedId}

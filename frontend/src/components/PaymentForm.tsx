@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -29,7 +29,11 @@ const stripeInputStyle = {
   invalid: { color: '#ff4444' },
 };
 
-export const PaymentForm: React.FC<PaymentFormProps> = ({
+export interface PaymentFormRef {
+  submit: () => Promise<void>;
+}
+
+export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
   amount,
   currency,
   email,
@@ -40,7 +44,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   country,
   onSuccess,
   onError,
-}) => {
+}, ref) => {
   // Ensure email is never null
   const safeEmail = email ?? '';
   
@@ -168,54 +172,51 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    submit: async () => {
+      await handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+    }
+  }));
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="glass-medium p-6 rounded-2xl">
-        <h3 className="text-lg font-bold mb-6 text-white">{t('payment_details')}</h3>
-        <div className="space-y-5">
+    <div className="bg-gray-50 border-2 border-gray-200 shadow-md rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-6">
+        <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-8" />
+        <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-8" />
+        <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-8" />
+        <span className="ml-2 bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full border">+1</span>
+      </div>
+      <div className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-2">{t('card_number')}</label>
+          <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+            <CardNumberElement
+              options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
+              className="flex-1 bg-transparent outline-none text-lg h-full"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-white mb-1">{t('card_number')}</label>
-            <div className="input-glass w-full text-white" style={{height: 52}}>
-              <CardNumberElement
-                options={{ style: stripeInputStyle }}
+            <label className="block text-sm font-medium text-gray-800 mb-2">{t('expiry')}</label>
+            <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+              <CardExpiryElement
+                options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                 className="flex-1 bg-transparent outline-none text-lg h-full"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">{t('expiry')}</label>
-              <div className="input-glass w-full text-white" style={{height: 52}}>
-                <CardExpiryElement
-                  options={{ style: stripeInputStyle }}
-                  className="flex-1 bg-transparent outline-none text-lg h-full"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-white mb-1">{t('cvc')}</label>
-              <div className="input-glass w-full text-white" style={{height: 52}}>
-                <CardCvcElement
-                  options={{ style: stripeInputStyle }}
-                  className="flex-1 bg-transparent outline-none text-lg h-full"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-2">{t('cvc')}</label>
+            <div className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 bg-white shadow-sm focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all">
+              <CardCvcElement
+                options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
+                className="flex-1 bg-transparent outline-none text-lg h-full"
+              />
             </div>
           </div>
         </div>
       </div>
-
-      <button
-        type="submit"
-        disabled={isProcessing || !stripe}
-        className="btn-glass w-full text-white py-4 px-6 rounded-lg font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isProcessing ? t('processing') : `${t('pay')} ${currency.toUpperCase()} ${amount}`}
-      </button>
-
-      <p className="text-xs text-white/80 text-center">
-        {t('payment_terms_notice')}
-      </p>
-    </form>
+    </div>
   );
-}; 
+}); 
