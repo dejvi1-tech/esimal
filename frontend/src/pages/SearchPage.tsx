@@ -202,7 +202,7 @@ const SearchPage: React.FC = () => {
                       {/* Price */}
                       <div className="text-center mb-4">
                         <div className="text-2xl font-bold text-green-600">
-                          €{pkg.sale_price.toFixed(2)}
+                          €{typeof pkg.sale_price === 'number' && !isNaN(pkg.sale_price) ? pkg.sale_price.toFixed(2) : '0.00'}
                         </div>
                       </div>
 

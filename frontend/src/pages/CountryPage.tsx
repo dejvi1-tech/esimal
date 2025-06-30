@@ -36,7 +36,9 @@ const SimplePlanCard: React.FC<{
       </div>
       <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300">
         <span>{pkg.validity_days} {t('days')}</span>
-        <span className={`font-bold text-base ${selected ? 'text-purple-600 dark:text-purple-400' : 'text-gray-800 dark:text-gray-200'}`}>€{pkg.sale_price.toFixed(2)}</span>
+        <span className={`font-bold text-base ${selected ? 'text-purple-600 dark:text-purple-400' : 'text-gray-800 dark:text-gray-200'}`}>
+          €{typeof pkg.sale_price === 'number' && !isNaN(pkg.sale_price) ? pkg.sale_price.toFixed(2) : '0.00'}
+        </span>
       </div>
     </div>
   );

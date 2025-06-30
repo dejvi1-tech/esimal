@@ -943,7 +943,7 @@ const AdminPanel: React.FC = () => {
                               placeholder="GB"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{(pkg.data_amount / 1024).toFixed(1)} GB</span>
+                            <span className="text-sm text-gray-900">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? (pkg.data_amount / 1024).toFixed(1) : '0.0'} GB</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -1000,9 +1000,7 @@ const AdminPanel: React.FC = () => {
                               className="w-24 px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
                             />
                           ) : (
-                            <span className={`text-sm ${pkg.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              ${pkg.profit.toFixed(2)}
-                            </span>
+                            <span className={`text-sm ${pkg.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>${typeof pkg.profit === 'number' && !isNaN(pkg.profit) ? pkg.profit.toFixed(2) : '0.00'}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

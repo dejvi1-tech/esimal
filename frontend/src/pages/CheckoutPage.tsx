@@ -410,7 +410,7 @@ const CheckoutPage: React.FC = () => {
                 <div className="font-semibold text-lg">{typeof packageData.name === 'string' ? packageData.name : packageData.name[language]}</div>
                 <div className="text-gray-500 text-sm">{packageData.data_amount}GB / {packageData.validity_days} {t('days')}</div>
               </div>
-              <div className="font-bold text-lg">ALL {packageData.sale_price.toFixed(2)}</div>
+              <div className="font-bold text-lg">ALL {typeof packageData.sale_price === 'number' && !isNaN(packageData.sale_price) ? packageData.sale_price.toFixed(2) : '0.00'}</div>
             </div>
             <input
               type="text"
@@ -430,7 +430,7 @@ const CheckoutPage: React.FC = () => {
             </button>
             <div className="flex justify-between items-center mt-4 border-t-2 border-gray-300 pt-6 bg-gray-50 p-4 rounded-lg">
               <span className="font-bold text-xl text-gray-900">Total</span>
-              <span className="font-bold text-2xl text-blue-600">€{total.toFixed(2)}</span>
+              <span className="font-bold text-2xl text-blue-600">€{typeof total === 'number' && !isNaN(total) ? total.toFixed(2) : '0.00'}</span>
             </div>
           </div>
         </div>

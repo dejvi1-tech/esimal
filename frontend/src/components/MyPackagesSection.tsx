@@ -146,7 +146,7 @@ const MyPackagesSection: React.FC = () => {
                   {/* Price */}
                   <div className="mb-4">
                     <span className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white text-2xl font-bold px-6 py-2 rounded-full shadow">
-                      ${pkg.sale_price.toFixed(2)}
+                      ${typeof pkg.sale_price === 'number' && !isNaN(pkg.sale_price) ? pkg.sale_price.toFixed(2) : '0.00'}
                     </span>
                   </div>
 
