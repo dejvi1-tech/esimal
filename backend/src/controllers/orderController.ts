@@ -15,6 +15,7 @@ import {
 import { emailTemplates } from '../utils/emailTemplates';
 import { RoamifyService } from '../services/roamifyService';
 import axios from 'axios';
+import { UserOrderStatus } from '../types/database';
 
 // Package mapping for Roamify integration
 const packageMapping = {
@@ -288,6 +289,15 @@ const VALID_STATUS_TRANSITIONS: OrderStatus = {
 // Maximum refund period in hours
 const MAX_REFUND_PERIOD_HOURS = 24;
 
+const GUEST_USER_ID = process.env.GUEST_USER_ID || '00000000-0000-0000-0000-000000000000'; // Set this in your env
+
+function validateUserOrderStatus(status: string): asserts status is UserOrderStatus {
+  const allowed: UserOrderStatus[] = ['pending', 'active', 'expired', 'cancelled'];
+  if (!allowed.includes(status as UserOrderStatus)) {
+    throw new ValidationError(`Invalid status: ${status}`);
+  }
+}
+
 // Create order and send confirmation email
 export const createOrder = async (
   req: Request,
@@ -324,14 +334,18 @@ export const createOrder = async (
     const qrCodeData = generateQRCodeData(esimCode, packageData.name);
 
     // Create order in database
+    const safeUserId = userId || GUEST_USER_ID;
+    if (!safeUserId) throw new ValidationError('user_id is required');
+    const status: UserOrderStatus = 'pending'; // or as appropriate
+    validateUserOrderStatus(status);
     const orderData = {
       packageId: packageId,
-      user_id: userId || null,
+      user_id: safeUserId,
       user_email: userEmail,
       user_name: userName || userEmail,
       esim_code: esimCode,
       qr_code_data: qrCodeData,
-      status: 'paid', // Assuming immediate payment or you can change this based on your flow
+      status: status,
       amount: packageData.sale_price,
       data_amount: packageData.data_amount,
       validity_days: packageData.validity_days,
@@ -513,6 +527,10 @@ export const createMyPackageOrder = async (
     }
 
     // Step 3: Create order in database with real Roamify data and user info
+    const safeUserId = userId || GUEST_USER_ID;
+    if (!safeUserId) throw new ValidationError('user_id is required');
+    const status: UserOrderStatus = 'pending'; // or as appropriate
+    validateUserOrderStatus(status);
     const orderData = {
       package_id: packageData.id, // Use the actual UUID
       user_email: userEmail,
@@ -522,7 +540,7 @@ export const createMyPackageOrder = async (
       esim_code: esimCode,
       qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
       roamify_order_id: roamifyOrderId,
-      status: 'paid',
+      status: status,
       amount: packageData.sale_price,
       data_amount: packageData.data_amount,
       validity_days: packageData.validity_days,

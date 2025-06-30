@@ -6,6 +6,16 @@ import { sendEmail } from '../services/emailService';
 import { emailTemplates } from '../utils/emailTemplates';
 import { RoamifyService } from '../services/roamifyService';
 import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
+import { UserOrderStatus } from '../types/database';
+
+const GUEST_USER_ID = process.env.GUEST_USER_ID || '00000000-0000-0000-0000-000000000000';
+
+function validateUserOrderStatus(status: string): asserts status is UserOrderStatus {
+  const allowed: UserOrderStatus[] = ['pending', 'active', 'expired', 'cancelled'];
+  if (!allowed.includes(status as UserOrderStatus)) {
+    throw new Error(`Invalid status: ${status}`);
+  }
+}
 
 /**
  * Handle Stripe webhook events
@@ -359,13 +369,19 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     });
 
     // Create user_orders entry
+    const safeUserId = order.user_id || GUEST_USER_ID;
+    if (!safeUserId) throw new Error('user_id is required');
+    if (!packageId) throw new Error('package_id is required');
+    const status: UserOrderStatus = roamifySuccess ? 'active' : 'pending';
+    validateUserOrderStatus(status);
+
     const userOrderData = {
-      user_id: order.user_id,
+      user_id: safeUserId,
       package_id: packageId,
       roamify_order_id: roamifyOrder.orderId,
       qr_code_url: '', // Will be populated later if needed
       iccid: roamifyOrder.esimId, // Use esimId as iccid
-      status: roamifySuccess ? 'active' : 'pending',
+      status: status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

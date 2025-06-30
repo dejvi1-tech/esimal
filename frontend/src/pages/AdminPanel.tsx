@@ -122,6 +122,9 @@ const AdminPanel: React.FC = () => {
   // Add state for sync process
   const [syncing, setSyncing] = useState(false);
 
+  // Add validation state
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+
   // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('admin_token');
@@ -777,6 +780,14 @@ const AdminPanel: React.FC = () => {
       setSyncing(false);
     }
   };
+
+  function validateMyPackageForm(form: any) {
+    const errors: {[key: string]: string} = {};
+    if (!form.name) errors.name = 'Name is required';
+    if (!form.country_name) errors.country_name = 'Country name is required';
+    if (!form.data_amount) errors.data_amount = 'Data amount is required';
+    return errors;
+  }
 
   return (
     <div className="min-h-screen bg-[#4B0082] text-white">

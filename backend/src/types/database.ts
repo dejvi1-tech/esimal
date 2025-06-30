@@ -28,4 +28,15 @@ export interface Esim {
   user_id: string;
   order: Order;
   created_at: string;
+}
+
+export type UserOrderStatus = 'pending' | 'active' | 'expired' | 'cancelled';
+
+export interface UserOrder {
+  id: string;
+  user_id: string;
+  package_id: string;
+  status: UserOrderStatus;
+  created_at: string;
+  updated_at: string;
 } 
