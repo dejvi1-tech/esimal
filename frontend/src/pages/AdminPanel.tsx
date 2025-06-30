@@ -98,32 +98,20 @@ const AdminPanel: React.FC = () => {
 
   // Add state to track sale prices for Roamify packages
   const [roamifySalePrices, setRoamifySalePrices] = useState<{ [id: string]: string }>({});
-
-  const [countrySearch, setCountrySearch] = useState('');
-
-  const [roamifyVisibleCount, setRoamifyVisibleCount] = useState(50000); // Show all packages by default (enough for 50k+ packages)
-
-  // Add state for duplicate analysis
-  const [duplicateAnalysis, setDuplicateAnalysis] = useState<{
-    totalPackages: number;
-    duplicateIds: { [id: string]: RoamifyPackage[] };
-    duplicateCombinations: { [key: string]: RoamifyPackage[] };
-    hasDuplicates: boolean;
-  }>({
+  
+  // Add missing state variables for Roamify operations
+  const [deduplicating, setDeduplicating] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  
+  // Add duplicate analysis state
+  const [duplicateAnalysis, setDuplicateAnalysis] = useState({
     totalPackages: 0,
     duplicateIds: {},
     duplicateCombinations: {},
     hasDuplicates: false
   });
 
-  // Add state for deduplication process
-  const [deduplicating, setDeduplicating] = useState(false);
-
-  // Add state for sync process
-  const [syncing, setSyncing] = useState(false);
-
-  // Add validation state
-  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [countrySearch, setCountrySearch] = useState('');
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {
@@ -352,6 +340,10 @@ const AdminPanel: React.FC = () => {
         }
         
         setRoamifyPackages(data);
+        
+        // Update duplicate analysis
+        const analysis = analyzePackagesForDuplicates(data);
+        setDuplicateAnalysis(analysis);
       } else {
         if (handleAuthError(response)) return;
         const text = await response.text();
@@ -889,21 +881,21 @@ const AdminPanel: React.FC = () => {
                         pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())
                       )
                       .map((pkg) => (
-                      <tr key={pkg.id} className="hover:bg-gray-50">
+                      <tr key={pkg.id} className="hover:bg-white/5 border-b border-white/10">
                         <td className="px-6 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="text"
                               value={editingMyPackage.name}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, name: e.target.value})}
-                              className="w-48 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-48 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-white">
                               {pkg.name}
                             </div>
                           )}
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-300">
                             ID: {pkg.id}
                           </div>
                         </td>
@@ -913,10 +905,10 @@ const AdminPanel: React.FC = () => {
                               type="text"
                               value={editingMyPackage.country_name}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, country_name: e.target.value})}
-                              className="w-32 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{pkg.country_name}</span>
+                            <span className="text-sm text-white">{pkg.country_name}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -925,11 +917,11 @@ const AdminPanel: React.FC = () => {
                               type="text"
                               value={(editingMyPackage as any).country_code || ''}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, country_code: e.target.value} as any)}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                               placeholder="e.g., DE"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{(pkg as any).country_code || 'N/A'}</span>
+                            <span className="text-sm text-white">{(pkg as any).country_code || 'N/A'}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -939,11 +931,11 @@ const AdminPanel: React.FC = () => {
                               step="0.1"
                               value={(editingMyPackage.data_amount / 1024).toFixed(1)}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, data_amount: Number(e.target.value) * 1024})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                               placeholder="GB"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? (pkg.data_amount / 1024).toFixed(1) : '0.0'} GB</span>
+                            <span className="text-sm text-white">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? (pkg.data_amount / 1024).toFixed(1) : '0.0'} GB</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -952,10 +944,10 @@ const AdminPanel: React.FC = () => {
                               type="number"
                               value={editingMyPackage.validity_days}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, validity_days: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{pkg.validity_days}</span>
+                            <span className="text-sm text-white">{pkg.validity_days}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -965,10 +957,10 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.base_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, base_price: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">${pkg.base_price}</span>
+                            <span className="text-sm text-white">${pkg.base_price}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -978,7 +970,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.sale_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, sale_price: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
                             <input
@@ -986,7 +978,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={pkg.sale_price}
                               onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           )}
                         </td>
@@ -997,10 +989,10 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.profit}
                               readOnly
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100"
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-gray-900"
                             />
                           ) : (
-                            <span className={`text-sm ${pkg.profit > 0 ? 'text-green-600' : 'text-red-600'}`}>${typeof pkg.profit === 'number' && !isNaN(pkg.profit) ? pkg.profit.toFixed(2) : '0.00'}</span>
+                            <span className={`text-sm ${pkg.profit > 0 ? 'text-green-400' : 'text-red-400'}`}>${typeof pkg.profit === 'number' && !isNaN(pkg.profit) ? pkg.profit.toFixed(2) : '0.00'}</span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1009,13 +1001,13 @@ const AdminPanel: React.FC = () => {
                               <button
                                 onClick={() => handleSavePackage(editingMyPackage)}
                                 disabled={saving}
-                                className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
                               >
                                 {saving ? 'Saving...' : 'Save'}
                               </button>
                               <button
                                 onClick={() => setEditingMyPackage(null)}
-                                className="text-gray-600 hover:text-gray-900"
+                                className="text-gray-400 hover:text-gray-300"
                               >
                                 Cancel
                               </button>
@@ -1024,14 +1016,14 @@ const AdminPanel: React.FC = () => {
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleEditMyPackage(pkg)}
-                                className="text-indigo-600 hover:text-indigo-900"
+                                className="text-blue-400 hover:text-blue-300"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteMyPackage(pkg.id)}
                                 disabled={deletingPackage === pkg.id}
-                                className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                                className="text-red-400 hover:text-red-300 disabled:opacity-50"
                               >
                                 {deletingPackage === pkg.id ? 'Deleting...' : 'Delete'}
                               </button>
@@ -1055,8 +1047,8 @@ const AdminPanel: React.FC = () => {
             
             {/* Duplicate Analysis Display */}
             {!roamifyLoading && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Package Analysis</h3>
+              <div className="mb-4 p-4 bg-white/10 rounded-lg border border-white/20">
+                <h3 className="text-lg font-semibold text-white mb-2">Package Analysis</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="bg-white p-3 rounded border">
                     <div className="font-medium text-gray-700">Total Packages</div>
@@ -1148,7 +1140,7 @@ const AdminPanel: React.FC = () => {
             
             {/* Country Filter */}
             <div className="mt-4">
-              <label htmlFor="country-filter" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="country-filter" className="block text-sm font-medium text-white">
                 Filter by Country:
               </label>
               <input
@@ -1156,13 +1148,13 @@ const AdminPanel: React.FC = () => {
                 placeholder="Search country..."
                 value={countrySearch}
                 onChange={e => setCountrySearch(e.target.value)}
-                className="mt-1 mb-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="mt-1 mb-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-gray-900 bg-white"
               />
               <select
                 id="country-filter"
                 value={selectedRoamifyCountry}
                 onChange={(e) => setSelectedRoamifyCountry(e.target.value)}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-gray-900 bg-white"
               >
                 <option value="">All Countries ({roamifyCountries.length})</option>
                 {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
@@ -1193,7 +1185,7 @@ const AdminPanel: React.FC = () => {
                     </>
                   )}
                 </button>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-300">
                   This will remove duplicate packages based on ID and combination matches
                 </p>
               </div>
@@ -1217,10 +1209,136 @@ const AdminPanel: React.FC = () => {
                   </>
                 )}
               </button>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-gray-300">
                 This will fetch fresh data directly from Roamify API and sync to database
               </p>
             </div>
+
+            {/* Roamify Packages Table */}
+            {roamifyLoading ? (
+              <div className="text-center text-xl text-white mt-8">Loading Roamify packages...</div>
+            ) : filteredRoamifyPackages.length === 0 ? (
+              <div className="text-center text-xl text-white mt-8">
+                {selectedRoamifyCountry ? 
+                  `No packages found for ${selectedRoamifyCountry}` : 
+                  'No packages found. Try syncing from Roamify API.'
+                }
+              </div>
+            ) : (
+              <div className="glass p-4 rounded-2xl overflow-x-auto mt-6">
+                <table className="min-w-full text-left text-white">
+                  <thead>
+                    <tr>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country Code</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Data (GB)</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Days</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Base Price</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Sale Price</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Profit</th>
+                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRoamifyPackages.map((pkg) => {
+                      const isDuplicateId = duplicateAnalysis.duplicateIds[pkg.id || pkg.packageId || ''];
+                      const combinationKey = `${pkg.country || pkg.country_name || 'unknown'}|${pkg.data || pkg.dataAmount || 'unknown'}|${pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown'}|${pkg.price || pkg.base_price || 'unknown'}`;
+                      const isDuplicateCombo = duplicateAnalysis.duplicateCombinations[combinationKey];
+                      
+                      return (
+                        <tr 
+                          key={pkg.id || pkg.packageId} 
+                          className={`hover:bg-white/5 border-b border-white/10 ${
+                            isDuplicateId || isDuplicateCombo ? 'bg-red-900/20' : ''
+                          }`}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-white">
+                              {pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package'}
+                            </div>
+                            <div className="text-sm text-gray-300">
+                              ID: {pkg.id || pkg.packageId || 'N/A'}
+                            </div>
+                            {isDuplicateId && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">
+                                Duplicate ID
+                              </span>
+                            )}
+                            {isDuplicateCombo && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 mt-1">
+                                Duplicate Combo
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-white">{pkg.country || pkg.country_name || 'N/A'}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-white">{pkg.country_code || 'N/A'}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-white">
+                              {pkg.data || (typeof pkg.dataAmount === 'number' ? (pkg.dataAmount / 1024).toFixed(1) : 'N/A')} GB
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-white">
+                              {pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-white">
+                              ${pkg.price || pkg.base_price || '0.00'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <input
+                              type="number"
+                              step="0.01"
+                              value={roamifySalePrices[pkg.id || pkg.packageId || ''] || ''}
+                              onChange={(e) => setRoamifySalePrices(prev => ({
+                                ...prev,
+                                [pkg.id || pkg.packageId || '']: e.target.value
+                              }))}
+                              placeholder={(pkg.price || pkg.base_price || 0).toString()}
+                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`text-sm ${
+                              (parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] || '0') - (pkg.price || pkg.base_price || 0)) > 0 
+                                ? 'text-green-400' 
+                                : 'text-red-400'
+                            }`}>
+                              ${((parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] || '0') || (pkg.price || pkg.base_price || 0)) - (pkg.price || pkg.base_price || 0)).toFixed(2)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleSaveRoamifyPackage(pkg)}
+                                disabled={updating === (pkg.id || pkg.packageId)}
+                                className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
+                              >
+                                {updating === (pkg.id || pkg.packageId) ? 'Saving...' : 'Save'}
+                              </button>
+                              <button
+                                onClick={() => handleSaveAsMostPopular(pkg)}
+                                disabled={updating === (pkg.id || pkg.packageId)}
+                                className="text-green-400 hover:text-green-300 disabled:opacity-50"
+                              >
+                                Save as Most Popular
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
