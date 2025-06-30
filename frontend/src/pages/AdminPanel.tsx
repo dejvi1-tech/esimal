@@ -113,6 +113,9 @@ const AdminPanel: React.FC = () => {
   const [myPackagesCountrySearch, setMyPackagesCountrySearch] = useState('');
   const [roamifyCountrySearch, setRoamifyCountrySearch] = useState('');
 
+  // Add tab state
+  const [activeTab, setActiveTab] = useState<'myPackages' | 'roamifyPackages'>('myPackages');
+
   // Helper function to get auth headers
   const getAuthHeaders = () => {
     const token = localStorage.getItem('admin_token');
@@ -147,8 +150,6 @@ const AdminPanel: React.FC = () => {
   useEffect(() => {
     fetchAllData();
   }, [country, currentPage]);
-
-
 
   const fetchAllCountries = async () => {
     try {
@@ -781,7 +782,7 @@ const AdminPanel: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#4B0082] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <header className="glass-medium p-4 flex justify-between items-center rounded-b-2xl mb-8">
           <div>
@@ -802,9 +803,34 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
 
-        {/* Responsive Grid Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+        {/* Tab Navigation */}
+        <div className="glass-light p-1 rounded-2xl mb-6 inline-flex">
+          <button
+            onClick={() => setActiveTab('myPackages')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              activeTab === 'myPackages'
+                ? 'bg-white/20 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            My eSIM Packages ({myPackages.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('roamifyPackages')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              activeTab === 'roamifyPackages'
+                ? 'bg-white/20 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            Roamify Packages ({roamifyPackages.length})
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        <div className="w-full">
           {/* My Packages Only Panel */}
+          {activeTab === 'myPackages' && (
           <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">My eSIM Packages Only ({myPackages.length})</h2>
@@ -841,21 +867,22 @@ const AdminPanel: React.FC = () => {
             {loading ? (
               <div className="text-center text-xl">Loading packages...</div>
             ) : (
-              <div className="glass p-4 rounded-2xl overflow-x-auto bg-black/20">
-                <table className="min-w-full text-left text-white bg-transparent">
-                  <thead>
-                    <tr>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country Code</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Data (GB)</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Days</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Base Price</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Sale Price</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Profit</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
+              <div className="glass p-4 rounded-2xl bg-black/20 w-full">
+                <div className="overflow-auto max-h-[70vh]">
+                  <table className="w-full text-left text-white bg-transparent table-auto">
+                    <thead className="sticky top-0 bg-black/30">
+                      <tr>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[200px]">Package</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[120px]">Country</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Code</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Data</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[60px]">Days</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Base Price</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Sale Price</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[70px]">Profit</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[120px]">Actions</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     {myPackages
                       .filter(pkg => 
@@ -864,7 +891,7 @@ const AdminPanel: React.FC = () => {
                       )
                       .map((pkg) => (
                       <tr key={pkg.id} className="hover:bg-white/5 border-b border-white/10 text-white">
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="text"
@@ -881,78 +908,78 @@ const AdminPanel: React.FC = () => {
                             ID: {pkg.id}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="text"
                               value={editingMyPackage.country_name}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, country_name: e.target.value})}
-                              className="w-32 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
                             <span className="text-sm text-white">{pkg.country_name}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="text"
                               value={(editingMyPackage as any).country_code || ''}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, country_code: e.target.value} as any)}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                               placeholder="e.g., DE"
                             />
                           ) : (
                             <span className="text-sm text-white">{(pkg as any).country_code || 'N/A'}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
                               step="0.1"
                               value={(editingMyPackage.data_amount / 1024).toFixed(1)}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, data_amount: Number(e.target.value) * 1024})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                               placeholder="GB"
                             />
                           ) : (
                             <span className="text-sm text-white">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? (pkg.data_amount / 1024).toFixed(1) : '0.0'} GB</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
                               value={editingMyPackage.validity_days}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, validity_days: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
                             <span className="text-sm text-white">{pkg.validity_days}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
                               step="0.01"
                               value={editingMyPackage.base_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, base_price: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
                             <span className="text-sm text-white">${pkg.base_price}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
                               step="0.01"
                               value={editingMyPackage.sale_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, sale_price: Number(e.target.value)})}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                             />
                           ) : (
                             <input
@@ -960,24 +987,24 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={pkg.sale_price}
                               onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
                             />
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 py-4 whitespace-nowrap">
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
                               step="0.01"
                               value={editingMyPackage.profit}
                               readOnly
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-gray-900"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-gray-900"
                             />
                           ) : (
                             <span className={`text-sm ${pkg.profit > 0 ? 'text-green-400' : 'text-red-400'}`}>${typeof pkg.profit === 'number' && !isNaN(pkg.profit) ? pkg.profit.toFixed(2) : '0.00'}</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                           {editingMyPackage?.id === pkg.id ? (
                             <div className="flex space-x-2">
                               <button
@@ -1016,12 +1043,15 @@ const AdminPanel: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
             </div>
           </div>
+          )}
 
           {/* Roamify Packages Panel */}
+          {activeTab === 'roamifyPackages' && (
           <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">Roamify Packages ({roamifyPackages.length})</h2>
@@ -1196,8 +1226,6 @@ const AdminPanel: React.FC = () => {
               </p>
             </div>
 
-
-
             {/* Roamify Packages Table */}
             {roamifyLoading ? (
               <div className="text-center text-xl text-white mt-8">Loading Roamify packages...</div>
@@ -1212,21 +1240,22 @@ const AdminPanel: React.FC = () => {
                 <p className="text-sm text-gray-300 mt-2">Try selecting "All Countries" or a different country.</p>
               </div>
             ) : (
-              <div className="glass p-4 rounded-2xl overflow-x-auto mt-6 bg-black/20">
-                <table className="min-w-full text-left text-white bg-transparent">
-                  <thead>
-                    <tr>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Package</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Country Code</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Data (GB)</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Days</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Base Price</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Sale Price</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Profit</th>
-                      <th className="border-b border-white/20 px-6 py-3 text-xs font-medium uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
+              <div className="glass p-4 rounded-2xl bg-black/20 mt-6 w-full">
+                <div className="overflow-auto max-h-[70vh]">
+                  <table className="w-full text-left text-white bg-transparent table-auto">
+                    <thead className="sticky top-0 bg-black/30">
+                      <tr>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[200px]">Package</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[120px]">Country</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Code</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Data</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[60px]">Days</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Base Price</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[80px]">Sale Price</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[70px]">Profit</th>
+                        <th className="border-b border-white/20 px-3 py-3 text-xs font-medium uppercase tracking-wider min-w-[150px]">Actions</th>
+                      </tr>
+                    </thead>
                   <tbody>
                     {filteredRoamifyPackages.map((pkg) => {
                       const isDuplicateId = duplicateAnalysis.duplicateIds[pkg.id || pkg.packageId || ''];
@@ -1240,7 +1269,7 @@ const AdminPanel: React.FC = () => {
                             isDuplicateId || isDuplicateCombo ? 'bg-red-900/20' : ''
                           }`}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-white">
                               {pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package'}
                             </div>
@@ -1258,28 +1287,28 @@ const AdminPanel: React.FC = () => {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">{pkg.country || pkg.country_name || 'N/A'}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">{pkg.country_code || 'N/A'}</span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">
                               {pkg.data || (typeof pkg.dataAmount === 'number' ? (pkg.dataAmount / 1024).toFixed(1) : 'N/A')} GB
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">
                               {pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'N/A'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">
                               ${pkg.price || pkg.base_price || '0.00'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <input
                               type="number"
                               step="0.01"
@@ -1289,10 +1318,10 @@ const AdminPanel: React.FC = () => {
                                 [pkg.id || pkg.packageId || '']: e.target.value
                               }))}
                               placeholder={(pkg.price || pkg.base_price || 0).toString()}
-                              className="w-24 px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
                             />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-3 py-4 whitespace-nowrap">
                             <span className={`text-sm ${
                               (parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] || '0') - (pkg.price || pkg.base_price || 0)) > 0 
                                 ? 'text-green-400' 
@@ -1301,7 +1330,7 @@ const AdminPanel: React.FC = () => {
                               ${((parseFloat(roamifySalePrices[pkg.id || pkg.packageId || ''] || '0') || (pkg.price || pkg.base_price || 0)) - (pkg.price || pkg.base_price || 0)).toFixed(2)}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleSaveRoamifyPackage(pkg)}
@@ -1324,10 +1353,12 @@ const AdminPanel: React.FC = () => {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>
