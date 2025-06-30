@@ -258,6 +258,30 @@ export const deletePackage = async (
   }
 };
 
+// Admin-only function to delete package from my_packages table
+export const deleteMyPackage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabaseAdmin
+      .from('my_packages')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getCountries = async (
   req: Request,
   res: Response,

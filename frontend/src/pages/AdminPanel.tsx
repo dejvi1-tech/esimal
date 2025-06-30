@@ -77,8 +77,6 @@ const AdminPanel: React.FC = () => {
   const [updating, setUpdating] = useState<string | null>(null);
   const [country, setCountry] = useState<string>('');
   const [allCountries, setAllCountries] = useState<string[]>([]);
-  const [activeTab, setActiveTab] = useState<'my-packages-only' | 'my-packages' | 'roamify-packages'>('roamify-packages');
-  
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -111,7 +109,9 @@ const AdminPanel: React.FC = () => {
     hasDuplicates: false
   });
 
-  const [countrySearch, setCountrySearch] = useState('');
+  // Add separate search states for each panel
+  const [myPackagesCountrySearch, setMyPackagesCountrySearch] = useState('');
+  const [roamifyCountrySearch, setRoamifyCountrySearch] = useState('');
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {
@@ -802,26 +802,10 @@ const AdminPanel: React.FC = () => {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="glass-light rounded-2xl p-2 mb-6">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('my-packages-only')}
-              className={`btn-glass px-4 py-2 rounded-xl ${activeTab === 'my-packages-only' ? 'bg-accent text-black' : 'bg-white/10 text-white'}`}
-            >
-              My Packages Only ({myPackages.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('roamify-packages')}
-              className={`btn-glass px-4 py-2 rounded-xl ${activeTab === 'roamify-packages' ? 'bg-accent text-black' : 'bg-white/10 text-white'}`}
-            >
-              Roamify Packages ({totalCount ? totalCount.toLocaleString() : roamifyPackages.length.toLocaleString()})
-            </button>
-          </nav>
-        </div>
-
-        {/* My Packages Only Tab */}
-        {activeTab === 'my-packages-only' && (
+        {/* Responsive Grid Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 w-full">
+          {/* My Packages Only Panel */}
+          <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">My eSIM Packages Only ({myPackages.length})</h2>
             <p className="text-gray-200 mb-4">Manage your eSIM packages with edit and delete functionality</p>
@@ -834,22 +818,22 @@ const AdminPanel: React.FC = () => {
                   type="text"
                   id="my-packages-country-search"
                   placeholder="Search country..."
-                  value={countrySearch}
-                  onChange={e => setCountrySearch(e.target.value)}
+                  value={myPackagesCountrySearch}
+                  onChange={e => setMyPackagesCountrySearch(e.target.value)}
                   className="input-glass w-full text-white placeholder-gray-300"
                 />
-                {countrySearch && (
+                {myPackagesCountrySearch && (
                   <button
-                    onClick={() => setCountrySearch('')}
+                    onClick={() => setMyPackagesCountrySearch('')}
                     className="btn-glass bg-white/20 text-white px-4 py-2 rounded-xl"
                   >
                     Clear
                   </button>
                 )}
               </div>
-              {countrySearch && (
+              {myPackagesCountrySearch && (
                 <p className="mt-1 text-sm text-gray-200">
-                  Showing {myPackages.filter(pkg => pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())).length} of {myPackages.length} packages
+                  Showing {myPackages.filter(pkg => pkg.country_name.toLowerCase().includes(myPackagesCountrySearch.toLowerCase())).length} of {myPackages.length} packages
                 </p>
               )}
             </div>
@@ -875,8 +859,8 @@ const AdminPanel: React.FC = () => {
                   <tbody>
                     {myPackages
                       .filter(pkg => 
-                        !countrySearch || 
-                        pkg.country_name.toLowerCase().includes(countrySearch.toLowerCase())
+                        !myPackagesCountrySearch || 
+                        pkg.country_name.toLowerCase().includes(myPackagesCountrySearch.toLowerCase())
                       )
                       .map((pkg) => (
                       <tr key={pkg.id} className="hover:bg-white/5 border-b border-white/10 text-white">
@@ -1034,11 +1018,11 @@ const AdminPanel: React.FC = () => {
                 </table>
               </div>
             )}
+            </div>
           </div>
-        )}
 
-        {/* Roamify Packages Tab */}
-        {activeTab === 'roamify-packages' && (
+          {/* Roamify Packages Panel */}
+          <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
             <h2 className="text-2xl font-bold text-white mb-2">Roamify Packages ({roamifyPackages.length})</h2>
             <p className="text-gray-200 mb-4">Available packages from Roamify API - Edit sale price and save to your inventory</p>
@@ -1144,8 +1128,8 @@ const AdminPanel: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search country..."
-                value={countrySearch}
-                onChange={e => setCountrySearch(e.target.value)}
+                value={roamifyCountrySearch}
+                onChange={e => setRoamifyCountrySearch(e.target.value)}
                 className="mt-1 mb-2 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-gray-900 bg-white"
               />
               <select
@@ -1155,7 +1139,7 @@ const AdminPanel: React.FC = () => {
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md text-gray-900 bg-white"
               >
                 <option value="">All Countries ({roamifyCountries.length})</option>
-                {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
+                {roamifyCountries.filter(c => !!c && c.toLowerCase().includes(roamifyCountrySearch.toLowerCase())).map(country => (
                   <option key={country} value={country}>{country}</option>
                 ))}
               </select>
@@ -1342,8 +1326,9 @@ const AdminPanel: React.FC = () => {
                 </table>
               </div>
             )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
