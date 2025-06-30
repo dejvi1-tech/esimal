@@ -9,21 +9,62 @@ import {
   getOrderDetails,
 } from '../controllers/orderController';
 import { orderRateLimiter } from '../middleware/rateLimiter';
-import asyncHandler from 'express-async-handler';
 
 const router = express.Router();
 
 // Public routes for creating orders
-router.post('/', orderRateLimiter, asyncHandler(createOrder));
-router.post('/my-packages', orderRateLimiter, asyncHandler(createMyPackageOrder));
+router.post('/', orderRateLimiter, async (req, res, next): Promise<void> => {
+  try {
+    await createOrder(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.post('/my-packages', orderRateLimiter, async (req, res, next): Promise<void> => {
+  try {
+    await createMyPackageOrder(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Get order details (public route)
-router.get('/:orderId/details', asyncHandler(getOrderDetails));
+router.get('/:orderId/details', async (req, res, next): Promise<void> => {
+  try {
+    await getOrderDetails(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // Admin-only routes for order management
-router.get('/', asyncHandler(getAllOrders));
-router.get('/:id', asyncHandler(getOrder));
-router.put('/:id/status', asyncHandler(updateOrderStatus));
-router.post('/:id/cancel', asyncHandler(cancelOrder));
+router.get('/', async (req, res, next): Promise<void> => {
+  try {
+    await getAllOrders(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/:id', async (req, res, next): Promise<void> => {
+  try {
+    await getOrder(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.put('/:id/status', async (req, res, next): Promise<void> => {
+  try {
+    await updateOrderStatus(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.post('/:id/cancel', async (req, res, next): Promise<void> => {
+  try {
+    await cancelOrder(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router; 

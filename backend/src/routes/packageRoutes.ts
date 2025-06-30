@@ -8,17 +8,58 @@ import {
   getSectionPackages,
   searchPackages,
 } from '../controllers/packageController';
-import asyncHandler from 'express-async-handler';
 
 const router = express.Router();
 
 // Admin-only routes for package management
-router.get('/', asyncHandler(getAllPackages));
-router.post('/', asyncHandler(createPackage));
-router.get('/get-section-packages', asyncHandler(getSectionPackages));
-router.get('/search-packages', asyncHandler(searchPackages));
-router.get('/:id', asyncHandler(getPackage));
-router.put('/:id', asyncHandler(updatePackage));
-router.delete('/:id', asyncHandler(deletePackage));
+router.get('/', async (req, res, next): Promise<void> => {
+  try {
+    await getAllPackages(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.post('/', async (req, res, next): Promise<void> => {
+  try {
+    await createPackage(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/get-section-packages', async (req, res, next): Promise<void> => {
+  try {
+    await getSectionPackages(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/search-packages', async (req, res, next): Promise<void> => {
+  try {
+    await searchPackages(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get('/:id', async (req, res, next): Promise<void> => {
+  try {
+    await getPackage(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.put('/:id', async (req, res, next): Promise<void> => {
+  try {
+    await updatePackage(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
+router.delete('/:id', async (req, res, next): Promise<void> => {
+  try {
+    await deletePackage(req, res, next);
+  } catch (err) {
+    next(err);
+  }
+});
 
 export default router; 
