@@ -332,6 +332,7 @@ export const getSectionPackages = async (
       .from('my_packages')
       .select('*')
       .eq('show_on_frontend', true)
+      .eq('location_slug', 'most-popular')
       .order('homepage_order', { ascending: true });
 
     if (error) {

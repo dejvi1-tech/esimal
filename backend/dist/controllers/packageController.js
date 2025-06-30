@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.savePackage = exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
+exports.savePackage = exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deleteMyPackage = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("../utils/logger");
@@ -184,6 +184,24 @@ const deletePackage = async (req, res, next) => {
     }
 };
 exports.deletePackage = deletePackage;
+// Admin-only function to delete package from my_packages table
+const deleteMyPackage = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabaseAdmin
+            .from('my_packages')
+            .delete()
+            .eq('id', id);
+        if (error) {
+            throw error;
+        }
+        res.status(204).send();
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.deleteMyPackage = deleteMyPackage;
 const getCountries = async (req, res, next) => {
     try {
         // Get all countries at once without pagination
@@ -223,6 +241,7 @@ const getSectionPackages = async (req, res, next) => {
             .from('my_packages')
             .select('*')
             .eq('show_on_frontend', true)
+            .eq('location_slug', 'most-popular')
             .order('homepage_order', { ascending: true });
         if (error) {
             throw error;
