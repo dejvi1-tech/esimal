@@ -127,10 +127,12 @@ export const getAllPackages = async (
       return res.status(400).json({ status: 'error', message: 'Missing or invalid country_code' });
     }
     const { data: packages, error } = await supabaseAdmin
-      .from('packages')
+      .from('my_packages')
       .select('*')
       .eq('country_code', countryCode.toUpperCase())
-      .order('created_at', { ascending: false });
+      .eq('visible', true)
+      .eq('is_active', true)
+      .order('sale_price', { ascending: true });
     if (error) {
       throw error;
     }
