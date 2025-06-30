@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import CoverageModal from '@/components/CoverageModal';
+import { europeCoverage } from '@/data/coverageData';
 
 interface MostPopularPackage {
   id: string;
@@ -72,6 +73,15 @@ const HomePage = () => {
     setIsCoverageModalOpen(false);
   };
 
+  // Prepare coverage data for the modal
+  const coverageData = {
+    countries: europeCoverage.map(c => c.country),
+    regions: ['Europe', 'North America'],
+    data: 'Unlimited',
+    validity: '30 Days',
+    speed: '5G/LTE'
+  };
+
   return (
     <div className="min-h-screen">
       <Helmet>
@@ -105,23 +115,30 @@ const HomePage = () => {
                     <div className="flex-grow">
                       <div className="flex items-center mb-4">
                         <div className="mr-4">
-                          <svg className="w-12 h-12" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="50" cy="50" r="50" fill="#4f46e5"/>
-                              <g transform="translate(50,50) scale(1.5)">
-                                  <path transform="rotate(0) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(30) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(60) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(90) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(120) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(150) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(180) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(210) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(240) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(270) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(300) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
-                                  <path transform="rotate(330) translate(0, -20)" d="M0-5L1.17 3.5H-1.17z" fill="white"/>
+                          {/* EU Flag in Circle */}
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20 flex items-center justify-center">
+                            <svg className="w-10 h-7" viewBox="0 0 810 540" xmlns="http://www.w3.org/2000/svg">
+                              {/* EU Flag Background */}
+                              <rect width="810" height="540" fill="#003399"/>
+                              {/* EU Stars in Circle */}
+                              <g fill="#ffcc00">
+                                <g transform="translate(405,270)">
+                                  <path transform="rotate(0) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(30) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(60) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(90) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(120) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(150) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(180) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(210) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(240) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(270) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(300) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                  <path transform="rotate(330) translate(0,-120)" d="M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z"/>
+                                </g>
                               </g>
-                          </svg>
+                            </svg>
+                          </div>
                         </div>
                         <h3 className="text-2xl font-bold text-white">{t('europe')}</h3>
                       </div>
@@ -270,7 +287,8 @@ const HomePage = () => {
       {/* Coverage Modal */}
       <CoverageModal 
         isOpen={isCoverageModalOpen} 
-        onClose={handleCloseCoverageModal} 
+        onClose={handleCloseCoverageModal}
+        coverage={coverageData}
       />
     </div>
   );

@@ -19,21 +19,72 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
 
   if (!isOpen) return null;
 
+  // Handle escape key
+  React.useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+    <div 
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+      style={{ 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999
+      }}
+    >
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer" 
+        onClick={onClose}
+        style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0
+        }}
+      />
       
-      <div className="relative modal-glass rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20">
+      {/* Modal Content */}
+      <div 
+        className="relative modal-glass rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white/20"
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: '600px',
+          width: '100%'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/20">
           <h2 className="text-2xl font-bold text-white">
-            {t('coverage_modal_title')}
+            Europe Coverage
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="p-2 hover:bg-white/10 rounded-full transition-colors text-white"
           >
-            <X className="w-6 h-6 text-white" />
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -44,17 +95,17 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
             <div className="text-center p-4 glass-light rounded-xl">
               <Wifi className="w-8 h-8 text-blue-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">{coverage.data}</div>
-              <div className="text-sm text-white/70">{t('coverage_data')}</div>
+              <div className="text-sm text-white/70">Data Amount</div>
             </div>
             <div className="text-center p-4 glass-light rounded-xl">
               <Clock className="w-8 h-8 text-green-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">{coverage.validity}</div>
-              <div className="text-sm text-white/70">{t('coverage_validity')}</div>
+              <div className="text-sm text-white/70">Validity Period</div>
             </div>
             <div className="text-center p-4 glass-light rounded-xl">
               <Globe className="w-8 h-8 text-purple-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-white">{coverage.speed}</div>
-              <div className="text-sm text-white/70">{t('coverage_speed')}</div>
+              <div className="text-sm text-white/70">Network Speed</div>
             </div>
           </div>
 
@@ -62,16 +113,16 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
           <div className="mb-8">
             <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
               <MapPin className="w-5 h-5" />
-              {t('coverage_countries')} ({coverage.countries.length})
+              Covered Countries ({coverage.countries.length})
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
               {coverage.countries.map((country, index) => (
                 <div
                   key={index}
                   className="flex items-center gap-2 p-2 glass-light rounded-lg"
                 >
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-white">{country}</span>
+                  <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
+                  <span className="text-sm text-white truncate">{country}</span>
                 </div>
               ))}
             </div>
@@ -80,7 +131,7 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
           {/* Regions */}
           <div>
             <h3 className="text-xl font-bold mb-4 text-white">
-              {t('coverage_regions')}
+              Covered Regions
             </h3>
             <div className="space-y-2">
               {coverage.regions.map((region, index) => (
@@ -100,9 +151,9 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
         <div className="p-6 border-t border-white/20">
           <button
             onClick={onClose}
-            className="w-full btn-glass bg-accent text-accent-foreground py-3 rounded-xl font-semibold transition-colors"
+            className="w-full btn-glass bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold"
           >
-            {t('coverage_close')}
+            Close
           </button>
         </div>
       </div>
