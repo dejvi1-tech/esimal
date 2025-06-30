@@ -248,40 +248,11 @@ const CheckoutPage: React.FC = () => {
         </Helmet>
         <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-4 md:gap-8 px-2 md:px-0">
           {/* Left: Form */}
-          <div className="flex-1 bg-white rounded-xl shadow p-4 md:p-8 mb-4 md:mb-0">
-            <h2 className="text-2xl font-bold mb-6 md:mb-8 text-gray-900">{t('checkout')}</h2>
-            <form className="space-y-4 md:space-y-6" onSubmit={handleFormSubmit}>
-              {/* Billing Information at the top */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('first_name')} *</label>
-                  <input type="text" value={name} onChange={e => setName(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_first_name')} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('last_name')} *</label>
-                  <input type="text" value={surname} onChange={e => setSurname(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_last_name')} />
-                </div>
-              </div>
+          <div className="flex-1 flex flex-col justify-between">
+            <form className="bg-white rounded-xl shadow p-6 md:p-8 flex flex-col gap-6" onSubmit={handleFormSubmit}>
+              {/* Credit Card Section at the top using Stripe Elements */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('phone_number')} ({t('kosovo_only')})</label>
-                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="XXX XXX XXX" />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('country')}</label>
-                  <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                    {countryList.map(c => (
-                      <option key={c.code} value={c.code}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder={t('enter_email')} />
-                </div>
-              </div>
-              {/* Payment Platform below billing info */}
-              <div className="mt-6">
+                <h2 className="text-xl font-bold mb-4 text-gray-900">Credit card</h2>
                 <Elements stripe={stripePromise}>
                   <PaymentForm
                     amount={total}
@@ -296,15 +267,25 @@ const CheckoutPage: React.FC = () => {
                     onError={handlePaymentError}
                   />
                 </Elements>
-                {/* Powered by Stripe branding */}
-                <div className="flex flex-col items-center mt-6">
-                  <div className="flex items-center mb-1">
-                    <img src="https://stripe.com/img/v3/home/social.png" alt="Stripe logo" className="h-6 mr-2" style={{height: '24px'}} />
-                    <span className="text-xs text-gray-500">Powered by Stripe</span>
-                  </div>
-                  <div className="w-full border-t border-gray-200 mt-2"></div>
-                </div>
               </div>
+              {/* Billing Address Section */}
+              <div>
+                <h2 className="text-lg font-bold mb-2 text-gray-900">Billing address</h2>
+                <div className="mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Country/Region</label>
+                  <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    {countryList.map(c => (
+                      <option key={c.code} value={c.code}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+                  <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="First name" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+                  <input type="text" value={surname} onChange={e => setSurname(e.target.value)} placeholder="Last name" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+                </div>
+                <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border border-gray-300 rounded-lg" required />
+              </div>
+              <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg mt-4">Pay now</button>
             </form>
           </div>
           {/* Right: Order Summary */}
