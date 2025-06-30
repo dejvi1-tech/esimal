@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { Helmet } from 'react-helmet-async';
+import { ArrowLeft } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { PaymentForm } from '@/components/PaymentForm';
+import { PaymentForm, PaymentFormRef } from '@/components/PaymentForm';
+import europeFlag from '../assets/images/europe.png';
+import italyFlag from '../assets/images/italy.png';
+import { europeanCountries } from '@/data/countries';
 
 console.log('VITE_STRIPE_PUBLIC_KEY:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -27,6 +31,7 @@ interface PackageData {
   data_amount: number;
   validity_days: number;
   country_name: { al: string; en: string } | string;
+  image?: string;
 }
 
 // ErrorBoundary component
@@ -73,7 +78,7 @@ const CheckoutPage: React.FC = () => {
   const { t, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [country, setCountry] = useState(countryList[0].code);
+  const [country, setCountry] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -84,6 +89,7 @@ const CheckoutPage: React.FC = () => {
   const [discount, setDiscount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [storedPackageId, setStoredPackageId] = useState<string | null>(null);
+  const paymentFormRef = useRef<PaymentFormRef>(null);
 
   // Accept both ?packageId=... and ?package=...
   const packageId = searchParams.get('packageId') || searchParams.get('package');
@@ -165,9 +171,12 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[DEBUG] Main form submit prevented - payment should be handled by PaymentForm');
+    console.log('[DEBUG] Main form submit - calling PaymentForm submit');
+    if (paymentFormRef.current) {
+      await paymentFormRef.current.submit();
+    }
   };
 
   // Cleanup localStorage on unmount
@@ -241,11 +250,26 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Helmet>
           <title>{t('checkout')} - eSIMFly</title>
           <meta name="description" content={t('checkout_description')} />
         </Helmet>
+        
+        {/* Header with back button */}
+        <div className="w-full bg-white border-b border-gray-200 px-4 py-4">
+          <div className="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+          </div>
+        </div>
+
         <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-4 md:gap-8 px-2 md:px-0">
           {/* Left: Form */}
           <div className="flex-1 flex flex-col justify-between">
@@ -255,6 +279,7 @@ const CheckoutPage: React.FC = () => {
                 <h2 className="text-xl font-bold mb-4 text-gray-900">Credit card</h2>
                 <Elements stripe={stripePromise}>
                   <PaymentForm
+                    ref={paymentFormRef}
                     amount={total}
                     currency="eur"
                     email={email}
@@ -285,8 +310,9 @@ const CheckoutPage: React.FC = () => {
                 <div className="mb-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Country/Region</label>
                   <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                    {countryList.map(c => (
-                      <option key={c.code} value={c.code}>{c.name}</option>
+                    <option value="">Select your country</option>
+                    {europeanCountries.map(c => (
+                      <option key={c.code} value={c.code}>{c.name.en}</option>
                     ))}
                   </select>
                 </div>
@@ -300,43 +326,52 @@ const CheckoutPage: React.FC = () => {
             </form>
           </div>
           {/* Right: Order Summary */}
-          <div className="w-full md:w-96 bg-white border border-gray-200 rounded-xl shadow p-4 md:p-8 text-gray-900 flex flex-col">
-            <h3 className="text-xl font-bold mb-4 md:mb-6">{t('your_order')}</h3>
-            <div className="mb-2 md:mb-4">
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-lg">
-                  {typeof packageData.name === 'string' ? packageData.name : packageData.name[language]}
-                </span>
-                <span className="font-bold text-lg">€{packageData.sale_price.toFixed(2)}</span>
+          <div className="w-full md:w-96 bg-white border border-gray-200 rounded-xl shadow p-6 flex flex-col">
+            <div className="flex items-center mb-4">
+              {(() => {
+                // Try to match the country name from packageData to a country in europeanCountries
+                let countryFlag = '';
+                let countryName = '';
+                if (packageData && packageData.country_name) {
+                  const countryNameValue = typeof packageData.country_name === 'string' ? packageData.country_name : packageData.country_name.en;
+                  const found = europeanCountries.find(c => c.name.en.toLowerCase() === countryNameValue.toLowerCase() || c.name.al.toLowerCase() === countryNameValue.toLowerCase());
+                  if (found) {
+                    countryFlag = found.flag;
+                    countryName = found.name.en;
+                  }
+                }
+                if (countryFlag) {
+                  return <img src={countryFlag} alt={countryName} className="w-14 h-14 rounded object-cover border border-gray-200" />;
+                } else {
+                  return <img src={packageData?.image || '/images/placeholder.svg'} alt={countryName} className="w-14 h-14 rounded object-cover border border-gray-200" />;
+                }
+              })()}
+              <div className="ml-4 flex-1">
+                <div className="font-semibold text-lg">{typeof packageData.name === 'string' ? packageData.name : packageData.name[language]}</div>
+                <div className="text-gray-500 text-sm">{packageData.data_amount}GB / {packageData.validity_days} {t('days')}</div>
               </div>
-              <div className="text-sm opacity-80 mt-1">
-                {packageData.data_amount}GB eSIM {packageData.country_name && (typeof packageData.country_name === 'string' ? packageData.country_name : packageData.country_name[language])} / {packageData.validity_days} {t('days')}
-              </div>
-              <div className="text-sm opacity-80 mt-1">Qty 1</div>
+              <div className="font-bold text-lg">ALL {packageData.sale_price.toFixed(2)}</div>
             </div>
-            <div className="mb-2 md:mb-4">
-              <input
-                type="text"
-                value={coupon}
-                onChange={e => setCoupon(e.target.value)}
-                placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
-                className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-300 focus:border-transparent mb-2"
-                disabled={isCouponApplied}
-              />
-              <button
-                type="button"
-                onClick={handleApplyCoupon}
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50"
-                disabled={isCouponApplied}
-              >
-                {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
-              </button>
+            <input
+              type="text"
+              value={coupon}
+              onChange={e => setCoupon(e.target.value)}
+              placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
+              className="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-300 focus:border-transparent mb-4"
+              disabled={isCouponApplied}
+            />
+            <button
+              type="button"
+              onClick={handleApplyCoupon}
+              className="w-full bg-gray-900 hover:bg-gray-800 text-white py-2 rounded-lg font-semibold transition-colors disabled:opacity-50 mb-6"
+              disabled={isCouponApplied}
+            >
+              {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
+            </button>
+            <div className="flex justify-between items-center mt-2 border-t border-gray-200 pt-4">
+              <span className="font-bold text-2xl">Total</span>
+              <span className="font-bold text-2xl">ALL {total.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-center mt-2 md:mt-4 border-t border-gray-200 pt-2 md:pt-4">
-              <span className="font-semibold text-lg">Total</span>
-              <span className="font-bold text-2xl">€{total.toFixed(2)}</span>
-            </div>
-            <div className="text-xs opacity-80 mt-2 md:mt-4">EUR</div>
           </div>
         </div>
       </div>

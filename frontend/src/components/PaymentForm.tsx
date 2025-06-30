@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -29,7 +29,11 @@ const stripeInputStyle = {
   invalid: { color: '#ff4444' },
 };
 
-export const PaymentForm: React.FC<PaymentFormProps> = ({
+export interface PaymentFormRef {
+  submit: () => Promise<void>;
+}
+
+export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
   amount,
   currency,
   email,
@@ -40,7 +44,7 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
   country,
   onSuccess,
   onError,
-}) => {
+}, ref) => {
   // Ensure email is never null
   const safeEmail = email ?? '';
   
@@ -168,54 +172,51 @@ export const PaymentForm: React.FC<PaymentFormProps> = ({
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    submit: async () => {
+      await handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+    }
+  }));
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-white border border-gray-200 shadow rounded-xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-6" />
-          <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-6" />
-          <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-6" />
-          <span className="ml-2 bg-gray-200 text-xs px-2 py-1 rounded">+1</span>
+    <div className="bg-white border border-gray-200 shadow rounded-xl p-6">
+      <div className="flex items-center gap-2 mb-4">
+        <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-6" />
+        <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-6" />
+        <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-6" />
+        <span className="ml-2 bg-gray-200 text-xs px-2 py-1 rounded">+1</span>
+      </div>
+      <div className="space-y-5">
+        <div>
+          <label className="block text-sm font-medium text-gray-800 mb-1">{t('card_number')}</label>
+          <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+            <CardNumberElement
+              options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
+              className="flex-1 bg-transparent outline-none text-lg h-full"
+            />
+          </div>
         </div>
-        <div className="space-y-5">
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1">{t('card_number')}</label>
+            <label className="block text-sm font-medium text-gray-800 mb-1">{t('expiry')}</label>
             <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-              <CardNumberElement
+              <CardExpiryElement
                 options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
                 className="flex-1 bg-transparent outline-none text-lg h-full"
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-1">{t('expiry')}</label>
-              <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                <CardExpiryElement
-                  options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
-                  className="flex-1 bg-transparent outline-none text-lg h-full"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-800 mb-1">{t('cvc')}</label>
-              <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
-                <CardCvcElement
-                  options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
-                  className="flex-1 bg-transparent outline-none text-lg h-full"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">{t('cvc')}</label>
+            <div className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white">
+              <CardCvcElement
+                options={{ style: { base: { fontSize: '17px', color: '#222', '::placeholder': { color: '#bbb' }, fontFamily: 'inherit', backgroundColor: 'transparent' }, invalid: { color: '#ff4444' } } }}
+                className="flex-1 bg-transparent outline-none text-lg h-full"
+              />
             </div>
           </div>
         </div>
       </div>
-      <button
-        type="submit"
-        disabled={isProcessing || !stripe}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold text-lg mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isProcessing ? t('processing') : `${t('pay_now')}`}
-      </button>
-    </form>
+    </div>
   );
-}; 
+}); 
