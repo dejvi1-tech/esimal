@@ -18,8 +18,8 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node", "express", "express-async-handler"]
+    "types": ["node", "express"]
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "dist"]
 } 
