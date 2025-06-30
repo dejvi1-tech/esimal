@@ -160,6 +160,13 @@ export const globalPackages: Package[] = [
 
 export const europeanCountries: Country[] = [
 {
+  code: 'EU',
+  name: { al: 'Europë', en: 'Europe' },
+  flag: 'https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg',
+  region: 'Europe',
+  packages: globalPackages
+},
+{
   code: 'AL',
   name: { al: 'Shqipëria', en: 'Albania' },
   flag: 'https://flagcdn.com/w40/al.png',

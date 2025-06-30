@@ -108,6 +108,7 @@ const CheckoutPage: React.FC = () => {
   const effectivePackageId = packageId || storedPackageId || localStorage.getItem('checkout_package_id');
   
   console.log('[DEBUG] CheckoutPage render - packageId:', packageId, 'storedPackageId:', storedPackageId, 'effectivePackageId:', effectivePackageId);
+  console.log('[DEBUG] Available countries:', europeanCountries.length, europeanCountries.map(c => c.name.en));
 
   useEffect(() => {
     const fetchPackageData = async () => {
@@ -258,8 +259,7 @@ const CheckoutPage: React.FC = () => {
         
         {/* Header with back button */}
         <div className="w-full bg-white border-b-2 border-gray-200 px-4 py-4 shadow-sm">
-          <div className="max-w-5xl mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Checkout</h1>
+          <div className="max-w-5xl mx-auto flex items-center">
             <button
               onClick={() => navigate(-1)}
               className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white hover:bg-gray-800 rounded-lg transition-colors font-medium shadow-md border border-gray-800"
@@ -267,6 +267,8 @@ const CheckoutPage: React.FC = () => {
               <ArrowLeft className="w-5 h-5" />
               <span>Back</span>
             </button>
+            <h1 className="text-2xl font-bold text-gray-900 flex-1 text-center">Checkout</h1>
+            <div className="w-[120px]"></div> {/* Spacer to center the title */}
           </div>
         </div>
 
@@ -310,10 +312,19 @@ const CheckoutPage: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Country/Region</label>
-                    <select value={country} onChange={e => setCountry(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                    <select 
+                      value={country} 
+                      onChange={e => {
+                        console.log('[DEBUG] Country selected:', e.target.value);
+                        setCountry(e.target.value);
+                      }} 
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    >
                       <option value="">Select your country</option>
                       {europeanCountries.map(c => (
-                        <option key={c.code} value={c.code}>{c.name.en}</option>
+                        <option key={c.code} value={c.code}>
+                          {c.name.en} {c.code === 'AL' ? '(Albania)' : ''} - {c.code}
+                        </option>
                       ))}
                     </select>
                   </div>
