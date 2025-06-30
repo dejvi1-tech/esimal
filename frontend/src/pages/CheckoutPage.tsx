@@ -297,9 +297,12 @@ const CheckoutPage: React.FC = () => {
                   />
                 </Elements>
                 {/* Powered by Stripe branding */}
-                <div className="flex justify-center items-center mt-4">
-                  <img src="https://stripe.com/img/v3/home/social.png" alt="Stripe logo" className="h-6 mr-2" style={{height: '24px'}} />
-                  <span className="text-xs text-gray-500">Powered by Stripe</span>
+                <div className="flex flex-col items-center mt-6">
+                  <div className="flex items-center mb-1">
+                    <img src="https://stripe.com/img/v3/home/social.png" alt="Stripe logo" className="h-6 mr-2" style={{height: '24px'}} />
+                    <span className="text-xs text-gray-500">Powered by Stripe</span>
+                  </div>
+                  <div className="w-full border-t border-gray-200 mt-2"></div>
                 </div>
               </div>
             </form>
