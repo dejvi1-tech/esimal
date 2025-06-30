@@ -20,6 +20,7 @@ router.get('/all-roamify-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.
 router.get('/package-countries', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.getPackageCountries));
 router.post('/deduplicate-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.deduplicatePackages));
 router.post('/sync-roamify-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.syncRoamifyPackages));
+router.post('/save-package', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.savePackage));
 // Debug routes
 router.get('/debug-order/:orderId', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.debugOrder));
 exports.default = router;

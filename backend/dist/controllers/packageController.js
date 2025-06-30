@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
+exports.savePackage = exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("../utils/logger");
@@ -817,4 +817,60 @@ const syncRoamifyPackages = async (req, res, next) => {
     }
 };
 exports.syncRoamifyPackages = syncRoamifyPackages;
+// Secure admin endpoint: Save package to my_packages
+const savePackage = async (req, res, next) => {
+    try {
+        const { id, name, country_name, country_code, data_amount, validity_days, base_price, sale_price, profit, reseller_id, region, show_on_frontend, location_slug, homepage_order } = req.body;
+        // Validate required fields
+        if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price || !sale_price) {
+            throw new errors_1.ValidationError('Missing required fields: name, country_name, country_code, data_amount, validity_days, base_price, sale_price');
+        }
+        // Calculate profit if not provided
+        const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
+        // Prepare package data
+        const packageData = {
+            id: id || (0, uuid_1.v4)(), // Generate new UUID if not provided
+            name,
+            country_name,
+            country_code: country_code.toUpperCase(),
+            data_amount,
+            validity_days,
+            base_price,
+            sale_price,
+            profit: calculatedProfit,
+            reseller_id: reseller_id || null,
+            region: region || null,
+            visible: true, // Default to visible
+            show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
+            location_slug: location_slug || null,
+            homepage_order: homepage_order || 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        // Upsert package (insert or update)
+        const { data: savedPackage, error } = await supabaseAdmin
+            .from('my_packages')
+            .upsert([packageData], {
+            onConflict: 'id',
+            ignoreDuplicates: false
+        })
+            .select()
+            .single();
+        if (error) {
+            logger_1.logger.error('Error saving package:', error);
+            throw error;
+        }
+        logger_1.logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name}`);
+        res.status(200).json({
+            status: 'success',
+            data: savedPackage,
+            message: 'Package saved successfully'
+        });
+    }
+    catch (error) {
+        logger_1.logger.error('Error in savePackage:', error);
+        next(error);
+    }
+};
+exports.savePackage = savePackage;
 //# sourceMappingURL=packageController.js.map

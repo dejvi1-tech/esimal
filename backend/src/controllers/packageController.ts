@@ -970,3 +970,84 @@ export const syncRoamifyPackages = async (
     next(error);
   }
 };
+
+// Secure admin endpoint: Save package to my_packages
+export const savePackage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const {
+      id,
+      name,
+      country_name,
+      country_code,
+      data_amount,
+      validity_days,
+      base_price,
+      sale_price,
+      profit,
+      reseller_id,
+      region,
+      show_on_frontend,
+      location_slug,
+      homepage_order
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price || !sale_price) {
+      throw new ValidationError('Missing required fields: name, country_name, country_code, data_amount, validity_days, base_price, sale_price');
+    }
+
+    // Calculate profit if not provided
+    const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
+
+    // Prepare package data
+    const packageData = {
+      id: id || uuidv4(), // Generate new UUID if not provided
+      name,
+      country_name,
+      country_code: country_code.toUpperCase(),
+      data_amount,
+      validity_days,
+      base_price,
+      sale_price,
+      profit: calculatedProfit,
+      reseller_id: reseller_id || null,
+      region: region || null,
+      visible: true, // Default to visible
+      show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
+      location_slug: location_slug || null,
+      homepage_order: homepage_order || 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Upsert package (insert or update)
+    const { data: savedPackage, error } = await supabaseAdmin
+      .from('my_packages')
+      .upsert([packageData], { 
+        onConflict: 'id',
+        ignoreDuplicates: false 
+      })
+      .select()
+      .single();
+
+    if (error) {
+      logger.error('Error saving package:', error);
+      throw error;
+    }
+
+    logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name}`);
+
+    res.status(200).json({
+      status: 'success',
+      data: savedPackage,
+      message: 'Package saved successfully'
+    });
+  } catch (error) {
+    logger.error('Error in savePackage:', error);
+    next(error);
+  }
+};

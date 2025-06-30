@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages } from '../controllers/packageController';
+import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage } from '../controllers/packageController';
 import { debugOrder } from '../controllers/adminController';
 import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -22,6 +22,7 @@ router.get('/all-roamify-packages', requireAdminAuth, asyncHandler(getAllRoamify
 router.get('/package-countries', requireAdminAuth, asyncHandler(getPackageCountries));
 router.post('/deduplicate-packages', requireAdminAuth, asyncHandler(deduplicatePackages));
 router.post('/sync-roamify-packages', requireAdminAuth, asyncHandler(syncRoamifyPackages));
+router.post('/save-package', requireAdminAuth, asyncHandler(savePackage));
 
 // Debug routes
 router.get('/debug-order/:orderId', requireAdminAuth, asyncHandler(debugOrder));
