@@ -63,6 +63,7 @@ const BundlePage: React.FC = () => {
     if (!bundleId) return;
     setLoading(true);
     const countryCode = mapSlugToCode(bundleId);
+    console.log('[BundlePage] Mapped bundleId to countryCode:', bundleId, '->', countryCode); // DEBUG LOG
     if (!countryCode) {
       setError('Invalid country');
       setLoading(false);
@@ -74,6 +75,7 @@ const BundlePage: React.FC = () => {
         return res.json();
       })
       .then((data) => {
+        console.log('[BundlePage] API response for countryCode', countryCode, ':', data); // DEBUG LOG
         const pkgs = data.data || [];
         setPackages(pkgs);
         if (pkgs.length > 0) setSelectedId(pkgs[0].id);

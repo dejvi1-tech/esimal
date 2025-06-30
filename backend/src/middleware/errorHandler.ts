@@ -9,6 +9,16 @@ export const errorHandler = (
   next: NextFunction
 ) => {
   logger.error('Error:', err);
+  // Enhanced error logging
+  logger.error('API Error', {
+    message: err.message,
+    stack: err.stack,
+    method: req.method,
+    url: req.originalUrl,
+    query: req.query,
+    body: req.body,
+    user: (req as any).user || null,
+  });
   // Also log to console for debugging
   console.error('API Error:', err);
   if (err && err.stack) {

@@ -123,6 +123,7 @@ export const getAllPackages = async (
 ) => {
   try {
     const countryCode = req.query.country_code as string;
+    console.log(`[API] /api/packages received country_code:`, countryCode); // DEBUG LOG
     if (!countryCode || typeof countryCode !== 'string' || countryCode.length !== 2) {
       return res.status(400).json({ status: 'error', message: 'Missing or invalid country_code' });
     }
@@ -136,6 +137,7 @@ export const getAllPackages = async (
     if (error) {
       throw error;
     }
+    console.log(`[API] /api/packages returning ${packages?.length || 0} packages for country_code:`, countryCode); // DEBUG LOG
     res.status(200).json({
       status: 'success',
       data: packages,
