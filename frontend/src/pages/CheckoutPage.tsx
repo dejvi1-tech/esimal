@@ -254,11 +254,6 @@ const CheckoutPage: React.FC = () => {
           <meta name="description" content={t('checkout_description')} />
         </Helmet>
 
-        {/* Fixed Header with Glassmorphism */}
-        <header className={`fixed top-0 w-full z-50 ${scrolled ? 'navbar-glassmorphism' : ''}`}>
-          {/* Add your header content here */}
-        </header>
-
         <div className="flex flex-1 flex-col md:flex-row max-w-5xl mx-auto w-full py-6 md:py-12 gap-4 md:gap-8 px-2 md:px-0">
           {/* Left: Form */}
           <div className="flex-1 glass-medium p-6 md:p-8 rounded-2xl">
