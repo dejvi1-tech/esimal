@@ -506,6 +506,85 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     const status: UserOrderStatus = roamifySuccess ? 'active' : 'pending';
     validateUserOrderStatus(status);
 
+    // ENHANCED: Ensure guest user exists before creating user_orders entry
+    if (safeUserId === GUEST_USER_ID) {
+      logger.info(`Creating user_orders entry for guest user: ${GUEST_USER_ID}`);
+      
+      // Check if guest user exists, create if needed
+      const { data: guestUser, error: guestUserError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', GUEST_USER_ID)
+        .single();
+      
+      if (guestUserError || !guestUser) {
+        logger.warn(`Guest user ${GUEST_USER_ID} not found, creating...`);
+        
+        try {
+          const { data: newGuestUser, error: createGuestError } = await supabase
+            .from('users')
+            .insert({
+              id: GUEST_USER_ID,
+              email: 'guest@esimal.com',
+              password: 'disabled-account',
+              first_name: 'Guest',
+              last_name: 'User',
+              role: 'guest',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+          
+          if (createGuestError) {
+            logger.error(`Failed to create guest user: ${createGuestError.message}`);
+            
+            // ALTERNATIVE: Skip user_orders creation for now and log for admin review
+            logger.error(`Skipping user_orders creation due to guest user issue. Order ID: ${orderId}`);
+            
+            // Update order metadata to indicate this needs admin attention
+            await supabase
+              .from('orders')
+              .update({
+                metadata: {
+                  ...order.metadata,
+                  user_orders_skipped: true,
+                  guest_user_creation_failed: true,
+                  requires_admin_review: true
+                }
+              })
+              .eq('id', orderId);
+            
+            // Don't throw error, just skip user_orders creation
+            logger.warn(`Order ${orderId} completed but user_orders entry skipped - requires admin review`);
+            return; // Exit early but don't fail the entire eSIM delivery
+          } else {
+            logger.info(`Guest user created successfully: ${newGuestUser.id}`);
+          }
+        } catch (guestCreationError) {
+          logger.error(`Exception creating guest user:`, guestCreationError);
+          
+          // Skip user_orders creation and mark for admin review
+          await supabase
+            .from('orders')
+            .update({
+              metadata: {
+                ...order.metadata,
+                user_orders_skipped: true,
+                guest_user_creation_exception: true,
+                requires_admin_review: true
+              }
+            })
+            .eq('id', orderId);
+          
+          logger.warn(`Order ${orderId} completed but user_orders entry skipped due to guest user creation failure`);
+          return; // Don't fail the entire delivery
+        }
+      } else {
+        logger.info(`Guest user exists: ${GUEST_USER_ID}`);
+      }
+    }
+
     const userOrderData = {
       user_id: safeUserId,
       package_id: packageId,
@@ -527,14 +606,33 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       logger.error(`[ROAMIFY DEBUG] Error creating user_orders entry`, {
         orderId,
         error: userOrderError,
+        userOrderData,
+        guestUserId: GUEST_USER_ID,
       });
-      throw new Error(`Failed to create user_orders entry: ${userOrderError.message}`);
+      
+      // ENHANCED: Don't throw error, just log and mark for admin review
+      logger.warn(`Continuing eSIM delivery despite user_orders creation failure for order ${orderId}`);
+      
+      // Update order metadata to indicate this needs admin attention
+      await supabase
+        .from('orders')
+        .update({
+          metadata: {
+            ...order.metadata,
+            user_orders_creation_failed: true,
+            user_orders_error: userOrderError.message,
+            requires_admin_review: true
+          }
+        })
+        .eq('id', orderId);
+      
+      // Don't throw - continue with eSIM delivery
+    } else {
+      logger.info(`[ROAMIFY DEBUG] User orders entry created successfully`, {
+        orderId,
+        userOrderId: userOrder.id,
+      });
     }
-
-    logger.info(`[ROAMIFY DEBUG] User orders entry created successfully`, {
-      orderId,
-      userOrderId: userOrder.id,
-    });
 
     // Optionally, handle QR code generation if needed here
     // ...
