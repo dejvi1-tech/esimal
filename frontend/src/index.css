@@ -27,10 +27,17 @@
 
 /* Global background and text color - fixed across all themes */
 html, body {
-  background: var(--fixed-bg) !important;
+  background: #4B0082 !important;
   color: var(--text-color) !important;
   transition: none !important;
   animation: none !important;
+}
+
+body::after {
+  /* Remove any pseudo-element that might add a gradient/fade at the bottom */
+  content: none !important;
+  background: none !important;
+  display: none !important;
 }
 
 /* Disable ALL transitions and animations globally */
