@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.emailTemplates = void 0;
 const dotenv_1 = require("dotenv");
 const qrCodeService_1 = require("../services/qrCodeService");
+const qrcode_1 = __importDefault(require("qrcode"));
 // Load environment variables
 (0, dotenv_1.config)();
 const baseTemplate = (content) => `
@@ -101,22 +105,51 @@ exports.emailTemplates = {
     orderConfirmation: {
         subject: 'eSIM juaj është gati! - Konfirmimi i porosisë',
         html: async (data) => {
-            // Prioritize the real QR code URL from Roamify over generated ones
+            // Generate base64 QR code that embeds directly in email (no external URLs)
             let qrCodeDataUrl = '';
-            if (data.qrCodeUrl && data.qrCodeUrl !== '') {
-                // Use the real QR code URL from Roamify
-                qrCodeDataUrl = data.qrCodeUrl;
+            try {
+                if (data.qrCodeData && data.qrCodeData !== '') {
+                    // Use the real LPA code from Roamify to generate QR code
+                    const lpaCode = data.qrCodeData;
+                    qrCodeDataUrl = await qrcode_1.default.toDataURL(lpaCode, {
+                        width: 300,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    });
+                }
+                else if (data.esimCode && data.esimCode !== 'PENDING' && data.esimCode !== '') {
+                    // Fallback: Generate QR code from eSIM code
+                    const lpaData = qrCodeService_1.QRCodeService.generateLPAData(data.esimCode, data.packageName || '');
+                    qrCodeDataUrl = await qrcode_1.default.toDataURL(lpaData, {
+                        width: 300,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    });
+                }
+                else {
+                    // Final fallback: Generate placeholder QR code
+                    const placeholderData = `eSIM Code: ${data.esimCode || 'PENDING'}`;
+                    qrCodeDataUrl = await qrcode_1.default.toDataURL(placeholderData, {
+                        width: 300,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        }
+                    });
+                }
             }
-            else {
-                // Fallback: Generate QR code using LPA data or eSIM code
-                const lpaData = data.qrCodeData || qrCodeService_1.QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
-                try {
-                    qrCodeDataUrl = await qrCodeService_1.QRCodeService.generateQRCodeDataURL(data.esimCode || '', data.packageName || '');
-                }
-                catch (error) {
-                    // Final fallback: Use external QR code service
-                    qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
-                }
+            catch (error) {
+                console.error('Error generating QR code for email:', error);
+                // Emergency fallback: Use external service (less reliable but better than no QR code)
+                const fallbackData = data.qrCodeData || data.esimCode || 'eSIM';
+                qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fallbackData)}`;
             }
             // Compose the greeting
             const greetingName = data.firstName || data.name || '';
@@ -126,7 +159,7 @@ exports.emailTemplates = {
         <p>Përshëndetje ${greetingName},</p>
         <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
         <div class="qr-code">
-          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto;" />
+          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px;" />
         </div>
         <p><strong>Nr. eSim:</strong> ${esimId}</p>
         <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>

@@ -296,8 +296,11 @@ async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: a
       logger.info(`Including eSIM profile data in email`, {
         orderId,
         esimId: metadata.esimId,
-        profileData: metadata.esimProfile,
+        hasQrCodeUrl: !!metadata.esimProfile.qrCodeUrl,
+        hasLpaCode: !!metadata.esimProfile.lpaCode,
+        hasActivationCode: !!metadata.esimProfile.activationCode,
         qrCodeUrl: metadata.esimProfile.qrCodeUrl,
+        lpaCode: metadata.esimProfile.lpaCode ? `${metadata.esimProfile.lpaCode.substring(0, 50)}...` : null,
       });
       
       // Use the real eSIM profile data from Roamify
@@ -310,6 +313,21 @@ async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: a
       if (metadata.esimProfile.iosQuickInstall) {
         (emailData as any).iosQuickInstall = metadata.esimProfile.iosQuickInstall;
       }
+      
+      // Log what we're actually sending to the email template
+      logger.info(`Email template data for QR code`, {
+        orderId,
+        hasQrCodeData: !!emailData.qrCodeData,
+        hasQrCodeUrl: !!emailData.qrCodeUrl,
+        esimCode: emailData.esimCode,
+        qrCodeDataLength: emailData.qrCodeData ? emailData.qrCodeData.length : 0,
+      });
+    } else {
+      logger.warn(`No eSIM profile data available for email`, {
+        orderId,
+        esimId: metadata.esimId,
+        availableMetadataKeys: Object.keys(metadata),
+      });
     }
 
     await sendEmail({
@@ -704,7 +722,14 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         // Generate eSIM QR code/profile
         try {
           const qrData = await RoamifyService.getQrCodeWithPolling(esimId);
-          logger.info(`QR code polled and ready`, { orderId, esimId, qrCodeUrl: qrData.qrCodeUrl });
+          logger.info(`QR code polled and ready`, { 
+            orderId, 
+            esimId, 
+            qrCodeUrl: qrData.qrCodeUrl,
+            hasLpaCode: !!qrData.lpaCode,
+            hasActivationCode: !!qrData.activationCode,
+            lpaCodePreview: qrData.lpaCode ? `${qrData.lpaCode.substring(0, 50)}...` : null,
+          });
           
           // Update order with QR code data
           await supabase

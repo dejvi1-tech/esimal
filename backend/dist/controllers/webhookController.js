@@ -273,8 +273,11 @@ async function sendConfirmationEmail(order, paymentIntent, metadata) {
             logger_1.logger.info(`Including eSIM profile data in email`, {
                 orderId,
                 esimId: metadata.esimId,
-                profileData: metadata.esimProfile,
+                hasQrCodeUrl: !!metadata.esimProfile.qrCodeUrl,
+                hasLpaCode: !!metadata.esimProfile.lpaCode,
+                hasActivationCode: !!metadata.esimProfile.activationCode,
                 qrCodeUrl: metadata.esimProfile.qrCodeUrl,
+                lpaCode: metadata.esimProfile.lpaCode ? `${metadata.esimProfile.lpaCode.substring(0, 50)}...` : null,
             });
             // Use the real eSIM profile data from Roamify
             emailData.esimCode = metadata.esimId || emailData.esimCode;
@@ -285,6 +288,21 @@ async function sendConfirmationEmail(order, paymentIntent, metadata) {
             if (metadata.esimProfile.iosQuickInstall) {
                 emailData.iosQuickInstall = metadata.esimProfile.iosQuickInstall;
             }
+            // Log what we're actually sending to the email template
+            logger_1.logger.info(`Email template data for QR code`, {
+                orderId,
+                hasQrCodeData: !!emailData.qrCodeData,
+                hasQrCodeUrl: !!emailData.qrCodeUrl,
+                esimCode: emailData.esimCode,
+                qrCodeDataLength: emailData.qrCodeData ? emailData.qrCodeData.length : 0,
+            });
+        }
+        else {
+            logger_1.logger.warn(`No eSIM profile data available for email`, {
+                orderId,
+                esimId: metadata.esimId,
+                availableMetadataKeys: Object.keys(metadata),
+            });
         }
         await (0, emailService_1.sendEmail)({
             to: email,
@@ -645,7 +663,14 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 // Generate eSIM QR code/profile
                 try {
                     const qrData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimId);
-                    logger_1.logger.info(`QR code polled and ready`, { orderId, esimId, qrCodeUrl: qrData.qrCodeUrl });
+                    logger_1.logger.info(`QR code polled and ready`, {
+                        orderId,
+                        esimId,
+                        qrCodeUrl: qrData.qrCodeUrl,
+                        hasLpaCode: !!qrData.lpaCode,
+                        hasActivationCode: !!qrData.activationCode,
+                        lpaCodePreview: qrData.lpaCode ? `${qrData.lpaCode.substring(0, 50)}...` : null,
+                    });
                     // Update order with QR code data
                     await supabase_1.supabase
                         .from('orders')
