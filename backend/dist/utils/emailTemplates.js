@@ -101,30 +101,34 @@ exports.emailTemplates = {
     orderConfirmation: {
         subject: 'eSIM juaj është gati! - Konfirmimi i porosisë',
         html: async (data) => {
-            // Use the real LPA format QR code data from Roamify
-            const lpaData = data.qrCodeData || qrCodeService_1.QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
-            // Generate QR code as data URL for email embedding
+            // Prioritize the real QR code URL from Roamify over generated ones
             let qrCodeDataUrl = '';
-            try {
-                if (data.qrCodeUrl) {
-                    qrCodeDataUrl = data.qrCodeUrl;
-                }
-                else {
+            if (data.qrCodeUrl && data.qrCodeUrl !== '') {
+                // Use the real QR code URL from Roamify
+                qrCodeDataUrl = data.qrCodeUrl;
+            }
+            else {
+                // Fallback: Generate QR code using LPA data or eSIM code
+                const lpaData = data.qrCodeData || qrCodeService_1.QRCodeService.generateLPAData(data.esimCode || '', data.packageName || '');
+                try {
                     qrCodeDataUrl = await qrCodeService_1.QRCodeService.generateQRCodeDataURL(data.esimCode || '', data.packageName || '');
                 }
-            }
-            catch (error) {
-                qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
+                catch (error) {
+                    // Final fallback: Use external QR code service
+                    qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(lpaData)}`;
+                }
             }
             // Compose the greeting
-            const greetingName = data.firstName ? data.firstName : '';
+            const greetingName = data.firstName || data.name || '';
+            // Show the real eSIM ID instead of PENDING
+            const esimId = data.iccid || data.esimCode || 'PENDING';
             return baseTemplate(`
         <p>Përshëndetje ${greetingName},</p>
         <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
         <div class="qr-code">
           <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto;" />
         </div>
-        <p><strong>Nr. eSim:</strong> ${data.iccid || data.esimCode || ''}</p>
+        <p><strong>Nr. eSim:</strong> ${esimId}</p>
         <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
         <p><strong>Iphone:</strong> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni <b>"Add eSIM"</b> (funksionon me iOS 17.4 e sipër).</p>
         <p>Nëse nuk ju del &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
