@@ -330,3 +330,8 @@ p, span, div, a, button, input, textarea, select {
   -webkit-backdrop-filter: blur(4px);
   transition: none !important;
 }
+
+/* Override: Force black text for all text in the checkout page */
+.checkout-page *, .checkout-page {
+  color: #111 !important;
+}
