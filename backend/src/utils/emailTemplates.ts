@@ -159,16 +159,12 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           console.log('[EMAIL TEMPLATE DEBUG] ✅ Using REAL QR code data from Roamify');
           console.log('[EMAIL TEMPLATE DEBUG] Real QR data:', data.qrCodeData);
           
-          qrCodeDataUrl = await QRCode.toDataURL(data.qrCodeData, {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
+          // PRIMARY: Use external QR code service for Gmail compatibility
+          const encodedData = encodeURIComponent(data.qrCodeData);
+          qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
           
-          console.log('[EMAIL TEMPLATE DEBUG] ✅ Successfully generated QR code from REAL Roamify data');
+          console.log('[EMAIL TEMPLATE DEBUG] ✅ Using external QR service for Gmail compatibility');
+          console.log('[EMAIL TEMPLATE DEBUG] QR URL:', qrCodeDataUrl);
           
         } else if (data.esimCode && data.esimCode !== 'PENDING' && data.esimCode !== '') {
           // FALLBACK: Only use this if no real QR code data available
@@ -176,16 +172,10 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           console.log('[EMAIL TEMPLATE DEBUG] Fallback eSIM code:', data.esimCode);
           
           const lpaData = QRCodeService.generateLPAData(data.esimCode, data.packageName || '');
-          qrCodeDataUrl = await QRCode.toDataURL(lpaData, {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
+          const encodedData = encodeURIComponent(lpaData);
+          qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
           
-          console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Generated QR code from FALLBACK data');
+          console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Generated external QR URL from FALLBACK data');
           
         } else {
           // EMERGENCY FALLBACK: Generate placeholder QR code with order info
@@ -197,30 +187,25 @@ export const emailTemplates: Record<string, EmailTemplate> = {
             placeholderData = `eSIM Package: ${data.packageName || 'eSIM'}\nContact support for activation`;
           }
           
-          qrCodeDataUrl = await QRCode.toDataURL(placeholderData, {
-            width: 300,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
+          const encodedData = encodeURIComponent(placeholderData);
+          qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
           
-          console.log('[EMAIL TEMPLATE DEBUG] ❌ Generated EMERGENCY PLACEHOLDER QR code');
+          console.log('[EMAIL TEMPLATE DEBUG] ❌ Generated EMERGENCY PLACEHOLDER QR URL');
         }
       } catch (error) {
         console.error('❌ Error generating QR code for email:', error);
-        // Emergency fallback: Use external service (less reliable but better than no QR code)
+        // Emergency fallback: Use external service with basic data
         console.log('[EMAIL TEMPLATE DEBUG] 🚨 Using EXTERNAL emergency fallback due to error');
         const fallbackData = data.qrCodeData || data.esimCode || 'eSIM';
-        qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fallbackData)}`;
+        const encodedData = encodeURIComponent(fallbackData);
+        qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
         console.log('[EMAIL TEMPLATE DEBUG] 🚨 External fallback URL:', qrCodeDataUrl);
       }
 
       console.log('[EMAIL TEMPLATE DEBUG] Final QR code result:', {
         qrCodeLength: qrCodeDataUrl.length,
-        isBase64: qrCodeDataUrl.startsWith('data:image/'),
         isExternal: qrCodeDataUrl.startsWith('http'),
+        isGmailCompatible: qrCodeDataUrl.includes('qrserver.com'),
         preview: qrCodeDataUrl.substring(0, 100) + '...',
         usedRealData: !!(data.qrCodeData && data.qrCodeData !== '' && data.qrCodeData !== 'PENDING')
       });
@@ -235,7 +220,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
         <p>Përshëndetje ${greetingName},</p>
         <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
         <div class="qr-code">
-          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px;" />
+          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" width="300" height="300" style="display: block; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px; margin: 0 auto;" />
         </div>
         <p><strong>Nr. eSim:</strong> ${esimId}</p>
         <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
