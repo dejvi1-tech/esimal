@@ -16,7 +16,9 @@
     "migration:sql": "ts-node src/scripts/runMigration.ts",
     "test:email": "ts-node src/scripts/testEmail.ts",
     "test:email:simple": "ts-node src/scripts/simpleEmailTest.ts",
-    "validate:packages": "ts-node src/scripts/validatePackages.ts"
+    "validate:packages": "ts-node src/scripts/validatePackages.ts",
+    "fix:webhooks": "node run_webhook_fixes.js",
+    "test:webhooks": "node run_webhook_fixes.js"
   },
   "keywords": [],
   "author": "",

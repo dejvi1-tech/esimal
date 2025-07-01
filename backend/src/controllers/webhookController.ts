@@ -60,7 +60,7 @@ async function validatePackageExists(packageId: string, context: string = 'unkno
 }
 
 /**
- * Handle Stripe webhook events
+ * Handle Stripe webhook events with idempotency protection
  */
 export const handleStripeWebhook = (req: Request, res: Response, next: NextFunction) => {
   console.log('[EMAIL DEBUG] handleStripeWebhook called. Event:', req.body);
@@ -83,6 +83,57 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
     }
 
     try {
+      // IDEMPOTENCY CHECK: Prevent duplicate event processing
+      const eventId = event.id;
+      const eventType = event.type;
+      
+      // Check if we've already processed this event
+      const { data: existingEvent, error: checkError } = await supabase
+        .from('processed_events')
+        .select('id, processed_at, status')
+        .eq('event_id', eventId)
+        .single();
+
+      if (existingEvent) {
+        logger.info(`⚡ Event ${eventId} already processed at ${existingEvent.processed_at} with status ${existingEvent.status}`, {
+          eventId,
+          eventType,
+          previousProcessingStatus: existingEvent.status,
+          duplicateAttempt: true,
+        });
+        return res.json({ 
+          received: true, 
+          message: 'Event already processed',
+          previousStatus: existingEvent.status 
+        });
+      }
+
+      // Create processing record to mark this event as being handled
+      const { error: insertError } = await supabase
+        .from('processed_events')
+        .insert({
+          event_id: eventId,
+          event_type: eventType,
+          status: 'processing',
+          payload: event,
+          processed_at: new Date().toISOString(),
+        });
+
+      if (insertError) {
+        logger.error('Failed to create processing record - potential duplicate event', {
+          eventId,
+          eventType,
+          error: insertError.message,
+        });
+        // If insert fails due to unique constraint, it means another process is handling this event
+        if (insertError.message.includes('duplicate') || insertError.message.includes('unique')) {
+          logger.warn(`⚡ Event ${eventId} is being processed by another instance - skipping`);
+          return res.json({ received: true, message: 'Event being processed by another instance' });
+        }
+        // For other errors, continue processing but log the issue
+        logger.warn('Processing record creation failed but continuing with event processing');
+      }
+
       // Log the entire webhook event for debugging
       logger.info(`Received Stripe webhook event: ${event.type}`, {
         eventId: event.id,
@@ -91,43 +142,64 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       });
       console.log('[EMAIL DEBUG] Stripe event type:', event.type);
 
-      // Handle the event
-      switch (event.type) {
-        case 'payment_intent.succeeded':
-          console.log('[EMAIL DEBUG] Entered case: payment_intent.succeeded');
-          await handlePaymentIntentSucceeded(event.data.object);
-          break;
-        case 'payment_intent.payment_failed':
-          console.log('[EMAIL DEBUG] Entered case: payment_intent.payment_failed');
-          await handlePaymentIntentFailed(event.data.object);
-          break;
-        case 'payment_intent.canceled':
-          console.log('[EMAIL DEBUG] Entered case: payment_intent.canceled');
-          await handlePaymentIntentCanceled(event.data.object);
-          break;
-        case 'checkout.session.completed':
-          console.log('[EMAIL DEBUG] Entered case: checkout.session.completed');
-          await handleCheckoutSessionCompleted(event.data.object);
-          break;
-        case 'charge.refunded':
-          console.log('[EMAIL DEBUG] Entered case: charge.refunded');
-          await handleChargeRefunded(event.data.object);
-          break;
-        case 'customer.subscription.created':
-          console.log('[EMAIL DEBUG] Entered case: customer.subscription.created');
-          await handleSubscriptionCreated(event.data.object);
-          break;
-        case 'customer.subscription.updated':
-          console.log('[EMAIL DEBUG] Entered case: customer.subscription.updated');
-          await handleSubscriptionUpdated(event.data.object);
-          break;
-        case 'customer.subscription.deleted':
-          console.log('[EMAIL DEBUG] Entered case: customer.subscription.deleted');
-          await handleSubscriptionDeleted(event.data.object);
-          break;
-        default:
-          logger.info(`Unhandled event type: ${event.type}`);
-          console.log('[EMAIL DEBUG] Unhandled event type:', event.type);
+      let processingStatus = 'completed';
+      let processingError = null;
+
+      try {
+        // Handle the event
+        switch (event.type) {
+          case 'payment_intent.succeeded':
+            console.log('[EMAIL DEBUG] Entered case: payment_intent.succeeded');
+            await handlePaymentIntentSucceeded(event.data.object);
+            break;
+          case 'payment_intent.payment_failed':
+            console.log('[EMAIL DEBUG] Entered case: payment_intent.payment_failed');
+            await handlePaymentIntentFailed(event.data.object);
+            break;
+          case 'payment_intent.canceled':
+            console.log('[EMAIL DEBUG] Entered case: payment_intent.canceled');
+            await handlePaymentIntentCanceled(event.data.object);
+            break;
+          case 'checkout.session.completed':
+            console.log('[EMAIL DEBUG] Entered case: checkout.session.completed');
+            await handleCheckoutSessionCompleted(event.data.object);
+            break;
+          case 'charge.refunded':
+            console.log('[EMAIL DEBUG] Entered case: charge.refunded');
+            await handleChargeRefunded(event.data.object);
+            break;
+          case 'customer.subscription.created':
+            console.log('[EMAIL DEBUG] Entered case: customer.subscription.created');
+            await handleSubscriptionCreated(event.data.object);
+            break;
+          case 'customer.subscription.updated':
+            console.log('[EMAIL DEBUG] Entered case: customer.subscription.updated');
+            await handleSubscriptionUpdated(event.data.object);
+            break;
+          case 'customer.subscription.deleted':
+            console.log('[EMAIL DEBUG] Entered case: customer.subscription.deleted');
+            await handleSubscriptionDeleted(event.data.object);
+            break;
+          default:
+            logger.info(`Unhandled event type: ${event.type}`);
+            console.log('[EMAIL DEBUG] Unhandled event type:', event.type);
+        }
+      } catch (eventError: any) {
+        processingStatus = 'failed';
+        processingError = eventError.message;
+        throw eventError;
+      } finally {
+        // Update processing status
+        if (!insertError) {
+          await supabase
+            .from('processed_events')
+            .update({
+              status: processingStatus,
+              error_message: processingError,
+              completed_at: new Date().toISOString(),
+            })
+            .eq('event_id', eventId);
+        }
       }
 
       res.json({ received: true });
@@ -639,71 +711,40 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     const status: UserOrderStatus = roamifySuccess ? 'active' : 'pending';
     validateUserOrderStatus(status);
 
-    // ENHANCED: Ensure guest user exists before creating user_orders entry
+    // OPTIMIZED: Ensure guest user exists before creating user_orders entry
     if (safeUserId === GUEST_USER_ID) {
       logger.info(`👤 Creating user_orders entry for guest user: ${GUEST_USER_ID}`);
       
-      // Check if guest user exists, create if needed
+      // Check if guest user exists (should exist due to migration)
       const { data: guestUser, error: guestUserError } = await supabase
         .from('users')
-        .select('id')
+        .select('id, email, role')
         .eq('id', GUEST_USER_ID)
         .single();
       
       if (guestUserError || !guestUser) {
-        logger.warn(`⚠️ Guest user ${GUEST_USER_ID} not found, creating...`);
+        logger.warn(`⚠️ Guest user ${GUEST_USER_ID} not found - this should not happen after migration`);
         
+        // The migration should have created this user, but as a fallback, try to create it
+        // with the service role client
         try {
-          // Try multiple strategies for guest user creation
-          const creationStrategies = [
-            // Strategy 1: Minimal required fields (role: 'user' since 'guest' is not in enum)
-            {
+          const { data: newGuestUser, error: createError } = await supabase
+            .from('users')
+            .insert({
               id: GUEST_USER_ID,
               email: 'guest@esimal.com',
               password: 'disabled-account',
+              first_name: 'Guest',
+              last_name: 'User',
               role: 'user'
-            },
-            // Strategy 2: Even more minimal
-            {
-              id: GUEST_USER_ID,
-              email: 'guest@esimal.com',
-              password: 'disabled-account'
-            }
-          ];
-          
-          let newGuestUser = null;
-          let createGuestError = null;
-          
-          for (const strategy of creationStrategies) {
-            try {
-              const { data, error } = await supabase
-                .from('users')
-                .insert(strategy)
-                .select()
-                .single();
-              
-              if (!error && data) {
-                newGuestUser = data;
-                createGuestError = null;
-                logger.info(`✅ Guest user created with strategy: ${JSON.stringify(Object.keys(strategy))}`);
-                break;
-              } else {
-                createGuestError = error;
-                logger.warn(`⚠️ Guest user strategy failed: ${error?.message}`);
-              }
-            } catch (strategyError: any) {
-              createGuestError = strategyError;
-              logger.warn(`⚠️ Guest user strategy exception: ${strategyError?.message || 'Unknown error'}`);
-            }
-          }
-          
-          if (createGuestError) {
-            logger.error(`❌ Failed to create guest user: ${createGuestError.message}`);
+            })
+            .select()
+            .single();
             
-            // ALTERNATIVE: Skip user_orders creation for now and log for admin review
-            logger.error(`⚠️ Skipping user_orders creation due to guest user issue. Order ID: ${orderId}`);
+          if (createError) {
+            logger.error(`❌ Failed to create guest user even with optimized approach: ${createError.message}`);
             
-            // Update order metadata to indicate this needs admin attention
+            // Update order metadata and continue without user_orders
             await supabase
               .from('orders')
               .update({
@@ -716,16 +757,14 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
               })
               .eq('id', orderId);
             
-            // Don't throw error, just skip user_orders creation and CONTINUE with email flow
             logger.warn(`⚠️ Order ${orderId} will continue without user_orders entry - proceeding to email delivery`);
-            // Continue to email flow instead of returning early
           } else {
-            logger.info(`✅ Guest user created successfully: ${newGuestUser.id}`);
+            logger.info(`✅ Guest user created successfully as fallback: ${newGuestUser.id}`);
           }
         } catch (guestCreationError) {
           logger.error(`❌ Exception creating guest user:`, guestCreationError);
           
-          // Skip user_orders creation and mark for admin review
+          // Mark for admin review and continue
           await supabase
             .from('orders')
             .update({
@@ -739,10 +778,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
             .eq('id', orderId);
           
           logger.warn(`⚠️ Order ${orderId} proceeding to email delivery despite guest user creation exception`);
-          // Continue to email flow instead of returning early
         }
       } else {
-        logger.info(`✅ Guest user exists: ${GUEST_USER_ID}`);
+        logger.info(`✅ Guest user exists: ${GUEST_USER_ID} (${guestUser.email})`);
       }
     }
 
