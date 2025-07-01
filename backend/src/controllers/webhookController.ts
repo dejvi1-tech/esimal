@@ -716,9 +716,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
               })
               .eq('id', orderId);
             
-            // Don't throw error, just skip user_orders creation
-            logger.warn(`⚠️ Order ${orderId} completed but user_orders entry skipped - requires admin review`);
-            return; // Exit early but don't fail the entire eSIM delivery
+            // Don't throw error, just skip user_orders creation and CONTINUE with email flow
+            logger.warn(`⚠️ Order ${orderId} will continue without user_orders entry - proceeding to email delivery`);
+            // Continue to email flow instead of returning early
           } else {
             logger.info(`✅ Guest user created successfully: ${newGuestUser.id}`);
           }
@@ -738,8 +738,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
             })
             .eq('id', orderId);
           
-          logger.warn(`⚠️ Order ${orderId} completed but user_orders entry skipped due to guest user creation failure`);
-          return; // Don't fail the entire delivery
+          logger.warn(`⚠️ Order ${orderId} proceeding to email delivery despite guest user creation exception`);
+          // Continue to email flow instead of returning early
         }
       } else {
         logger.info(`✅ Guest user exists: ${GUEST_USER_ID}`);
@@ -787,11 +787,12 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         })
         .eq('id', orderId);
       
-      // Don't throw - continue with eSIM delivery
+      // Continue with email flow - don't return early
+      logger.warn(`⚠️ Order ${orderId} proceeding to email delivery despite user_orders creation failure`);
     } else {
       logger.info(`✅ User orders entry created successfully`, {
         orderId,
-        userOrderId: userOrder.id,
+        userOrderId: userOrder?.id,
       });
     }
 
@@ -921,7 +922,7 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         .eq('id', orderId);
       
       // Update user_orders with QR code URL if entry exists
-      if (userOrder) {
+      if (userOrder && userOrder.id) {
         await supabase
           .from('user_orders')
           .update({
@@ -929,6 +930,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
             updated_at: new Date().toISOString(),
           })
           .eq('id', userOrder.id);
+        logger.info(`✅ Updated user_orders with QR code URL`, { orderId, userOrderId: userOrder.id });
+      } else {
+        logger.warn(`⚠️ Skipping user_orders QR code update - no user_orders entry exists`, { orderId });
       }
       
       logger.info(`✅ QR code data saved to database`);
