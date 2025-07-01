@@ -694,6 +694,13 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
 
     // Update order with eSIM data (if available)
     const esimId = roamifyOrder.esimId;
+    logger.info(`Checking eSIM ID for QR code generation`, {
+      orderId,
+      esimId,
+      hasEsimId: !!esimId,
+      roamifyOrderId: roamifyOrder.orderId,
+    });
+    
     if (esimId) {
       const { error: updateError } = await supabase
         .from('orders')
@@ -786,16 +793,33 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
           });
         }
       }
-    } else {
-      // No eSIM ID available, send email without QR code
-      await sendConfirmationEmail(order, paymentIntent, metadata);
-    }
+            } else {
+          // No eSIM ID available, send email without QR code
+          logger.warn(`No eSIM ID available for email delivery`, {
+            orderId,
+            packageId,
+            orderEsimCode: order.esim_code,
+            orderRoamifyEsimId: order.roamify_esim_id,
+            paymentIntentId: paymentIntent.id,
+          });
+          await sendConfirmationEmail(order, paymentIntent, metadata);
+        }
   } catch (esimError) {
     logger.error('Error delivering eSIM:', esimError, {
       orderId,
       packageId,
       paymentIntentId: paymentIntent.id,
+      error: esimError instanceof Error ? esimError.message : String(esimError),
+      stack: esimError instanceof Error ? esimError.stack : undefined,
     });
+    
+    // Still try to send email even if eSIM delivery failed
+    logger.info(`Attempting to send email despite eSIM delivery failure`, { orderId });
+    try {
+      await sendConfirmationEmail(order, paymentIntent, metadata);
+    } catch (emailError) {
+      logger.error('Failed to send email after eSIM delivery failure:', emailError, { orderId });
+    }
   }
 }
 
