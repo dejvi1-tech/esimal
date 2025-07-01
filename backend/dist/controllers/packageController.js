@@ -72,23 +72,20 @@ const getAllPackages = async (req, res, next) => {
     try {
         const countryCode = req.query.country_code;
         console.log(`[API] /api/packages received country_code:`, countryCode); // DEBUG LOG
-        
         let query = supabaseAdmin
             .from('my_packages')
             .select('*')
             .eq('visible', true)
             .eq('show_on_frontend', true);
-        
         // If country_code is provided, filter by it. Otherwise, return all packages (for admin panel)
         if (countryCode && typeof countryCode === 'string' && countryCode.length === 2) {
             query = query.eq('country_code', countryCode.toUpperCase());
             console.log(`[API] /api/packages filtering by country_code:`, countryCode);
-        } else {
+        }
+        else {
             console.log(`[API] /api/packages returning all packages (no country filter)`);
         }
-        
         const { data: packages, error } = await query.order('sale_price', { ascending: true });
-        
         if (error) {
             throw error;
         }

@@ -521,20 +521,48 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         logger.warn(`Guest user ${GUEST_USER_ID} not found, creating...`);
         
         try {
-          const { data: newGuestUser, error: createGuestError } = await supabase
-            .from('users')
-            .insert({
+          // Try multiple strategies for guest user creation
+          const creationStrategies = [
+            // Strategy 1: Minimal required fields (role: 'user' since 'guest' is not in enum)
+            {
               id: GUEST_USER_ID,
               email: 'guest@esimal.com',
               password: 'disabled-account',
-              first_name: 'Guest',
-              last_name: 'User',
-              role: 'guest',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .select()
-            .single();
+              role: 'user'
+            },
+            // Strategy 2: Even more minimal
+            {
+              id: GUEST_USER_ID,
+              email: 'guest@esimal.com',
+              password: 'disabled-account'
+            }
+          ];
+          
+          let newGuestUser = null;
+          let createGuestError = null;
+          
+          for (const strategy of creationStrategies) {
+            try {
+              const { data, error } = await supabase
+                .from('users')
+                .insert(strategy)
+                .select()
+                .single();
+              
+              if (!error && data) {
+                newGuestUser = data;
+                createGuestError = null;
+                logger.info(`Guest user created with strategy: ${JSON.stringify(Object.keys(strategy))}`);
+                break;
+              } else {
+                createGuestError = error;
+                logger.warn(`Guest user strategy failed: ${error?.message}`);
+              }
+            } catch (strategyError: any) {
+              createGuestError = strategyError;
+              logger.warn(`Guest user strategy exception: ${strategyError?.message || 'Unknown error'}`);
+            }
+          }
           
           if (createGuestError) {
             logger.error(`Failed to create guest user: ${createGuestError.message}`);

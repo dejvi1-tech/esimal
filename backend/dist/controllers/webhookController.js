@@ -19,6 +19,43 @@ function validateUserOrderStatus(status) {
     }
 }
 /**
+ * Validate that a package ID exists in either my_packages or packages table
+ * This helps catch package lookup issues early
+ */
+async function validatePackageExists(packageId, context = 'unknown') {
+    try {
+        // First check my_packages table
+        const { data: myPackageData, error: myPackageError } = await supabase_1.supabase
+            .from('my_packages')
+            .select('*')
+            .eq('id', packageId)
+            .single();
+        if (!myPackageError && myPackageData) {
+            logger_1.logger.info(`Package validation: Found ${packageId} in my_packages table (context: ${context})`);
+            return { found: true, table: 'my_packages', packageData: myPackageData };
+        }
+        // Then check packages table
+        const { data: packageData, error: packageError } = await supabase_1.supabase
+            .from('packages')
+            .select('*')
+            .eq('id', packageId)
+            .single();
+        if (!packageError && packageData) {
+            logger_1.logger.info(`Package validation: Found ${packageId} in packages table (context: ${context})`);
+            return { found: true, table: 'packages', packageData: packageData };
+        }
+        logger_1.logger.warn(`Package validation: ${packageId} not found in either table (context: ${context})`, {
+            myPackageError: myPackageError?.message,
+            packageError: packageError?.message,
+        });
+        return { found: false, table: null, packageData: null };
+    }
+    catch (error) {
+        logger_1.logger.error(`Package validation error for ${packageId} (context: ${context}):`, error);
+        return { found: false, table: null, packageData: null };
+    }
+}
+/**
  * Handle Stripe webhook events
  */
 const handleStripeWebhook = (req, res, next) => {
@@ -107,6 +144,43 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
         metadata: JSON.stringify(metadata),
     });
     try {
+        // EARLY VALIDATION: Check if package exists before proceeding
+        if (metadata.packageId) {
+            const packageValidation = await validatePackageExists(metadata.packageId, 'payment_intent_succeeded');
+            if (!packageValidation.found) {
+                logger_1.logger.error(`CRITICAL: Package ID ${metadata.packageId} from payment intent metadata does not exist in database`, {
+                    paymentIntentId,
+                    packageId: metadata.packageId,
+                    metadata: JSON.stringify(metadata),
+                });
+                // Still try to update the order, but mark it as problematic
+                const { data: order, error: orderError } = await supabase_1.supabase
+                    .from('orders')
+                    .update({
+                    status: 'paid_but_package_missing',
+                    updated_at: new Date().toISOString(),
+                    metadata: {
+                        error: 'Package ID not found in database',
+                        original_package_id: metadata.packageId,
+                        needs_admin_review: true
+                    }
+                })
+                    .eq('payment_intent_id', paymentIntentId)
+                    .select()
+                    .single();
+                if (!orderError && order) {
+                    logger_1.logger.error(`Order ${order.id} marked as 'paid_but_package_missing' - requires admin review`, {
+                        orderId: order.id,
+                        packageId: metadata.packageId,
+                        paymentIntentId,
+                    });
+                }
+                return; // Don't proceed with eSIM delivery
+            }
+            else {
+                logger_1.logger.info(`Package validation passed: ${metadata.packageId} found in ${packageValidation.table} table`);
+            }
+        }
         // Update order status to paid
         const { data: order, error: orderError } = await supabase_1.supabase
             .from('orders')
@@ -248,41 +322,82 @@ async function deliverEsim(order, paymentIntent, metadata) {
         paymentIntentId: paymentIntent.id,
     });
     try {
-        // First, try to find package by UUID in the packages table
+        // FIXED: First, try to find package by UUID in the my_packages table (matches handleCheckoutSessionCompleted)
         let { data: packageData, error: packageError } = await supabase_1.supabase
-            .from('packages')
+            .from('my_packages')
             .select('*')
             .eq('id', packageId)
             .single();
+        // FALLBACK: If not found in my_packages, try packages table as secondary lookup
         if (packageError || !packageData) {
-            logger_1.logger.error(`Package ID ${packageId} not found in Supabase`);
-            throw new Error(`Package ID ${packageId} not found in Supabase`);
+            logger_1.logger.info(`Package ID ${packageId} not found in my_packages table, trying packages table as fallback...`);
+            const { data: packagesData, error: packagesError } = await supabase_1.supabase
+                .from('packages')
+                .select('*')
+                .eq('id', packageId)
+                .single();
+            if (packagesError || !packagesData) {
+                logger_1.logger.error(`Package ID ${packageId} not found in either my_packages or packages table`, {
+                    myPackagesError: packageError,
+                    packagesError: packagesError,
+                    packageId,
+                    orderId,
+                    paymentIntentId: paymentIntent.id,
+                });
+                // ENHANCED ERROR: Provide more context about what went wrong
+                throw new Error(`Package ID ${packageId} not found in Supabase. Checked both my_packages and packages tables. This suggests a data consistency issue where the package used for checkout no longer exists in the database.`);
+            }
+            packageData = packagesData;
+            logger_1.logger.info(`Package found in packages table as fallback: ${packageId}`);
         }
         else {
-            logger_1.logger.info(`Package found by UUID in packages table: ${packageId}`);
+            logger_1.logger.info(`Package found in my_packages table: ${packageId}`);
         }
-        // --- STRICT LOGIC ---
+        // --- STRICT LOGIC FOR ROAMIFY PACKAGE ID ---
         let realRoamifyPackageId = null;
-        if (packageData && !packageData.features) {
-            if (packageData.reseller_id) {
-                realRoamifyPackageId = packageData.reseller_id;
-                logger_1.logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
-            }
-            else {
-                logger_1.logger.error(`No reseller_id found for package: ${packageData.id}`);
-                throw new Error(`No reseller_id found for package: ${packageData.id}`);
-            }
-        }
-        else if (packageData && packageData.features) {
+        // Check if the package has features with packageId
+        if (packageData && packageData.features && packageData.features.packageId) {
             realRoamifyPackageId = packageData.features.packageId;
             logger_1.logger.info(`Using packageId from features: ${realRoamifyPackageId}`);
         }
+        // Check if the package has reseller_id (fallback method)
+        else if (packageData && packageData.reseller_id) {
+            realRoamifyPackageId = packageData.reseller_id;
+            logger_1.logger.info(`Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
+        }
+        // If still no Roamify package ID found, try to find it in packages table by reseller_id
+        else if (packageData && !packageData.features && !packageData.reseller_id) {
+            logger_1.logger.warn(`No reseller_id or features.packageId found for package: ${packageData.id}. This package may not be properly configured for Roamify delivery.`);
+            // Try to find a related package in packages table that might have the Roamify ID
+            const { data: relatedPackages, error: relatedError } = await supabase_1.supabase
+                .from('packages')
+                .select('features, reseller_id')
+                .or(`name.eq.${packageData.name},country_name.eq.${packageData.country_name}`)
+                .limit(1);
+            if (!relatedError && relatedPackages && relatedPackages.length > 0) {
+                const relatedPackage = relatedPackages[0];
+                if (relatedPackage.features && relatedPackage.features.packageId) {
+                    realRoamifyPackageId = relatedPackage.features.packageId;
+                    logger_1.logger.info(`Found Roamify packageId from related package: ${realRoamifyPackageId}`);
+                }
+                else if (relatedPackage.reseller_id) {
+                    realRoamifyPackageId = relatedPackage.reseller_id;
+                    logger_1.logger.info(`Found reseller_id from related package: ${realRoamifyPackageId}`);
+                }
+            }
+        }
+        if (!realRoamifyPackageId) {
+            logger_1.logger.error(`No Roamify packageId found for package: ${packageId}. Package data:`, {
+                packageId: packageData.id,
+                name: packageData.name,
+                hasFeatures: !!packageData.features,
+                hasResellerId: !!packageData.reseller_id,
+                orderId,
+            });
+            throw new Error(`No Roamify packageId found for package: ${packageId}. Package may not be properly configured for eSIM delivery.`);
+        }
         // --- END STRICT LOGIC ---
         const roamifyPackageId = realRoamifyPackageId;
-        if (!roamifyPackageId) {
-            logger_1.logger.error(`No Roamify packageId found for package: ${packageId}`);
-            throw new Error(`No Roamify packageId found for package: ${packageId}`);
-        }
         logger_1.logger.info(`[ROAMIFY DEBUG] Creating eSIM order with working API`, {
             orderId,
             packageId,
@@ -348,6 +463,105 @@ async function deliverEsim(order, paymentIntent, metadata) {
             throw new Error('package_id is required');
         const status = roamifySuccess ? 'active' : 'pending';
         validateUserOrderStatus(status);
+        // ENHANCED: Ensure guest user exists before creating user_orders entry
+        if (safeUserId === GUEST_USER_ID) {
+            logger_1.logger.info(`Creating user_orders entry for guest user: ${GUEST_USER_ID}`);
+            // Check if guest user exists, create if needed
+            const { data: guestUser, error: guestUserError } = await supabase_1.supabase
+                .from('users')
+                .select('id')
+                .eq('id', GUEST_USER_ID)
+                .single();
+            if (guestUserError || !guestUser) {
+                logger_1.logger.warn(`Guest user ${GUEST_USER_ID} not found, creating...`);
+                try {
+                    // Try multiple strategies for guest user creation
+                    const creationStrategies = [
+                        // Strategy 1: Minimal required fields (role: 'user' since 'guest' is not in enum)
+                        {
+                            id: GUEST_USER_ID,
+                            email: 'guest@esimal.com',
+                            password: 'disabled-account',
+                            role: 'user'
+                        },
+                        // Strategy 2: Even more minimal
+                        {
+                            id: GUEST_USER_ID,
+                            email: 'guest@esimal.com',
+                            password: 'disabled-account'
+                        }
+                    ];
+                    let newGuestUser = null;
+                    let createGuestError = null;
+                    for (const strategy of creationStrategies) {
+                        try {
+                            const { data, error } = await supabase_1.supabase
+                                .from('users')
+                                .insert(strategy)
+                                .select()
+                                .single();
+                            if (!error && data) {
+                                newGuestUser = data;
+                                createGuestError = null;
+                                logger_1.logger.info(`Guest user created with strategy: ${JSON.stringify(Object.keys(strategy))}`);
+                                break;
+                            }
+                            else {
+                                createGuestError = error;
+                                logger_1.logger.warn(`Guest user strategy failed: ${error?.message}`);
+                            }
+                        }
+                        catch (strategyError) {
+                            createGuestError = strategyError;
+                            logger_1.logger.warn(`Guest user strategy exception: ${strategyError?.message || 'Unknown error'}`);
+                        }
+                    }
+                    if (createGuestError) {
+                        logger_1.logger.error(`Failed to create guest user: ${createGuestError.message}`);
+                        // ALTERNATIVE: Skip user_orders creation for now and log for admin review
+                        logger_1.logger.error(`Skipping user_orders creation due to guest user issue. Order ID: ${orderId}`);
+                        // Update order metadata to indicate this needs admin attention
+                        await supabase_1.supabase
+                            .from('orders')
+                            .update({
+                            metadata: {
+                                ...order.metadata,
+                                user_orders_skipped: true,
+                                guest_user_creation_failed: true,
+                                requires_admin_review: true
+                            }
+                        })
+                            .eq('id', orderId);
+                        // Don't throw error, just skip user_orders creation
+                        logger_1.logger.warn(`Order ${orderId} completed but user_orders entry skipped - requires admin review`);
+                        return; // Exit early but don't fail the entire eSIM delivery
+                    }
+                    else {
+                        logger_1.logger.info(`Guest user created successfully: ${newGuestUser.id}`);
+                    }
+                }
+                catch (guestCreationError) {
+                    logger_1.logger.error(`Exception creating guest user:`, guestCreationError);
+                    // Skip user_orders creation and mark for admin review
+                    await supabase_1.supabase
+                        .from('orders')
+                        .update({
+                        metadata: {
+                            ...order.metadata,
+                            user_orders_skipped: true,
+                            guest_user_creation_exception: true,
+                            requires_admin_review: true
+                        }
+                    })
+                        .eq('id', orderId);
+                    logger_1.logger.warn(`Order ${orderId} completed but user_orders entry skipped due to guest user creation failure`);
+                    return; // Don't fail the entire delivery
+                }
+            }
+            else {
+                logger_1.logger.info(`Guest user exists: ${GUEST_USER_ID}`);
+            }
+        }
         const userOrderData = {
             user_id: safeUserId,
             package_id: packageId,
@@ -367,13 +581,31 @@ async function deliverEsim(order, paymentIntent, metadata) {
             logger_1.logger.error(`[ROAMIFY DEBUG] Error creating user_orders entry`, {
                 orderId,
                 error: userOrderError,
+                userOrderData,
+                guestUserId: GUEST_USER_ID,
             });
-            throw new Error(`Failed to create user_orders entry: ${userOrderError.message}`);
+            // ENHANCED: Don't throw error, just log and mark for admin review
+            logger_1.logger.warn(`Continuing eSIM delivery despite user_orders creation failure for order ${orderId}`);
+            // Update order metadata to indicate this needs admin attention
+            await supabase_1.supabase
+                .from('orders')
+                .update({
+                metadata: {
+                    ...order.metadata,
+                    user_orders_creation_failed: true,
+                    user_orders_error: userOrderError.message,
+                    requires_admin_review: true
+                }
+            })
+                .eq('id', orderId);
+            // Don't throw - continue with eSIM delivery
         }
-        logger_1.logger.info(`[ROAMIFY DEBUG] User orders entry created successfully`, {
-            orderId,
-            userOrderId: userOrder.id,
-        });
+        else {
+            logger_1.logger.info(`[ROAMIFY DEBUG] User orders entry created successfully`, {
+                orderId,
+                userOrderId: userOrder.id,
+            });
+        }
         // Optionally, handle QR code generation if needed here
         // ...
         // Update order with eSIM data (if available)
