@@ -460,4 +460,42 @@ export class RoamifyService {
       iosQuickInstall,
     };
   }
+
+  /**
+   * Poll Roamify for eSIM profile until activationCode and smDp+Address are available
+   */
+  static async getEsimProfileWithPolling(orderId: string): Promise<{ activationCode: string, smDpPlusAddress: string, lpaCode: string }> {
+    const maxWaitMs = 300000; // 5 minutes max
+    const pollIntervalMs = 5000; // 5 seconds
+    const start = Date.now();
+    let lastError = null;
+    while (Date.now() - start < maxWaitMs) {
+      try {
+        const response = await axios.get(`${this.baseUrl}/api/esim/order/${orderId}`, {
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'esim-marketplace/1.0.0',
+          },
+          timeout: 15000,
+        });
+        const data = response.data?.data;
+        const esim = data?.esim;
+        const activationCode = esim?.activationCode || esim?.activation_code;
+        const smDpPlusAddress = esim?.smdpAddress || esim?.smDpPlusAddress;
+        const lpaCode = esim?.lpaCode;
+        if (activationCode && smDpPlusAddress) {
+          logger.info(`[ROAMIFY] Got eSIM profile: activationCode=${activationCode}, smDpPlusAddress=${smDpPlusAddress}, lpaCode=${lpaCode}`);
+          return { activationCode, smDpPlusAddress, lpaCode };
+        }
+        logger.info(`[ROAMIFY] eSIM profile not ready yet for order ${orderId}. Retrying...`);
+      } catch (err) {
+        lastError = err;
+        logger.warn(`[ROAMIFY] Error polling eSIM profile for order ${orderId}: ${err}`);
+      }
+      await new Promise(res => setTimeout(res, pollIntervalMs));
+    }
+    logger.error(`[ROAMIFY] Timed out waiting for eSIM profile for order ${orderId}`);
+    throw lastError || new Error('Timed out waiting for eSIM profile');
+  }
 } 

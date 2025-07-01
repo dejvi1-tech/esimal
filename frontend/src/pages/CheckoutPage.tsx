@@ -251,7 +251,7 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="checkout-page min-h-screen bg-gray-50 flex flex-col">
         <Helmet>
           <title>{t('checkout')} - eSIMFly</title>
           <meta name="description" content={t('checkout_description')} />
