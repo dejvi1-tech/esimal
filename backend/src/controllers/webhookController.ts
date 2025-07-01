@@ -217,19 +217,17 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
 
     logger.info(`Order updated successfully: ${order.id}`, { orderId: order.id, paymentIntentId });
 
-    // Deliver eSIM with comprehensive logging first
+        // Deliver eSIM with two-step email flow (thank you + QR code emails)
     if (metadata.packageId) {
       await deliverEsim(order, paymentIntent, metadata);
     } else {
       logger.warn('No package ID found in payment intent metadata', { paymentIntentId });
     }
-
-    // Send confirmation email with comprehensive logging after eSIM delivery
-    if (metadata.email) {
-      await sendConfirmationEmail(order, paymentIntent, metadata);
-    } else {
-      logger.warn('No email found in payment intent metadata', { paymentIntentId });
-    }
+    
+    // Note: Email sending is now integrated into deliverEsim() function
+    // No separate email call needed - deliverEsim() handles both:
+    // 1. Immediate thank you email after payment
+    // 2. QR code email after polling (if successful)
 
   } catch (error) {
     logger.error('Error handling payment success:', error, { paymentIntentId });
@@ -238,6 +236,71 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
 
 function isValidEsimProfile(qrData: any): boolean {
   return !!(qrData && (qrData.qrCodeUrl || qrData.lpaCode || qrData.activationCode));
+}
+
+/**
+ * Send immediate thank you email after payment confirmation
+ */
+async function sendThankYouEmail(order: any, paymentIntent: any, metadata: any) {
+  const orderId = order.id;
+  const email = order.guest_email || metadata.email;
+  const packageId = metadata.packageId;
+
+  logger.info(`📧 Sending immediate thank you email`, {
+    orderId,
+    email,
+    packageId,
+    paymentIntentId: paymentIntent.id,
+  });
+
+  try {
+    // Get package details for the email
+    const { data: packageData, error: packageError } = await supabase
+      .from('my_packages')
+      .select('*')
+      .eq('id', packageId)
+      .single();
+
+    if (packageError || !packageData) {
+      logger.error('Package not found for thank you email:', packageError, { packageId });
+      throw new Error(`Package not found: ${packageId}`);
+    }
+
+    // Prepare thank you email data
+    const emailData = {
+      orderId: orderId,
+      amount: paymentIntent.amount / 100,
+      packageName: metadata.packageName || packageData.name,
+      dataAmount: `${packageData.data_amount}GB`,
+      validityDays: packageData.validity_days,
+      name: metadata.name || '',
+      surname: metadata.surname || '',
+      email: email,
+      dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
+    };
+
+    await sendEmail({
+      to: email,
+      subject: emailTemplates.thankYou.subject,
+      html: async () => emailTemplates.thankYou.html(emailData),
+    });
+
+    logger.info(`✅ Thank you email sent successfully`, {
+      orderId,
+      email,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+
+  } catch (emailError) {
+    logger.error('❌ Error sending thank you email:', emailError, {
+      orderId,
+      email,
+      packageId,
+      paymentIntentId: paymentIntent.id,
+    });
+    // Don't throw error - this shouldn't stop the eSIM delivery process
+  }
 }
 
 /**
@@ -296,8 +359,8 @@ async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: a
       validityDays: packageData.validity_days,
       esimCode: metadata.esimId || order.esim_code || order.roamify_esim_id || 'PENDING',
       iccid: metadata.esimId || order.esim_code || order.roamify_esim_id || '',
-      qrCodeData: order.qr_code_data || '',
-      qrCodeUrl: '', // Will be set from eSIM profile data
+      qrCodeData: '', // Will be set from real Roamify data first, then fallback to DB
+      qrCodeUrl: '',
       isGuestOrder: true,
       signupUrl: `${process.env.FRONTEND_URL}/signup`,
       dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
@@ -306,43 +369,71 @@ async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: a
       email: email,
     };
 
-    // If we have eSIM profile data from Roamify, include it
+    // PRIORITY 1: Use real eSIM profile data from Roamify (this should be the primary source)
     if (metadata.esimProfile) {
-      logger.info(`Including eSIM profile data in email`, {
+      logger.info(`✅ Using REAL QR code data from Roamify for email`, {
         orderId,
         esimId: metadata.esimId,
         hasQrCodeUrl: !!metadata.esimProfile.qrCodeUrl,
         hasLpaCode: !!metadata.esimProfile.lpaCode,
         hasActivationCode: !!metadata.esimProfile.activationCode,
         qrCodeUrl: metadata.esimProfile.qrCodeUrl,
-        lpaCode: metadata.esimProfile.lpaCode ? `${metadata.esimProfile.lpaCode.substring(0, 50)}...` : null,
+        lpaCodePreview: metadata.esimProfile.lpaCode ? `${metadata.esimProfile.lpaCode.substring(0, 50)}...` : null,
+        activationCodePreview: metadata.esimProfile.activationCode ? `${metadata.esimProfile.activationCode.substring(0, 20)}...` : null,
       });
       
-      // Use the real eSIM profile data from Roamify
+      // Use the real eSIM profile data from Roamify - ABSOLUTE PRIORITY
       emailData.esimCode = metadata.esimId || emailData.esimCode;
       emailData.iccid = metadata.esimId || emailData.iccid;
       emailData.qrCodeUrl = metadata.esimProfile.qrCodeUrl || '';
-      emailData.qrCodeData = metadata.esimProfile.lpaCode || metadata.esimProfile.activationCode || '';
+      
+      // CRITICAL: Use real LPA code from Roamify - this is the most important field
+      if (metadata.esimProfile.lpaCode) {
+        emailData.qrCodeData = metadata.esimProfile.lpaCode;
+        logger.info(`✅ Using REAL LPA code from Roamify: ${metadata.esimProfile.lpaCode.substring(0, 50)}...`);
+      } else if (metadata.esimProfile.activationCode) {
+        emailData.qrCodeData = metadata.esimProfile.activationCode;
+        logger.info(`✅ Using REAL activation code from Roamify: ${metadata.esimProfile.activationCode.substring(0, 20)}...`);
+      } else {
+        logger.warn(`⚠️ No LPA code or activation code in Roamify profile, using fallback`);
+        emailData.qrCodeData = order.qr_code_data || '';
+      }
       
       // Add iOS quick install URL if available
       if (metadata.esimProfile.iosQuickInstall) {
         (emailData as any).iosQuickInstall = metadata.esimProfile.iosQuickInstall;
       }
       
-      // Log what we're actually sending to the email template
-      logger.info(`Email template data for QR code`, {
+      // Log confirmation of real data usage
+      logger.info(`✅ Email will use REAL Roamify QR code data`, {
         orderId,
-        hasQrCodeData: !!emailData.qrCodeData,
+        realDataUsed: true,
+        qrCodeDataLength: emailData.qrCodeData ? emailData.qrCodeData.length : 0,
+        qrCodeDataType: metadata.esimProfile.lpaCode ? 'LPA_CODE' : 'ACTIVATION_CODE',
         hasQrCodeUrl: !!emailData.qrCodeUrl,
         esimCode: emailData.esimCode,
-        qrCodeDataLength: emailData.qrCodeData ? emailData.qrCodeData.length : 0,
       });
+      
     } else {
-      logger.warn(`No eSIM profile data available for email`, {
+      // FALLBACK: Use database data if no real Roamify profile available
+      logger.warn(`⚠️ No real Roamify eSIM profile available, using database fallback`, {
         orderId,
         esimId: metadata.esimId,
         availableMetadataKeys: Object.keys(metadata),
+        orderQrCodeData: order.qr_code_data ? `${order.qr_code_data.substring(0, 50)}...` : 'none',
       });
+      
+      emailData.qrCodeData = order.qr_code_data || '';
+      
+      if (!emailData.qrCodeData) {
+        logger.error(`❌ NO QR CODE DATA AVAILABLE - neither from Roamify nor database`, {
+          orderId,
+          esimId: metadata.esimId,
+          hasMetadataProfile: !!metadata.esimProfile,
+          orderQrCodeData: order.qr_code_data,
+          orderEsimCode: order.esim_code,
+        });
+      }
     }
 
     await sendEmail({
@@ -762,34 +853,55 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
 
     logger.info(`💾 Order updated with eSIM code: ${esimId}`);
 
-    // CRITICAL: Generate eSIM QR code/profile with enhanced error handling
-    logger.info(`🔧 Starting QR code generation for eSIM: ${esimId}`);
+    // STEP 1: Send immediate thank you email
+    logger.info(`📧 Sending immediate thank you email before QR code generation`);
+    await sendThankYouEmail(order, paymentIntent, metadata);
+    
+    // STEP 2: Poll for QR code with 5-minute timeout
+    logger.info(`🔧 Starting QR code generation with 5-minute polling for eSIM: ${esimId}`);
     
     try {
-      const qrData = await RoamifyService.getQrCodeWithPolling(esimId);
+      const qrData = await RoamifyService.getQrCodeWithPolling5Min(esimId);
+      
+      // VERIFICATION: Log the real QR code data received from Roamify
+      logger.info(`🔍 REAL QR code data received from Roamify`, {
+        orderId,
+        esimId,
+        hasQrCodeUrl: !!qrData.qrCodeUrl,
+        hasLpaCode: !!qrData.lpaCode,
+        hasActivationCode: !!qrData.activationCode,
+        lpaCodePreview: qrData.lpaCode ? `${qrData.lpaCode.substring(0, 50)}...` : 'none',
+        activationCodePreview: qrData.activationCode ? `${qrData.activationCode.substring(0, 20)}...` : 'none',
+        qrCodeUrlPreview: qrData.qrCodeUrl ? `${qrData.qrCodeUrl.substring(0, 50)}...` : 'none',
+        isRealLPA: qrData.lpaCode && qrData.lpaCode.includes('LPA:'),
+        dataSource: 'ROAMIFY_API'
+      });
       
       // VALIDATION: Check if QR data is valid before proceeding
       if (!isValidEsimProfile(qrData)) {
-        logger.warn(`❌ No valid eSIM profile/QR code available yet. Will not send email.`, {
+        logger.warn(`❌ Invalid QR profile received after polling. Setting status to pending_qr.`, {
           orderId,
           esimId,
           qrData,
         });
-        // Set order status to waiting_for_qr
+        // Set order status to pending_qr
         await supabase
           .from('orders')
           .update({
-            status: 'waiting_for_qr',
+            status: 'pending_qr',
             metadata: {
               ...order.metadata,
-              waiting_for_qr: true,
+              pending_qr: true,
               qr_data_received: qrData,
-              requires_qr_retry: true
+              requires_qr_retry: true,
+              thank_you_email_sent: true
             },
             updated_at: new Date().toISOString(),
           })
           .eq('id', orderId);
-        return; // Do not send email
+        
+        logger.error(`❌ Order ${orderId} set to pending_qr status - background process needed`);
+        return; // Exit without sending second email
       }
       
       // Update order with QR code data
@@ -798,6 +910,12 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         .update({
           qr_code_data: qrData.lpaCode || qrData.activationCode,
           qr_code_url: qrData.qrCodeUrl,
+          status: 'completed',
+          metadata: {
+            ...order.metadata,
+            thank_you_email_sent: true,
+            qr_code_ready: true
+          },
           updated_at: new Date().toISOString(),
         })
         .eq('id', orderId);
@@ -815,49 +933,88 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       
       logger.info(`✅ QR code data saved to database`);
       
-      // SEND EMAIL WITH VALID QR DATA
-      logger.info(`📧 Sending confirmation email with QR code data`);
+      // STEP 3: Send confirmation email with QR code only when ready
+      logger.info(`📧 Sending second email with REAL QR code data from Roamify`, {
+        orderId,
+        esimId,
+        realQrData: {
+          hasLpaCode: !!qrData.lpaCode,
+          hasQrCodeUrl: !!qrData.qrCodeUrl,
+          lpaCodeLength: qrData.lpaCode ? qrData.lpaCode.length : 0,
+          isValidLPA: qrData.lpaCode && qrData.lpaCode.includes('LPA:'),
+        }
+      });
+      
       await sendConfirmationEmail(order, paymentIntent, {
         ...metadata,
         esimProfile: qrData,
         esimId: esimId,
       });
       
-      logger.info(`✅ eSIM delivery completed successfully`, {
+      logger.info(`✅ Two-step email flow completed successfully with REAL Roamify QR code`, {
         orderId,
         packageId,
         roamifyOrderId: roamifyOrder.orderId,
         esimId,
-        hasQrCode: true,
+        realQrCodeUsed: true,
+        qrCodeSource: 'ROAMIFY_API',
+        hasRealLpaCode: !!qrData.lpaCode,
+        hasRealQrCodeUrl: !!qrData.qrCodeUrl,
+        thankYouEmailSent: true,
+        confirmationEmailSent: true,
         paymentIntentId: paymentIntent.id,
       });
       
     } catch (profileError) {
-      logger.error('❌ Error generating eSIM profile/QR code:', profileError, {
+      logger.error('❌ Error during 5-minute QR code polling:', profileError, {
         orderId,
         esimId,
         error: profileError instanceof Error ? profileError.message : String(profileError),
         stack: profileError instanceof Error ? profileError.stack : undefined,
       });
       
-      // Update order to indicate QR code generation failed
-      await supabase
-        .from('orders')
-        .update({
-          metadata: {
-            ...order.metadata,
-            qr_code_generation_failed: true,
-            qr_code_error: profileError instanceof Error ? profileError.message : String(profileError),
-            requires_manual_qr_generation: true
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', orderId);
+      // Check if this is a timeout error
+      const isTimeout = profileError instanceof Error && profileError.message.includes('5 minutes');
       
-      // DO NOT SEND EMAIL if QR generation fails - customer will get broken QR code
-      logger.error(`❌ NOT sending email due to QR generation failure for order ${orderId}`);
-      
-      throw new Error(`QR code generation failed for eSIM ${esimId}: ${profileError instanceof Error ? profileError.message : String(profileError)}`);
+      if (isTimeout) {
+        // Set order status to pending_qr for background retry
+        await supabase
+          .from('orders')
+          .update({
+            status: 'pending_qr',
+            metadata: {
+              ...order.metadata,
+              qr_code_timeout: true,
+              qr_code_error: profileError.message,
+              requires_background_retry: true,
+              thank_you_email_sent: true,
+              timeout_occurred_at: new Date().toISOString()
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
+        
+        logger.error(`❌ QR code timeout for order ${orderId} - set to pending_qr for background retry`);
+        return; // Exit gracefully - background process can retry later
+      } else {
+        // Other QR generation error
+        await supabase
+          .from('orders')
+          .update({
+            metadata: {
+              ...order.metadata,
+              qr_code_generation_failed: true,
+              qr_code_error: profileError instanceof Error ? profileError.message : String(profileError),
+              requires_manual_qr_generation: true,
+              thank_you_email_sent: true
+            },
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', orderId);
+        
+        logger.error(`❌ QR code generation failed for order ${orderId} - manual intervention required`);
+        throw new Error(`QR code generation failed for eSIM ${esimId}: ${profileError instanceof Error ? profileError.message : String(profileError)}`);
+      }
     }
 
   } catch (esimError) {
@@ -1098,10 +1255,34 @@ async function handleCheckoutSessionCompleted(session: any) {
     }
 
     logger.info(`Order created successfully: ${order.id}`);
-    console.log('[EMAIL DEBUG] Before email block - customerEmail:', customerEmail);
-    // Step 3: Send confirmation email with real eSIM data
+    
+    // Step 3: Two-step email flow for checkout completion
     if (customerEmail) {
-      logger.info(`[EMAIL DEBUG] Attempting to send order confirmation email to ${customerEmail} for order ${order.id}`);
+      logger.info(`[EMAIL DEBUG] Starting two-step email flow for checkout completion to ${customerEmail} for order ${order.id}`);
+      
+      // Step 3a: Send immediate thank you email
+      try {
+        await sendEmail({
+          to: customerEmail,
+          subject: emailTemplates.thankYou.subject,
+          html: async () => emailTemplates.thankYou.html({
+            orderId: order.id,
+            packageName: packageData.name,
+            amount: amount,
+            dataAmount: `${packageData.data_amount}GB`,
+            validityDays: packageData.validity_days,
+            name,
+            surname,
+            email: customerEmail,
+            dashboardUrl: `${process.env.FRONTEND_URL}/dashboard`,
+          }),
+        });
+        logger.info(`[EMAIL DEBUG] ✅ Thank you email sent to ${customerEmail} for order ${order.id}`);
+      } catch (emailError) {
+        logger.error(`[EMAIL DEBUG] ❌ Error sending thank you email to ${customerEmail} for order ${order.id}:`, emailError);
+      }
+      
+      // Step 3b: Send QR code email (since QR code is already available)
       try {
         await sendEmail({
           to: customerEmail,
@@ -1123,15 +1304,12 @@ async function handleCheckoutSessionCompleted(session: any) {
             email: customerEmail,
           }),
         });
-        logger.info(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
-        console.log(`[EMAIL DEBUG] ✅ Order confirmation email sent to ${customerEmail} for order ${order.id}`);
+        logger.info(`[EMAIL DEBUG] ✅ QR code confirmation email sent to ${customerEmail} for order ${order.id}`);
       } catch (emailError) {
-        logger.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
-        console.error(`[EMAIL DEBUG] ❌ Error sending checkout success email to ${customerEmail} for order ${order.id}:`, emailError);
+        logger.error(`[EMAIL DEBUG] ❌ Error sending QR code email to ${customerEmail} for order ${order.id}:`, emailError);
       }
     } else {
       logger.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
-      console.error(`[EMAIL DEBUG] ❌ No customerEmail found for order ${order.id}. Full session:`, JSON.stringify(session, null, 2));
     }
     console.log('[EMAIL DEBUG] END OF FUNCTION');
   } catch (error) {

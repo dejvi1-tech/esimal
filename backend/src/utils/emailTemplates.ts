@@ -144,19 +144,22 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       console.log('[EMAIL TEMPLATE DEBUG] Email data received:', {
         hasQrCodeData: !!data.qrCodeData,
         qrCodeDataLength: data.qrCodeData ? data.qrCodeData.length : 0,
+        qrCodeDataPreview: data.qrCodeData ? data.qrCodeData.substring(0, 50) + '...' : 'none',
         hasEsimCode: !!data.esimCode,
         esimCode: data.esimCode,
         hasOrderId: !!data.orderId,
         orderId: data.orderId,
         packageName: data.packageName,
+        isRealRoamifyQR: data.qrCodeData && data.qrCodeData.includes('LPA:'),
       });
       
       try {
-        if (data.qrCodeData && data.qrCodeData !== '') {
-          // Use the real LPA code from Roamify to generate QR code
-          console.log('[EMAIL TEMPLATE DEBUG] Using real LPA code from Roamify');
-          const lpaCode = data.qrCodeData;
-          qrCodeDataUrl = await QRCode.toDataURL(lpaCode, {
+        // PRIORITY 1: Use real LPA code from Roamify (this should be the primary source)
+        if (data.qrCodeData && data.qrCodeData !== '' && data.qrCodeData !== 'PENDING') {
+          console.log('[EMAIL TEMPLATE DEBUG] ✅ Using REAL QR code data from Roamify');
+          console.log('[EMAIL TEMPLATE DEBUG] Real QR data:', data.qrCodeData);
+          
+          qrCodeDataUrl = await QRCode.toDataURL(data.qrCodeData, {
             width: 300,
             margin: 2,
             color: {
@@ -164,9 +167,14 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               light: '#FFFFFF'
             }
           });
+          
+          console.log('[EMAIL TEMPLATE DEBUG] ✅ Successfully generated QR code from REAL Roamify data');
+          
         } else if (data.esimCode && data.esimCode !== 'PENDING' && data.esimCode !== '') {
-          // Fallback: Generate QR code from eSIM code
-          console.log('[EMAIL TEMPLATE DEBUG] Using eSIM code fallback, generating LPA data');
+          // FALLBACK: Only use this if no real QR code data available
+          console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Using FALLBACK eSIM code, no real QR data available');
+          console.log('[EMAIL TEMPLATE DEBUG] Fallback eSIM code:', data.esimCode);
+          
           const lpaData = QRCodeService.generateLPAData(data.esimCode, data.packageName || '');
           qrCodeDataUrl = await QRCode.toDataURL(lpaData, {
             width: 300,
@@ -176,9 +184,12 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               light: '#FFFFFF'
             }
           });
+          
+          console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Generated QR code from FALLBACK data');
+          
         } else {
-          // Final fallback: Generate placeholder QR code with order info
-          console.log('[EMAIL TEMPLATE DEBUG] Using final fallback - no valid eSIM data available');
+          // EMERGENCY FALLBACK: Generate placeholder QR code with order info
+          console.log('[EMAIL TEMPLATE DEBUG] ❌ Using EMERGENCY fallback - no valid data available');
           let placeholderData;
           if (data.orderId) {
             placeholderData = `Order: ${data.orderId}\nPackage: ${data.packageName || 'eSIM Package'}\nContact support for activation`;
@@ -194,20 +205,24 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               light: '#FFFFFF'
             }
           });
+          
+          console.log('[EMAIL TEMPLATE DEBUG] ❌ Generated EMERGENCY PLACEHOLDER QR code');
         }
       } catch (error) {
-        console.error('Error generating QR code for email:', error);
+        console.error('❌ Error generating QR code for email:', error);
         // Emergency fallback: Use external service (less reliable but better than no QR code)
-        console.log('[EMAIL TEMPLATE DEBUG] Using emergency external fallback due to error');
+        console.log('[EMAIL TEMPLATE DEBUG] 🚨 Using EXTERNAL emergency fallback due to error');
         const fallbackData = data.qrCodeData || data.esimCode || 'eSIM';
         qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fallbackData)}`;
+        console.log('[EMAIL TEMPLATE DEBUG] 🚨 External fallback URL:', qrCodeDataUrl);
       }
 
-      console.log('[EMAIL TEMPLATE DEBUG] Final QR code generated:', {
+      console.log('[EMAIL TEMPLATE DEBUG] Final QR code result:', {
         qrCodeLength: qrCodeDataUrl.length,
         isBase64: qrCodeDataUrl.startsWith('data:image/'),
         isExternal: qrCodeDataUrl.startsWith('http'),
-        preview: qrCodeDataUrl.substring(0, 100) + '...'
+        preview: qrCodeDataUrl.substring(0, 100) + '...',
+        usedRealData: !!(data.qrCodeData && data.qrCodeData !== '' && data.qrCodeData !== 'PENDING')
       });
 
       // Compose the greeting
@@ -225,7 +240,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
         <p><strong>Nr. eSim:</strong> ${esimId}</p>
         <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
         <p><strong>Iphone:</strong> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni <b>"Add eSIM"</b> (funksionon me iOS 17.4 e sipër).</p>
-        <p>Nëse nuk ju del &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
+        <p>Nëse nuk ju dal &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
       `);
     },
   },
@@ -425,6 +440,44 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       <a href="${data.paymentUrl}" class="button">Complete Payment</a>
 
       <p>If you have any questions, please contact our support team.</p>
+    `),
+  },
+
+  // NEW: Thank You Email Template (sent immediately after payment)
+  thankYou: {
+    subject: 'Thank you for your eSIM purchase!',
+    html: (data: EmailTemplateData) => baseTemplate(`
+      <h2>🎉 Thank you for your purchase!</h2>
+      <p>Hi ${data.name || 'there'},</p>
+      <p>We're excited to confirm that your payment has been successfully processed and we're preparing your eSIM.</p>
+      
+      <div class="order-details">
+        <h3>📋 Order Summary:</h3>
+        <ul>
+          <li><strong>Order ID:</strong> ${data.orderId}</li>
+          <li><strong>Package:</strong> ${data.packageName}</li>
+          <li><strong>Data Amount:</strong> ${data.dataAmount}</li>
+          <li><strong>Validity:</strong> ${data.validityDays} days</li>
+          <li><strong>Amount Paid:</strong> $${data.amount}</li>
+        </ul>
+      </div>
+
+      <div class="activation-steps">
+        <h3>⏱️ What happens next?</h3>
+        <p><strong>You'll receive a second email with your QR code and instructions within 5 minutes.</strong></p>
+        <p>This email will contain everything you need to activate your eSIM, including:</p>
+        <ul>
+          <li>Your unique QR code for installation</li>
+          <li>Step-by-step activation instructions</li>
+          <li>Your eSIM activation code</li>
+        </ul>
+      </div>
+
+      <p>If you don't receive the activation email within 5 minutes, please check your spam folder or contact our support team.</p>
+      
+      <p>Thank you for choosing eSIM Marketplace!</p>
+      
+      ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
     `),
   },
 }; 

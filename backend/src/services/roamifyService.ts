@@ -402,7 +402,141 @@ export class RoamifyService {
   }
 
   /**
-   * Poll for QR code after applying eSIM profile
+   * Poll for QR code after applying eSIM profile (5-minute timeout for email flow)
+   */
+  static async getQrCodeWithPolling5Min(esimId: string): Promise<{
+    qrCodeUrl: string;
+    lpaCode: string;
+    activationCode: string;
+    iosQuickInstall: string;
+  }> {
+    const maxWaitMs = 300000; // 5 minutes max
+    const pollIntervalMs = 10000; // 10 seconds interval
+    const start = Date.now();
+    
+    logger.info(`[ROAMIFY QR POLL] Starting 5-minute QR code polling for eSIM: ${esimId}`);
+    
+    // Step 1: Apply for profile
+    const response = await axios.post<EsimApplyResponse>(
+      `${this.baseUrl}/api/esim/apply`,
+      { esimId },
+      {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000,
+      }
+    );
+    
+    // LOG: Initial API response from /api/esim/apply
+    logger.info(`[ROAMIFY QR POLL] Initial apply response for eSIM: ${esimId}`, {
+      responseStatus: response.status,
+      hasData: !!response.data,
+      hasDataData: !!response.data?.data,
+      hasEsim: !!response.data?.data?.esim,
+      responseStructure: {
+        data: response.data ? {
+          data: response.data.data ? {
+            esim: response.data.data.esim ? {
+              hasLpaCode: !!response.data.data.esim.lpaCode,
+              hasQrCodeUrl: !!response.data.data.esim.qrCodeUrl,
+              hasActivationCode: !!response.data.data.esim.activationCode,
+              lpaCodePreview: response.data.data.esim.lpaCode ? `${response.data.data.esim.lpaCode.substring(0, 30)}...` : 'none'
+            } : 'no esim'
+          } : 'no data.data'
+        } : 'no data'
+      }
+    });
+    
+    let esim = response.data?.data?.esim;
+    let qrCodeUrl = esim?.qrCodeUrl || '';
+    let lpaCode = esim?.lpaCode || '';
+    let activationCode = esim?.activationCode || '';
+    let iosQuickInstall = esim?.iosQuickInstall || '';
+    
+    // If QR code is immediately available, return it
+    if (qrCodeUrl && lpaCode) {
+      logger.info(`[ROAMIFY QR POLL] ✅ Real QR code IMMEDIATELY available from /apply for eSIM: ${esimId}`, {
+        lpaCodeLength: lpaCode.length,
+        lpaCodePreview: `${lpaCode.substring(0, 50)}...`,
+        qrCodeUrlLength: qrCodeUrl.length,
+        hasActivationCode: !!activationCode,
+        isValidLPA: lpaCode.includes('LPA:')
+      });
+      return {
+        qrCodeUrl,
+        lpaCode,
+        activationCode,
+        iosQuickInstall,
+      };
+    }
+    
+    // Poll until QR code is ready or timeout
+    let attempts = 0;
+    while (Date.now() - start < maxWaitMs) {
+      attempts++;
+      const elapsed = Date.now() - start;
+      logger.info(`[ROAMIFY QR POLL] Attempt ${attempts}, elapsed: ${Math.round(elapsed/1000)}s / 300s`);
+      
+      await new Promise(r => setTimeout(r, pollIntervalMs));
+      
+      try {
+        const statusRes = await axios.get<EsimApplyResponse>(`${this.baseUrl}/api/esim`, {
+          params: { esimId },
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 15000,
+        });
+        
+        esim = statusRes.data?.data?.esim;
+        if (esim && esim.qrCodeUrl && esim.lpaCode) {
+          qrCodeUrl = esim.qrCodeUrl;
+          lpaCode = esim.lpaCode;
+          activationCode = esim.activationCode || '';
+          iosQuickInstall = esim.iosQuickInstall || '';
+          
+          logger.info(`[ROAMIFY QR POLL] ✅ Real QR code ready from /api/esim after ${attempts} attempts (${Math.round(elapsed/1000)}s) for eSIM: ${esimId}`, {
+            lpaCodeLength: lpaCode.length,
+            lpaCodePreview: `${lpaCode.substring(0, 50)}...`,
+            qrCodeUrlLength: qrCodeUrl.length,
+            hasActivationCode: !!activationCode,
+            isValidLPA: lpaCode.includes('LPA:'),
+            pollingAttempts: attempts,
+            elapsedSeconds: Math.round(elapsed/1000),
+            dataSource: 'ROAMIFY_POLLING_API'
+          });
+          return {
+            qrCodeUrl,
+            lpaCode,
+            activationCode,
+            iosQuickInstall,
+          };
+        } else {
+          logger.info(`[ROAMIFY QR POLL] QR code not ready yet (attempt ${attempts})`, {
+            hasEsim: !!esim,
+            hasQrCodeUrl: !!esim?.qrCodeUrl,
+            hasLpaCode: !!esim?.lpaCode,
+            esimStructure: esim ? {
+              qrCodeUrl: esim.qrCodeUrl ? 'present' : 'missing',
+              lpaCode: esim.lpaCode ? `present(${esim.lpaCode.length}chars)` : 'missing',
+              activationCode: esim.activationCode ? 'present' : 'missing'
+            } : 'esim_object_missing'
+          });
+        }
+      } catch (pollError) {
+        logger.warn(`[ROAMIFY QR POLL] Error during polling attempt ${attempts}:`, pollError);
+      }
+    }
+    
+    logger.error(`[ROAMIFY QR POLL] ❌ Timeout after 5 minutes waiting for QR code for eSIM: ${esimId}`);
+    throw new Error(`QR code not ready after 5 minutes for eSIM: ${esimId}`);
+  }
+
+  /**
+   * Poll for QR code after applying eSIM profile (original method)
    */
   static async getQrCodeWithPolling(esimId: string): Promise<{
     qrCodeUrl: string;
@@ -422,12 +556,14 @@ export class RoamifyService {
         timeout: 30000,
       }
     );
+    
     let esim = response.data?.data?.esim;
     let qrCodeUrl = esim?.qrCodeUrl || '';
     let lpaCode = esim?.lpaCode || '';
     let activationCode = esim?.activationCode || '';
     let iosQuickInstall = esim?.iosQuickInstall || '';
     let tries = 0;
+    
     while (!qrCodeUrl && tries < 10) {
       await new Promise(r => setTimeout(r, 5000));
       const statusRes = await axios.get<EsimApplyResponse>(`${this.baseUrl}/api/esim`, {
