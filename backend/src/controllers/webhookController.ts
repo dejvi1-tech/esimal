@@ -236,25 +236,8 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
   }
 }
 
-/**
- * Validate QR data before sending email
- */
-function validateQrData(qrData: any, esimId: string): boolean {
-  const hasValidQrCode = qrData && (qrData.qrCodeUrl || qrData.lpaCode || qrData.activationCode);
-  const hasValidEsimId = esimId && esimId !== 'PENDING' && esimId !== '';
-  
-  logger.info('QR Data Validation:', {
-    esimId,
-    hasValidEsimId,
-    hasValidQrCode,
-    hasQrCodeUrl: !!qrData?.qrCodeUrl,
-    hasLpaCode: !!qrData?.lpaCode,
-    hasActivationCode: !!qrData?.activationCode,
-    qrCodeUrlPreview: qrData?.qrCodeUrl ? `${qrData.qrCodeUrl.substring(0, 50)}...` : 'none',
-    lpaCodePreview: qrData?.lpaCode ? `${qrData.lpaCode.substring(0, 50)}...` : 'none',
-  });
-  
-  return hasValidQrCode && hasValidEsimId;
+function isValidEsimProfile(qrData: any): boolean {
+  return !!(qrData && (qrData.qrCodeUrl || qrData.lpaCode || qrData.activationCode));
 }
 
 /**
@@ -264,6 +247,17 @@ async function sendConfirmationEmail(order: any, paymentIntent: any, metadata: a
   const orderId = order.id;
   const email = order.guest_email || metadata.email;
   const packageId = metadata.packageId;
+
+  // Guard: Do not send if eSIM profile is missing/invalid
+  if (metadata.esimProfile && !isValidEsimProfile(metadata.esimProfile)) {
+    logger.warn(`❌ Not sending confirmation email: eSIM profile is missing/invalid`, {
+      orderId,
+      email,
+      packageId,
+      esimProfile: metadata.esimProfile,
+    });
+    return;
+  }
 
   logger.info(`Starting email confirmation process`, {
     orderId,
@@ -774,39 +768,28 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     try {
       const qrData = await RoamifyService.getQrCodeWithPolling(esimId);
       
-      logger.info(`🎯 QR code polling completed`, { 
-        orderId, 
-        esimId, 
-        qrCodeUrl: qrData.qrCodeUrl,
-        hasLpaCode: !!qrData.lpaCode,
-        hasActivationCode: !!qrData.activationCode,
-        lpaCodePreview: qrData.lpaCode ? `${qrData.lpaCode.substring(0, 50)}...` : null,
-        qrCodeUrlPreview: qrData.qrCodeUrl ? `${qrData.qrCodeUrl.substring(0, 50)}...` : null,
-      });
-      
       // VALIDATION: Check if QR data is valid before proceeding
-      if (!validateQrData(qrData, esimId)) {
-        logger.error(`❌ Invalid QR data received from Roamify`, {
+      if (!isValidEsimProfile(qrData)) {
+        logger.warn(`❌ No valid eSIM profile/QR code available yet. Will not send email.`, {
           orderId,
           esimId,
           qrData,
         });
-        
-        // Mark order as needing manual QR generation
+        // Set order status to waiting_for_qr
         await supabase
           .from('orders')
           .update({
+            status: 'waiting_for_qr',
             metadata: {
               ...order.metadata,
-              invalid_qr_data: true,
+              waiting_for_qr: true,
               qr_data_received: qrData,
-              requires_manual_qr_generation: true
+              requires_qr_retry: true
             },
             updated_at: new Date().toISOString(),
           })
           .eq('id', orderId);
-        
-        throw new Error(`Invalid QR data received from Roamify for eSIM: ${esimId}`);
+        return; // Do not send email
       }
       
       // Update order with QR code data
