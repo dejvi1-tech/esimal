@@ -498,28 +498,32 @@ export const createMyPackageOrder = async (
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+
+      // NEW: Poll for eSIM profile
+      let profile;
+      try {
+        profile = await RoamifyService.getEsimProfileWithPolling(roamifyOrderId);
+        const qrText = `LPA:1$${profile.smDpPlusAddress}$${profile.activationCode}`;
+        logger.info(`[ROAMIFY] Final QR string: ${qrText}`);
+        realQRData = {
+          lpaCode: qrText,
+          qrCodeUrl: '',
+          activationCode: profile.activationCode,
+          iosQuickInstall: '',
+        };
+      } catch (pollErr) {
+        logger.error('Failed to fetch eSIM profile after order creation:', pollErr);
+        throw pollErr;
+      }
     } catch (roamifyError) {
       logger.error('Failed to create Roamify order, using fallback:', roamifyError);
-      
       // Fallback: Generate a unique eSIM code locally
       esimCode = await generateEsimCode();
       roamifyOrderId = `fallback-${Date.now()}`;
-      
-      logger.info(`Using fallback eSIM code: ${esimCode}`);
-    }
-
-    // Step 2: Generate real QR code from Roamify (with fallback)
-    logger.info(`Generating real QR code for eSIM: ${esimCode}`);
-    
-    try {
-      realQRData = await RoamifyService.getQrCodeWithPolling(esimCode);
-    } catch (qrError) {
-      logger.error('Failed to generate real QR code, using fallback:', qrError);
-      // Fallback: Generate QR code locally
       const fallbackLpaCode = generateQRCodeData(esimCode, packageData.name);
       realQRData = {
         lpaCode: fallbackLpaCode,
-        qrCodeUrl: '', // Will be generated in email template
+        qrCodeUrl: '',
         activationCode: esimCode,
         iosQuickInstall: '',
       };
