@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Wifi, Clock, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import EUFlag from '/images/eu.png';
 
 interface PackageCardProps {
   title: string;
@@ -21,8 +22,6 @@ interface PackageCardProps {
   description?: string;
   specialFeatures?: string[];
 }
-
-const EU_FLAG = 'https://upload.wikimedia.org/wikipedia/commons/b/b7/Flag_of_Europe.svg';
 
 const PackageCard = ({
   title,
@@ -68,8 +67,11 @@ const PackageCard = ({
           {/* Flag and Title */}
           <div className="flex items-center gap-3 mt-4 mb-6">
             <div className="relative">
-              <div className="absolute inset-0 bg-pink-200 rounded-full blur-sm"></div>
-              <img src={countryCode === 'EU' ? EU_FLAG : flagUrl} alt="Flag" className="relative w-14 h-14 rounded-full border-2 border-pink-100" />
+              {countryCode === 'EU' ? (
+                <img src={EUFlag} alt="EU Flag" className="w-12 h-12 rounded-full border border-gray-300 object-cover bg-white" style={{boxShadow: 'none'}} />
+              ) : (
+                <img src={flagUrl} alt="Flag" className="w-12 h-12 rounded-full border border-gray-300 object-cover bg-white" style={{boxShadow: 'none'}} />
+              )}
             </div>
             <h3 className="text-2xl font-bold bg-gradient-to-br from-pink-600 to-purple-600 bg-clip-text text-transparent">
               {title}
@@ -122,7 +124,7 @@ const PackageCard = ({
     <div className="relative bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-200">
       {/* Flag and Title */}
       <div className="flex items-center gap-2 mb-4">
-        <img src={countryCode === 'EU' ? EU_FLAG : flagUrl} alt="Flag" className="w-12 h-12" />
+        <img src={countryCode === 'EU' ? EUFlag : flagUrl} alt="Flag" className="w-12 h-12" />
         <h3 className="text-2xl font-bold text-black">{title}</h3>
       </div>
 
