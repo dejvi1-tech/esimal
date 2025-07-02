@@ -2,6 +2,7 @@ import { Signal, Wifi, Globe, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
+import EUFlag from '/images/eu.png';
 
 const CoverageSection = () => {
   const { t } = useLanguage();
@@ -151,12 +152,15 @@ const CoverageSection = () => {
                   
                   <div className="space-y-2">
                     <div className="text-sm font-semibold text-gray-700">Popular destinations:</div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
+                      {region.name === "Europe" && (
+                        <img src={EUFlag} alt="EU Flag" className="w-8 h-8 rounded-full border-2 border-blue-200 bg-white" style={{objectFit: 'cover'}} />
+                      )}
                       {region.popular.map((country, i) =>
-                    <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                        <span key={i} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
                           {country}
                         </span>
-                    )}
+                      )}
                     </div>
                   </div>
                 </CardContent>

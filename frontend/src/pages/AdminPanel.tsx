@@ -979,7 +979,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.sale_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, sale_price: Number(e.target.value)})}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm font-bold text-black bg-white"
                             />
                           ) : (
                             <input
@@ -987,7 +987,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={pkg.sale_price}
                               onChange={(e) => handlePriceChange(pkg.id, e.target.value)}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm font-bold text-black bg-white"
                             />
                           )}
                         </td>
@@ -1318,7 +1318,7 @@ const AdminPanel: React.FC = () => {
                                 [pkg.id || pkg.packageId || '']: e.target.value
                               }))}
                               placeholder={(pkg.price || pkg.base_price || 0).toString()}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm font-bold text-black bg-white"
                             />
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap">
