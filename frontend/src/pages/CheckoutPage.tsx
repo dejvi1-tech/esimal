@@ -75,7 +75,7 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean; error: any
 }
 
 const CheckoutPage: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [country, setCountry] = useState('');
@@ -189,6 +189,10 @@ const CheckoutPage: React.FC = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (language !== 'al') setLanguage('al');
+  }, [language, setLanguage]);
 
   if (isLoading) {
     return (
@@ -349,87 +353,11 @@ const CheckoutPage: React.FC = () => {
               </form>
             </div>
             {/* Right: Order Summary */}
-            <div className="w-full md:w-96 bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-6 flex flex-col" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
-              <h3 className="text-xl font-bold mb-4 text-gray-900 border-b-2 border-blue-100 pb-3">Order Summary</h3>
-              <div className="flex items-center mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                {(() => {
-                  // Try to match the country name from packageData to a country in europeanCountries
-                  let countryFlag = '';
-                  let countryName = '';
-                  
-                  console.log('[DEBUG] Package data:', packageData);
-                  console.log('[DEBUG] Package country_name:', packageData?.country_name);
-                  
-                  if (packageData && packageData.country_name) {
-                    const countryNameValue = typeof packageData.country_name === 'string' 
-                      ? packageData.country_name 
-                      : packageData.country_name[language] || packageData.country_name.en;
-                    
-                    console.log('[DEBUG] Country name value:', countryNameValue);
-                    
-                    // Try multiple matching strategies
-                    let found = europeanCountries.find(c => 
-                      c.name.en.toLowerCase() === countryNameValue.toLowerCase() || 
-                      c.name.al.toLowerCase() === countryNameValue.toLowerCase() ||
-                      c.code.toLowerCase() === countryNameValue.toLowerCase()
-                    );
-                    
-                    // If not found, try partial matching for common cases
-                    if (!found && countryNameValue.toLowerCase().includes('europe')) {
-                      found = europeanCountries.find(c => c.name.en.toLowerCase().includes('europe'));
-                    }
-                    
-                    // If still not found, try country code matching
-                    if (!found && country) {
-                      found = europeanCountries.find(c => c.code.toLowerCase() === country.toLowerCase());
-                    }
-                    
-                    console.log('[DEBUG] Found country:', found);
-                    
-                    if (found) {
-                      countryFlag = found.flag;
-                      countryName = found.name.en;
-                    }
-                  }
-                  
-                  console.log('[DEBUG] Final flag URL:', countryFlag);
-                  
-                  if (countryFlag) {
-                    return <img src={countryFlag} alt={countryName} className="w-14 h-14 rounded object-cover border border-gray-200" />;
-                  } else {
-                    // Fallback to a generic globe icon or placeholder
-                    return (
-                      <div className="w-14 h-14 rounded bg-gray-200 border border-gray-300 flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">No Flag</span>
-                      </div>
-                    );
-                  }
-                })()}
-                <div className="ml-4 flex-1">
-                  <div className="font-semibold text-lg">{typeof packageData.name === 'string' ? packageData.name : packageData.name[language]}</div>
-                  <div className="text-gray-500 text-sm">{packageData.data_amount}GB / {packageData.validity_days} {t('days')}</div>
-                </div>
-                <div className="font-bold text-lg">ALL {typeof packageData.sale_price === 'number' && !isNaN(packageData.sale_price) ? packageData.sale_price.toFixed(2) : '0.00'}</div>
-              </div>
-              <input
-                type="text"
-                value={coupon}
-                onChange={e => setCoupon(e.target.value)}
-                placeholder={t('discount_coupon') + ' (' + t('if_any') + ')'}
-                className="w-full px-4 py-3 rounded-lg border-2 border-blue-100 text-gray-900 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors mb-3 bg-white/80"
-                disabled={isCouponApplied}
-              />
-              <button
-                type="button"
-                onClick={handleApplyCoupon}
-                className="w-full bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 mb-6 border-2 border-green-500 hover:border-blue-600 shadow-sm"
-                disabled={isCouponApplied}
-              >
-                {isCouponApplied ? t('coupon_applied') : t('apply_coupon')}
-              </button>
-              <div className="flex justify-between items-center mt-4 border-t-2 border-blue-100 pt-6 bg-blue-50 p-4 rounded-lg">
-                <span className="font-bold text-xl text-gray-900">Total</span>
-                <span className="font-bold text-2xl text-blue-600">€{typeof total === 'number' && !isNaN(total) ? total.toFixed(2) : '0.00'}</span>
+            <div className="w-full md:w-96 bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-6 flex flex-col justify-center items-center" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
+              <h3 className="text-xl font-bold mb-4 text-gray-900 border-b-2 border-blue-100 pb-3 w-full text-center">Përmbledhje Porosie</h3>
+              <div className="flex flex-col justify-center items-center w-full">
+                <span className="font-bold text-xl text-gray-900 mb-2">Totali</span>
+                <span className="font-bold text-3xl text-blue-600">€{typeof total === 'number' && !isNaN(total) ? total.toFixed(2) : '0.00'}</span>
               </div>
             </div>
           </div>
