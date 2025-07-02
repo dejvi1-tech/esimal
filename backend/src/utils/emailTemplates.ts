@@ -47,19 +47,22 @@ const baseTemplate = (content: string) => `
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #f8f9fa; padding: 20px; text-align: center; }
+    body { font-family: 'Orbitron', 'Exo', Arial, sans-serif; line-height: 1.6; color: #fff; background: #4B0082; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .header { background: none; padding: 20px; text-align: center; }
+    .header img { max-width: 180px; margin-bottom: 8px; }
     .content { padding: 20px; }
-    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    .footer { text-align: center; padding: 20px; font-size: 12px; color: #e5e7eb; }
     .button { 
       display: inline-block;
       padding: 12px 24px;
-      background-color: #007bff;
-      color: white;
+      background-color: #fbbf24;
+      color: #4B0082;
       text-decoration: none;
       border-radius: 4px;
       margin: 20px 0;
+      font-weight: bold;
+      font-family: 'Orbitron', 'Exo', Arial, sans-serif;
     }
     .code { 
       font-family: monospace;
@@ -68,27 +71,32 @@ const baseTemplate = (content: string) => `
       border-radius: 4px;
       font-size: 16px;
       border: 1px solid #ddd;
+      color: #4B0082;
     }
     .qr-code {
       text-align: center;
       margin: 20px 0;
       padding: 20px;
-      background: #f8f9fa;
+      background: rgba(255,255,255,0.08);
       border-radius: 8px;
     }
     .qr-code img {
       max-width: 200px;
       height: auto;
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      background: #fff;
     }
     .order-details {
-      background: #f8f9fa;
+      background: rgba(255,255,255,0.08);
       padding: 15px;
       border-radius: 8px;
       margin: 20px 0;
+      color: #fff;
     }
     .order-details h3 {
       margin-top: 0;
-      color: #007bff;
+      color: #fbbf24;
     }
     .order-details ul {
       list-style: none;
@@ -106,10 +114,11 @@ const baseTemplate = (content: string) => `
       padding: 15px;
       border-radius: 8px;
       margin: 20px 0;
+      color: #4B0082;
     }
     .activation-steps h3 {
       margin-top: 0;
-      color: #28a745;
+      color: #fbbf24;
     }
     .activation-steps ol {
       margin: 10px 0;
@@ -120,14 +129,14 @@ const baseTemplate = (content: string) => `
 <body>
   <div class="container">
     <div class="header">
-      <h1>eSIM Marketplace</h1>
+      <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" />
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
       <p>This is an automated message, please do not reply directly to this email.</p>
-      <p>&copy; ${new Date().getFullYear()} eSIM Marketplace. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} esimfly. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -310,7 +319,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
   // Refund Processed Template
   refundProcessed: {
-    subject: 'Refund Processed - eSIM Marketplace',
+    subject: 'Refund Processed - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
       <h2>💰 Refund Processed</h2>
       <p>Your refund has been successfully processed and will be credited back to your original payment method.</p>
@@ -339,7 +348,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   },
 
   passwordReset: {
-    subject: 'Password Reset - eSIM Marketplace',
+    subject: 'Password Reset - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
       <h2>Password Reset Request</h2>
       <p>We received a request to reset your password. Click the button below to reset it:</p>
@@ -352,9 +361,9 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   },
 
   accountVerification: {
-    subject: 'Verify Your Email - eSIM Marketplace',
+    subject: 'Verify Your Email - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
-      <h2>Welcome to eSIM Marketplace!</h2>
+      <h2>Welcome to esimfly!</h2>
       <p>Thank you for creating an account. Please verify your email address by clicking the button below:</p>
       
       <a href="${data.verificationUrl}" class="button">Verify Email</a>
@@ -365,7 +374,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   },
 
   orderCancellation: {
-    subject: 'Order Cancelled - eSIM Marketplace',
+    subject: 'Order Cancelled - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
       <h2>Order Cancellation Confirmation</h2>
       <p>Your order has been ${data.isRefunded ? 'cancelled and refunded' : 'cancelled'}.</p>
@@ -389,9 +398,9 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   },
 
   accountCreated: {
-    subject: 'Account Created - eSIM Marketplace',
+    subject: 'Account Created - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
-      <h2>Welcome to eSIM Marketplace!</h2>
+      <h2>Welcome to esimfly!</h2>
       <p>Your account has been successfully created.</p>
       
       <h3>Account Details:</h3>
@@ -406,7 +415,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
   },
 
   topupOrderConfirmation: {
-    subject: 'Top-Up Order Confirmation - eSIM Marketplace',
+    subject: 'Top-Up Order Confirmation - esimfly',
     html: (data: EmailTemplateData) => baseTemplate(`
       <h2>Top-Up Order Confirmation</h2>
       <p>Thank you for your top-up order!</p>
@@ -460,7 +469,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
       <p>If you don't receive the activation email within 5 minutes, please check your spam folder or contact our support team.</p>
       
-      <p>Thank you for choosing eSIM Marketplace!</p>
+      <p>Thank you for choosing esimfly!</p>
       
       ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
     `),
