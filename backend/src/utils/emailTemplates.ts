@@ -465,4 +465,146 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
     `),
   },
+
+  // --- BEGIN: Branded Bilingual Order Confirmation Email ---
+  orderConfirmationBranded: {
+    subject: 'Konfirmim Porosie / Order Confirmation - esimfly',
+    html: (data: EmailTemplateData) => `
+      <!DOCTYPE html>
+      <html lang="sq">
+      <head>
+        <meta charset="utf-8">
+        <title>Konfirmim Porosie / Order Confirmation</title>
+        <style>
+          body { background: #4B0082; color: #fff; font-family: 'Orbitron', 'Exo', Arial, sans-serif; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 32px 24px; }
+          .header { text-align: center; margin-bottom: 24px; }
+          .logo { max-width: 180px; margin-bottom: 12px; }
+          .title { font-size: 1.7em; font-weight: bold; margin-bottom: 8px; }
+          .accent { color: #fbbf24; font-weight: bold; }
+          .section { margin: 24px 0; }
+          .footer { text-align: center; font-size: 12px; color: #e5e7eb; margin-top: 32px; }
+          .lang { font-size: 0.95em; margin-bottom: 18px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" class="logo" />
+          </div>
+          <div class="lang">
+            <b>ALBANIAN</b>
+          </div>
+          <div class="title">Faleminderit për porosinë tuaj!</div>
+          <div class="section">
+            Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.<br/>
+            <br/>
+            Përshëndetje${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Në vijim do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
+          </div>
+          <div class="lang">
+            <b>ENGLISH</b>
+          </div>
+          <div class="title">Thank you for your order!</div>
+          <div class="section">
+            You will receive another email with <span class="accent">your eSIM details</span> in a few minutes.<br/>
+            <br/>
+            Hello${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Shortly, you will receive a separate email with the QR code to activate your eSIM card.
+          </div>
+          <div class="footer">
+            Nëse keni pyetje, na kontaktoni duke kthyer përgjigje këtij emaili.<br/>
+            If you have questions, just reply to this email.<br/>
+            <br/>
+            Nëse nuk doni të merrni email-e prej nesh, <a href="#" style="color:#fbbf24;">çregjistrohuni këtu</a>.<br/>
+            If you wish to unsubscribe, <a href="#" style="color:#fbbf24;">unsubscribe here</a>.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  },
+  // --- END: Branded Bilingual Order Confirmation Email ---
+
+  // --- BEGIN: Branded Bilingual eSIM Details Email ---
+  esimDetailsBranded: {
+    subject: 'Detajet e eSIM / Your eSIM Details - esimfly',
+    html: (data: EmailTemplateData) => `
+      <!DOCTYPE html>
+      <html lang="sq">
+      <head>
+        <meta charset="utf-8">
+        <title>Detajet e eSIM / Your eSIM Details</title>
+        <style>
+          body { background: #4B0082; color: #fff; font-family: 'Orbitron', 'Exo', Arial, sans-serif; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 32px 24px; }
+          .header { text-align: center; margin-bottom: 24px; }
+          .logo { max-width: 180px; margin-bottom: 12px; }
+          .title { font-size: 1.7em; font-weight: bold; margin-bottom: 8px; }
+          .accent { color: #fbbf24; font-weight: bold; }
+          .section { margin: 24px 0; }
+          .qr { text-align: center; margin: 24px 0; }
+          .qr img { max-width: 220px; border-radius: 12px; border: 2px solid #fbbf24; background: #fff; }
+          .footer { text-align: center; font-size: 12px; color: #e5e7eb; margin-top: 32px; }
+          .lang { font-size: 0.95em; margin-bottom: 18px; }
+          .steps { background: rgba(251,191,36,0.08); border-radius: 10px; padding: 16px; margin: 18px 0; color: #fff; }
+          .steps-title { color: #fbbf24; font-weight: bold; margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" class="logo" />
+          </div>
+          <div class="lang"><b>ALBANIAN</b></div>
+          <div class="title">Detajet e eSIM tuaj</div>
+          <div class="section">
+            Përshëndetje${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Më poshtë gjeni barkodin për të aktivizuar kartën tuaj eSIM.<br/>
+          </div>
+          <div class="qr">
+            <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
+          </div>
+          <div class="section"><b>Nr. eSIM:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="steps">
+            <div class="steps-title">Si ta instaloni:</div>
+            <ul>
+              <li><b>iPhone:</b> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni "Add eSIM" (iOS 17.4+).</li>
+              <li>Nëse nuk ju del, skanoni kodin QR me kameran ose shkoni tek Settings &gt; Mobile Service &gt; Add eSIM.</li>
+            </ul>
+          </div>
+          <div class="lang"><b>ENGLISH</b></div>
+          <div class="title">Your eSIM Details</div>
+          <div class="section">
+            Hello${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Below is your QR code to activate your eSIM card.<br/>
+          </div>
+          <div class="qr">
+            <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
+          </div>
+          <div class="section"><b>eSIM Number:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="steps">
+            <div class="steps-title">How to install:</div>
+            <ul>
+              <li><b>iPhone:</b> Long-press the QR code image for 2 seconds until "Add eSIM" appears (iOS 17.4+).</li>
+              <li>If not, scan the QR code with your camera or go to Settings &gt; Mobile Service &gt; Add eSIM.</li>
+            </ul>
+          </div>
+          <div class="footer">
+            Nëse keni pyetje, na kontaktoni duke kthyer përgjigje këtij emaili.<br/>
+            If you have questions, just reply to this email.<br/>
+            <br/>
+            Nëse nuk doni të merrni email-e prej nesh, <a href="#" style="color:#fbbf24;">çregjistrohuni këtu</a>.<br/>
+            If you wish to unsubscribe, <a href="#" style="color:#fbbf24;">unsubscribe here</a>.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  },
+  // --- END: Branded Bilingual eSIM Details Email ---
 }; 
