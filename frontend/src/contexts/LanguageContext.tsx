@@ -363,6 +363,7 @@ interface LanguageContextType {
   language: 'al' | 'en';
   toggleLanguage: () => void;
   t: (key: string) => string;
+  setLanguage: (lang: 'al' | 'en') => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -400,7 +401,7 @@ export const LanguageProvider: React.FC<{children: ReactNode;}> = ({ children })
   };
 
   return (
-    <LanguageContext.Provider value={{ language, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, toggleLanguage, t, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
