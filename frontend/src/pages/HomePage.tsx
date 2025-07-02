@@ -262,14 +262,6 @@ const HomePage = () => {
                     alt={t('esim_compatibility_alt')}
                     className="rounded-xl w-full shadow-lg border border-white/20 object-contain"
                   />
-                  <div className="text-center">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                      {t('esim_compatibility_title')}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {t('esim_compatibility_description')}
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>

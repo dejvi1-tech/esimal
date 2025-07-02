@@ -320,7 +320,6 @@ const translations: Translations = {
   bundle_sweden: { al: 'Suedi', en: 'Sweden' },
   bundle_canada: { al: 'Kanada', en: 'Canada' },
   bundle_netherlands: { al: 'Holandë', en: 'Netherlands' },
-  bundle_illyria: { al: 'Iliri', en: 'Illyria' },
   bundle_europe: { al: 'Europa', en: 'Europe' },
   bundle_africa: { al: 'Afrika', en: 'Africa' },
   bundle_asia: { al: 'Azi', en: 'Asia' },
