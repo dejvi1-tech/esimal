@@ -667,7 +667,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     try {
       roamifyOrder = await RoamifyService.createEsimOrderV2({
         packageId: roamifyPackageId,
-        quantity: quantity
+        quantity: quantity,
+        countryName: packageData.country_name,
+        region: packageData.region
       });
       roamifySuccess = true;
       
@@ -681,6 +683,15 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         fallbackPackageId: roamifyOrder.fallbackPackageId,
         paymentIntentId: paymentIntent.id,
       });
+
+      // Log warning if fallback was used
+      if (roamifyOrder.fallbackUsed) {
+        logger.warn(`⚠️ Fallback package used for order ${orderId}`, {
+          originalPackageId: roamifyOrder.originalPackageId,
+          fallbackPackageId: roamifyOrder.fallbackPackageId,
+          reason: 'Original package ID caused 500 error with Roamify API'
+        });
+      }
     } catch (v2Error) {
       logger.error(`❌ Roamify order creation failed:`, v2Error);
       throw new Error(`Roamify order creation failed: ${v2Error}`);
@@ -699,7 +710,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
           original_package_id: roamifyOrder.originalPackageId || packageId,
           actual_package_id: roamifyOrder.fallbackPackageId || roamifyOrder.originalPackageId || packageId,
           fallback_used: roamifyOrder.fallbackUsed || false,
-          roamify_success: roamifySuccess
+          fallback_package_id: roamifyOrder.fallbackPackageId,
+          roamify_success: roamifySuccess,
+          roamify_error_handled: roamifyOrder.fallbackUsed ? 'package_500_error_fallback_used' : null
         }
       })
       .eq('id', orderId);
