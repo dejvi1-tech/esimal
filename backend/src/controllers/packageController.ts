@@ -137,13 +137,28 @@ export const getAllPackages = async (
   try {
     const countryCode = req.query.country_code as string;
     console.log(`[API] /api/packages received country_code:`, countryCode); // DEBUG LOG
-    
+
+    // Join my_packages with packages for richer data, but only for admin-approved packages
     let query = supabaseAdmin
       .from('my_packages')
-      .select('*')
+      .select(`
+        id as my_package_id,
+        name as my_package_name,
+        country_name as my_package_country_name,
+        data_amount as my_package_data_amount,
+        days as my_package_days,
+        sale_price as my_package_sale_price,
+        visible,
+        show_on_frontend,
+        country_code,
+        reseller_id,
+        packages:packages!inner(
+          *
+        )
+      `)
       .eq('visible', true)
       .eq('show_on_frontend', true);
-    
+
     // If country_code is provided, filter by it. Otherwise, return all packages (for admin panel)
     if (countryCode && typeof countryCode === 'string' && countryCode.length === 2) {
       query = query.eq('country_code', countryCode.toUpperCase());
@@ -151,12 +166,28 @@ export const getAllPackages = async (
     } else {
       console.log(`[API] /api/packages returning all packages (no country filter)`);
     }
-    
-    const { data: packages, error } = await query.order('sale_price', { ascending: true });
-    
+
+    // Join on my_packages.reseller_id = packages.id (text)
+    // This is handled by the select() above with the !inner join
+    const { data, error } = await query.order('sale_price', { ascending: true });
+
     if (error) {
       throw error;
     }
+    // Flatten the result to return packages.* fields at the top level, and my_package_id for reference
+    const packages = (data || []).map((row: any) => ({
+      ...row.packages,
+      my_package_id: row.my_package_id,
+      my_package_name: row.my_package_name,
+      my_package_country_name: row.my_package_country_name,
+      my_package_data_amount: row.my_package_data_amount,
+      my_package_days: row.my_package_days,
+      my_package_sale_price: row.my_package_sale_price,
+      visible: row.visible,
+      show_on_frontend: row.show_on_frontend,
+      country_code: row.country_code,
+      reseller_id: row.reseller_id,
+    }));
     console.log(`[API] /api/packages returning ${packages?.length || 0} packages`); // DEBUG LOG
     res.status(200).json({
       status: 'success',
