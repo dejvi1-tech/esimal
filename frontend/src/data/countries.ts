@@ -167,6 +167,13 @@ export const europeanCountries: Country[] = [
   packages: globalPackages
 },
 {
+  code: 'AE',
+  name: { al: 'Dubai', en: 'Dubai' },
+  flag: 'https://flagcdn.com/w40/ae.png',
+  region: 'Middle East',
+  packages: globalPackages
+},
+{
   code: 'AL',
   name: { al: 'Shqipëria', en: 'Albania' },
   flag: 'https://flagcdn.com/w40/al.png',

@@ -379,9 +379,11 @@ export const getSectionPackages = async (
       return;
     }
 
+    // STRICT BEHAVIOR: Only return admin-approved packages
     const { data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
+      .eq('visible', true)
       .eq('show_on_frontend', true)
       .eq('location_slug', 'most-popular')
       .order('homepage_order', { ascending: true });
@@ -390,7 +392,7 @@ export const getSectionPackages = async (
       throw error;
     }
 
-    console.log(`Found ${packages?.length || 0} most popular packages`);
+    console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
     res.json(packages || []);
   } catch (error) {
     next(error);
@@ -414,20 +416,43 @@ export const searchPackages = async (
       return;
     }
 
+    // STRICT BEHAVIOR: Only return admin-approved packages from my_packages
     let packages, error;
-    if (country === 'EU') {
+    
+    // Handle special cases for merged countries
+    let searchCountry = country;
+    if (country.toLowerCase().includes('united arab emirates') || 
+        country.toLowerCase().includes('uae') ||
+        country.toLowerCase() === 'ae') {
+      searchCountry = 'Dubai';
+    }
+    
+    if (searchCountry === 'EU') {
       // For Europe, match by country_code
-      ({ data: packages, error } = await supabase
+      ({ data: packages, error } = await supabaseAdmin
         .from('my_packages')
         .select('*')
         .eq('country_code', 'EU')
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
+        .order('sale_price', { ascending: true }));
+    } else if (searchCountry.toLowerCase() === 'dubai') {
+      // For Dubai, match by country_code for exact results
+      ({ data: packages, error } = await supabaseAdmin
+        .from('my_packages')
+        .select('*')
+        .eq('country_code', 'AE')
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
         .order('sale_price', { ascending: true }));
     } else {
       // For other countries, match by country_name
-      ({ data: packages, error } = await supabase
+      ({ data: packages, error } = await supabaseAdmin
         .from('my_packages')
         .select('*')
-        .ilike('country_name', `%${country}%`)
+        .ilike('country_name', `%${searchCountry}%`)
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
         .order('sale_price', { ascending: true }));
     }
 
@@ -436,6 +461,7 @@ export const searchPackages = async (
       throw error;
     }
 
+    console.log(`[API] /api/search-packages returning ${packages?.length || 0} admin-approved packages for: ${country}`);
     res.json(packages || []);
   } catch (error) {
     console.error('Search packages error:', error);

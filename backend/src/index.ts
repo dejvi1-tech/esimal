@@ -151,18 +151,41 @@ app.post('/api/test-email', (req: Request, res: Response, next: NextFunction): v
 // Add endpoint for frontend packages (plain array, only visible)
 app.get('/api/frontend-packages', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('my_packages')
       .select('id, name, country_name, data_amount, days, sale_price, reseller_id')
       .eq('visible', true)
+      .eq('show_on_frontend', true)
       .order('sale_price', { ascending: true });
     if (error) {
       res.status(500).json({ error: error.message });
       return;
     }
+    console.log(`[API] /api/frontend-packages returning ${data?.length || 0} admin-approved packages`);
     res.json(data || []);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch packages' });
+  }
+});
+
+// Add endpoint for featured packages (same as frontend packages for now)
+app.get('/api/featured-packages', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('my_packages')
+      .select('*')
+      .eq('visible', true)
+      .eq('show_on_frontend', true)
+      .limit(6) // Featured packages are typically limited
+      .order('sale_price', { ascending: true });
+    if (error) {
+      res.status(500).json({ error: error.message });
+      return;
+    }
+    console.log(`[API] /api/featured-packages returning ${data?.length || 0} admin-approved featured packages`);
+    res.json(data || []);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch featured packages' });
   }
 });
 
