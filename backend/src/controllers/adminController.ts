@@ -30,7 +30,7 @@ export const debugOrder = async (
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country_name
         )
       `)

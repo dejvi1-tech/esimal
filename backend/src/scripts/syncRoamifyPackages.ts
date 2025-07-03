@@ -203,7 +203,7 @@ function convertDataAmount(dataAmount: number, dataUnit: string): number {
   }
 }
 
-function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage {
+function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage | null {
   const dataAmountGB = convertDataAmount(pkg.dataAmount, pkg.dataUnit);
   const basePrice = pkg.price;
   const salePrice = pkg.price; // You can adjust this based on your pricing strategy

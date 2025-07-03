@@ -98,7 +98,7 @@ const testEmailSending = async (config: EmailConfig, testEmail: string): Promise
         packageName: 'Test Package - 1GB/7 Days',
         amount: 9.99,
         dataAmount: '1GB',
-        validityDays: 7,
+        days: 7,
         esimCode: 'TEST-ESIM-CODE-123456',
         isGuestOrder: true,
         signupUrl: 'http://localhost:3000/signup',

@@ -374,7 +374,7 @@ export const createOrder = async (
           packageName: packageData.name,
           amount: packageData.sale_price,
           dataAmount: `${packageData.data_amount}GB`,
-          validityDays: packageData.days,
+          days: packageData.days,
           esimCode: esimCode,
           qrCodeData: qrCodeData,
           isGuestOrder: !userId,
@@ -399,7 +399,7 @@ export const createOrder = async (
         packageName: packageData.name,
         amount: packageData.sale_price,
         dataAmount: packageData.data_amount,
-        validityDays: packageData.days,
+        days: packageData.days,
       },
     });
   } catch (error: unknown) {
@@ -575,7 +575,7 @@ export const createMyPackageOrder = async (
           packageName: packageData.name,
           amount: packageData.sale_price,
           dataAmount: `${packageData.data_amount}GB`,
-          validityDays: packageData.days,
+          days: packageData.days,
           esimCode: esimCode,
           qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
           qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
@@ -608,7 +608,7 @@ export const createMyPackageOrder = async (
         packageName: packageData.name,
         amount: packageData.sale_price,
         dataAmount: packageData.data_amount,
-        validityDays: packageData.days,
+        days: packageData.days,
         name,
         surname,
         email: userEmail,
