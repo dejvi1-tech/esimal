@@ -532,18 +532,19 @@ const AdminPanel: React.FC = () => {
       const name = pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package';
       const country_name = pkg.country || pkg.country_name || '';
       const country_code = pkg.country_code || '';
-      // Parse data_amount as a number in GB
+      // Parse data_amount as a number in MB (backend expects MB)
       let data_amount_raw = pkg.data || pkg.dataAmount || '';
       let data_amount = 0;
       if (typeof data_amount_raw === 'number') {
-        data_amount = data_amount_raw;
+        data_amount = data_amount_raw; // Assume already in MB if number
       } else if (typeof data_amount_raw === 'string') {
         const match = data_amount_raw.match(/(\d+(?:\.\d+)?)(GB|MB|KB)?/i);
         if (match) {
           let value = parseFloat(match[1]);
           const unit = match[2]?.toUpperCase() || 'GB';
-          if (unit === 'MB') value = value / 1024;
-          if (unit === 'KB') value = value / (1024 * 1024);
+          if (unit === 'GB') value = value * 1024; // Convert GB to MB
+          if (unit === 'KB') value = value / 1024; // Convert KB to MB
+          // if unit === 'MB', keep as is
           data_amount = value;
         }
       }
@@ -623,15 +624,34 @@ const AdminPanel: React.FC = () => {
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
 
+      // Parse data_amount as number in MB (backend expects MB)
+      let data_amount_raw = pkg.data || pkg.dataAmount || '';
+      let data_amount = 0;
+      if (typeof data_amount_raw === 'number') {
+        data_amount = data_amount_raw; // Assume already in MB if number
+      } else if (typeof data_amount_raw === 'string') {
+        const match = data_amount_raw.match(/(\d+(?:\.\d+)?)(GB|MB|KB)?/i);
+        if (match) {
+          let value = parseFloat(match[1]);
+          const unit = match[2]?.toUpperCase() || 'GB';
+          if (unit === 'GB') value = value * 1024; // Convert GB to MB
+          if (unit === 'KB') value = value / 1024; // Convert KB to MB
+          // if unit === 'MB', keep as is
+          data_amount = value;
+        }
+      }
+
       const packageData = {
-        id: pkg.id || pkg.packageId || '',
-        country: pkg.country || pkg.country_name || '',
+        name: pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package',
+        country_name: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
-        data: pkg.data || pkg.dataAmount || '',
-        days: pkg.days || pkg.day || pkg.validity_days || 0, // ✅ Fixed mapping for Most Popular packages
+        data_amount,
+        days: pkg.days || pkg.day || pkg.validity_days || 0,
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
+        reseller_id: pkg.id || pkg.packageId || '',
+        region: pkg.region || '',
         show_on_frontend: true,
         location_slug: "most-popular",
         homepage_order: 1

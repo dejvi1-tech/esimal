@@ -363,7 +363,7 @@ export const getSectionPackages = async (
       return;
     }
 
-    const { data: packages, error } = await supabase
+    const { data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
       .eq('show_on_frontend', true)
@@ -374,6 +374,7 @@ export const getSectionPackages = async (
       throw error;
     }
 
+    console.log(`Found ${packages?.length || 0} most popular packages`);
     res.json(packages || []);
   } catch (error) {
     next(error);
