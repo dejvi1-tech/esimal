@@ -6,10 +6,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatDataAmount(amount: number): string {
-  if (amount >= 1024) {
-    const gb = amount / 1024;
+  // Database stores data amounts in GB, so we just need to format them
+  // No conversion needed since data is already in GB
+  
+  if (amount >= 1) {
     // If it's a whole number, don't show decimal part. Otherwise, show one decimal.
-    return `${Number.isInteger(gb) ? gb : gb.toFixed(1)} GB`;
+    return `${Number.isInteger(amount) ? amount : amount.toFixed(1)} GB`;
   }
-  return `${amount} MB`;
+  
+  // For amounts less than 1GB, show as MB
+  const mb = amount * 1024;
+  return `${Number.isInteger(mb) ? mb : mb.toFixed(0)} MB`;
 }

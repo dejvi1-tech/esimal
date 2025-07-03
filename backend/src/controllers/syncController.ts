@@ -321,25 +321,55 @@ export const copyToMyPackages = async (
     }
 
     // Transform packages for my_packages table
-    const myPackagesToInsert = selectedPackages.map(pkg => ({
-      id: uuidv4(), // Generate new UUID for my_packages
-      name: pkg.name,
-      country_name: pkg.country_name,
-      country_code: pkg.country_code,
-      data_amount: pkg.features?.dataAmount || 0, // Store original MB value
-      days: pkg.days,
-      base_price: pkg.price,
-      sale_price: pkg.price * 1.5, // Add 50% markup by default
-      profit: pkg.price * 0.5,
-      reseller_id: pkg.reseller_id,
-      region: pkg.features?.region || '',
-      visible: true,
-      show_on_frontend: true,
-      homepage_order: 0,
-      location_slug: pkg.country_code?.toLowerCase(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }));
+    const myPackagesToInsert = selectedPackages.map(pkg => {
+      // Auto-generate Roamify package configuration if not present
+      const countryCodeLower = pkg.country_code?.toLowerCase() || 'global';
+      const dataAmountInt = Math.floor(pkg.features?.dataAmount || pkg.data_amount || 1);
+      const days = pkg.days || 30;
+      const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${dataAmountInt}gb-all`;
+
+      return {
+        id: uuidv4(), // Generate new UUID for my_packages
+        name: pkg.name,
+        country_name: pkg.country_name,
+        country_code: pkg.country_code,
+        data_amount: pkg.features?.dataAmount || 0, // Store original MB value
+        days: pkg.days,
+        base_price: pkg.price,
+        sale_price: pkg.price * 1.5, // Add 50% markup by default
+        profit: pkg.price * 0.5,
+        reseller_id: pkg.reseller_id,
+        region: pkg.features?.region || '',
+        visible: true,
+        show_on_frontend: true,
+        homepage_order: 0,
+        location_slug: pkg.country_code?.toLowerCase(),
+        // PRESERVE OR AUTO-GENERATE FEATURES
+        features: pkg.features ? {
+          ...pkg.features // Preserve existing features if they exist
+        } : {
+          // Auto-generate features if not present
+          packageId: autoRoamifyPackageId,
+          dataAmount: pkg.data_amount,
+          days: pkg.days || 30,
+          price: pkg.price || 5.0,
+          currency: 'EUR',
+          plan: 'data-only',
+          activation: 'first-use',
+          isUnlimited: false,
+          withSMS: false,
+          withCall: false,
+          withHotspot: true,
+          withDataRoaming: true,
+          geography: 'local',
+          region: pkg.features?.region || 'Europe',
+          countrySlug: countryCodeLower,
+          notes: []
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+    });
 
     // Insert into my_packages
     const { error: insertError } = await supabaseAdmin

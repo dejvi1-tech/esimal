@@ -1135,7 +1135,12 @@ export const savePackage = async (
     // Calculate profit if not provided
     const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
 
-    // Prepare package data (no 'validity' field)
+    // Auto-generate Roamify package configuration
+    const countryCodeLower = country_code.toLowerCase();
+    const dataAmountInt = Math.floor(data_amount || 1);
+    const roamifyPackageId = `esim-${countryCodeLower}-${parsedDays}days-${dataAmountInt}gb-all`;
+
+    // Prepare package data with auto-generated features
     const packageData: {
       id: string;
       name: string;
@@ -1152,6 +1157,7 @@ export const savePackage = async (
       show_on_frontend: any;
       location_slug: any;
       homepage_order: any;
+      features: any;
       created_at: string;
       updated_at: string;
     } = {
@@ -1170,6 +1176,25 @@ export const savePackage = async (
       show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
       location_slug: location_slug || null,
       homepage_order: homepage_order || 0,
+      // AUTO-GENERATE ROAMIFY FEATURES
+      features: {
+        packageId: roamifyPackageId,
+        dataAmount: data_amount,
+        days: parsedDays,
+        price: base_price,
+        currency: 'EUR',
+        plan: 'data-only',
+        activation: 'first-use',
+        isUnlimited: false,
+        withSMS: false,
+        withCall: false,
+        withHotspot: true,
+        withDataRoaming: true,
+        geography: 'local',
+        region: region || 'Europe',
+        countrySlug: countryCodeLower,
+        notes: []
+      },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -1189,12 +1214,12 @@ export const savePackage = async (
       throw error;
     }
 
-    logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name}`);
+    logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name} with Roamify config: ${roamifyPackageId}`);
 
     res.status(200).json({
       status: 'success',
       data: savedPackage,
-      message: 'Package saved successfully'
+      message: 'Package saved successfully with auto-generated Roamify configuration'
     });
   } catch (error) {
     logger.error('Error in savePackage:', error);

@@ -84,8 +84,9 @@ async function fixSpecificPackage() {
     // Since reseller_id is UUID in database, we store the Roamify package ID in features.packageId
     const updateData = {
       features: {
+        ...(packageData.features || {}), // Keep existing features if any
         packageId: roamifyPackageId,
-        dataAmount: (packageData.data_amount || 1) * 1024, // Convert GB to MB
+        dataAmount: packageData.data_amount, // FIXED: Don't multiply by 1024 if already in GB
         days: packageData.days || 30,
         price: packageData.base_price || 2.49,
         currency: 'EUR',

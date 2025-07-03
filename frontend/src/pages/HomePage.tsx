@@ -149,7 +149,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                            {pkg.data_amount === 0 ? t('unlimited_data') : `${parseFloat((pkg.data_amount / 1024).toFixed(2))} ${t('gb_internet')}`}
+                                                          {pkg.data_amount === 0 ? t('unlimited_data') : `${parseFloat(pkg.data_amount.toFixed(2))} ${t('gb_internet')}`}
                           </span>
                         </li>
                         <li className="flex items-center">

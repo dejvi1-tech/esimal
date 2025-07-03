@@ -634,7 +634,7 @@ export const fixPackagesRoamifyConfig = async (
             features: {
               ...(pkg.features || {}), // Keep existing features
               packageId: roamifyPackageId,
-              dataAmount: pkg.data_amount * 1024, // Convert GB to MB
+              dataAmount: pkg.data_amount,
               days: pkg.days,
               price: pkg.base_price,
               currency: 'EUR',
@@ -737,7 +737,7 @@ export const fixSpecificFailingPackage = async (
     const updateData = {
       features: {
         packageId: roamifyPackageId,
-        dataAmount: (packageData.data_amount || 1) * 1024, // Convert GB to MB
+        dataAmount: packageData.data_amount,
         days: packageData.days || 30,
         price: packageData.base_price || 2.49,
         currency: 'EUR',

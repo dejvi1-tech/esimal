@@ -430,7 +430,7 @@ const AdminPanel: React.FC = () => {
       // Convert data_amount from MB to GB for the API (since the database stores it in MB)
       const packageData = {
         ...pkg,
-        data_amount: pkg.data_amount / 1024 // Convert MB to GB for API
+        data_amount: pkg.data_amount // Already in GB
       };
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/update-package/${pkg.id}`, {
@@ -955,13 +955,13 @@ const AdminPanel: React.FC = () => {
                             <input
                               type="number"
                               step="0.1"
-                              value={(editingMyPackage.data_amount / 1024).toFixed(1)}
-                              onChange={(e) => setEditingMyPackage({...editingMyPackage, data_amount: Number(e.target.value) * 1024})}
+                              value={editingMyPackage.data_amount.toFixed(1)}
+                              onChange={(e) => setEditingMyPackage({...editingMyPackage, data_amount: Number(e.target.value)})}
                               className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
                               placeholder="GB"
                             />
                           ) : (
-                            <span className="text-sm text-white">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? (pkg.data_amount / 1024).toFixed(1) : '0.0'} GB</span>
+                            <span className="text-sm text-white">{typeof (pkg.data_amount) === 'number' && !isNaN(pkg.data_amount) ? pkg.data_amount.toFixed(1) : '0.0'} GB</span>
                           )}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
@@ -1308,7 +1308,7 @@ const AdminPanel: React.FC = () => {
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">
-                              {pkg.data || (typeof pkg.dataAmount === 'number' ? (pkg.dataAmount / 1024).toFixed(1) : 'N/A')} GB
+                              {pkg.data || (typeof pkg.dataAmount === 'number' ? pkg.dataAmount.toFixed(1) : 'N/A')} GB
                             </span>
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap">
