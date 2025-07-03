@@ -35,7 +35,7 @@ async function testSlugToUuidFix() {
       console.log(`      Location Slug: ${pkg.location_slug || 'N/A'}`);
       console.log(`      Country: ${pkg.country_name}`);
       console.log(`      Data: ${pkg.data_amount}MB`);
-      console.log(`      Validity: ${pkg.validity_days} days`);
+      console.log(`      Validity: ${pkg.validity_days} validity_days`);
       console.log(`      Price: $${pkg.sale_price}`);
       console.log(`      Reseller ID: ${pkg.reseller_id}`);
       console.log('');

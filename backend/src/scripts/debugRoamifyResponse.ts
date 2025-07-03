@@ -73,7 +73,7 @@ async function debugRoamifyResponse() {
                 'description', 'desc', 'details',
                 'price', 'cost', 'amount',
                 'data', 'dataAmount', 'data_amount', 'dataSize',
-                'duration', 'days', 'day', 'validity', 'validity_days',
+                'duration', 'validity_days',
                 'features', 'benefits',
                 'operator', 'carrier',
                 'isUnlimited', 'unlimited'

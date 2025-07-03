@@ -71,7 +71,7 @@ async function testRoamifyFix() {
           console.log('Package name:', samplePackage.package);
           console.log('Package price:', samplePackage.price);
           console.log('Package data:', samplePackage.dataAmount);
-          console.log('Package days:', samplePackage.day);
+          console.log('Package validity_days:', samplePackage.validity_days);
         }
       }
     }

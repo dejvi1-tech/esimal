@@ -214,7 +214,7 @@ function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage {
     name: pkg.package,
     country_name: pkg.countryName,
     data_amount: dataAmountGB,
-    validity_days: pkg.day,
+    validity_days: pkg.day, // Map Roamify's 'day' to our 'validity_days'
     base_price: basePrice,
     sale_price: salePrice,
     profit: profit

@@ -86,7 +86,7 @@ export const createPackage = async (
     }
 
     // Parse validity string to integer days
-    let validityStr = req.body.validity || req.body.validity_days || req.body.day || req.body.days || validityDays || '';
+    let validityStr = req.body.validity || req.body.validity_days || validityDays || '';
     let parsedDays = null;
     if (typeof validityStr === 'string') {
       parsedDays = parseValidityToDays(validityStr);
@@ -103,8 +103,6 @@ export const createPackage = async (
       price,
       data_amount: dataAmount,
       validity: validityStr,
-      day: parsedDays,
-      days: parsedDays,
       validity_days: parsedDays,
       country,
       operator,
@@ -232,7 +230,7 @@ export const updatePackage = async (
     }
 
     // Parse validity string to integer days
-    let validityStr = updateData.validity || updateData.validity_days || updateData.day || updateData.days || '';
+    let validityStr = updateData.validity || updateData.validity_days || '';
     let parsedDays = null;
     if (typeof validityStr === 'string') {
       parsedDays = parseValidityToDays(validityStr);
@@ -245,9 +243,6 @@ export const updatePackage = async (
     // Overwrite all relevant fields
     updateData.validity = validityStr;
     updateData.validity_days = parsedDays;
-    // Remove day/days from updateData if present
-    delete updateData.day;
-    delete updateData.days;
 
     // Update package
     const { data: updatedPackage, error } = await supabase
@@ -541,8 +536,6 @@ export const getAllRoamifyPackages = async (
         country_name: pkg.country_name,
         country_code: pkg.country_code,
         dataAmount: pkg.data_amount,
-        day: pkg.validity_days,
-        days: pkg.validity_days,
         validity_days: pkg.validity_days,
         base_price: pkg.price,
         operator: pkg.operator,
@@ -618,8 +611,6 @@ export const getAllRoamifyPackages = async (
       country_name: pkg.country_name,
       country_code: pkg.country_code,
       dataAmount: pkg.data_amount,
-      day: pkg.validity_days,
-      days: pkg.validity_days,
       validity_days: pkg.validity_days,
       base_price: pkg.price,
       operator: pkg.operator,
@@ -757,7 +748,7 @@ export const deduplicatePackages = async (
     packagesToKeep.forEach(pkg => {
       const country = pkg.country_name || pkg.country || '';
       const data = pkg.data_amount || pkg.data || '';
-      const days = pkg.validity_days || pkg.days || pkg.day || '';
+      const days = pkg.validity_days || '';
       const price = pkg.price || pkg.base_price || '';
       
       const combinationKey = `${country}|${data}|${days}|${price}`;
@@ -822,7 +813,7 @@ function calculateCompleteness(pkg: any): number {
   if (pkg.country_name || pkg.country) score += 2;
   if (pkg.country_code) score += 1;
   if (pkg.data_amount || pkg.data) score += 2;
-  if (pkg.validity_days || pkg.days || pkg.day) score += 2;
+  if (pkg.validity_days) score += 2;
   if (pkg.price || pkg.base_price) score += 2;
   if (pkg.reseller_id) score += 1;
   if (pkg.operator) score += 1;
@@ -944,7 +935,7 @@ export const syncRoamifyPackages = async (
             }
 
             // Parse validity string to integer days
-            let validityStr = pkg.validity || pkg.day || pkg.days || pkg.validity_days || '';
+            let validityStr = pkg.validity || pkg.validity_days || '';
             let parsedDays = null;
             if (typeof validityStr === 'string') {
               parsedDays = parseValidityToDays(validityStr);
@@ -980,8 +971,6 @@ export const syncRoamifyPackages = async (
               price: pkg.price,
               data_amount: dataStr,
               validity: validityStr, // Store original string for display
-              day: parsedDays,
-              days: parsedDays,
               validity_days: parsedDays,
               country_code: countryCode,
               country_name: pkg.countryName,

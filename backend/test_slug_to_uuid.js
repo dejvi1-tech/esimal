@@ -34,7 +34,7 @@ async function testSlugToUuidConversion() {
       console.log(`      ID: ${pkg.id}`);
       console.log(`      Country: ${pkg.country_name}`);
       console.log(`      Data: ${pkg.data_amount}MB`);
-      console.log(`      Validity: ${pkg.validity_days} days`);
+      console.log(`      Validity: ${pkg.validity_days} validity_days`);
       console.log(`      Price: $${pkg.sale_price}`);
       console.log(`      Reseller ID: ${pkg.reseller_id}`);
       console.log('');
@@ -68,7 +68,7 @@ async function testSlugToUuidConversion() {
     console.log(`   Name: ${packageData.name}`);
     console.log(`   Country: ${packageData.country_name}`);
     console.log(`   Data: ${packageData.data_amount}MB`);
-    console.log(`   Validity: ${packageData.validity_days} days`);
+    console.log(`   Validity: ${packageData.validity_days} validity_days`);
     console.log(`   Price: $${packageData.sale_price}`);
     console.log(`   Reseller ID: ${packageData.reseller_id}`);
     console.log(`   Visible: ${packageData.visible}`);

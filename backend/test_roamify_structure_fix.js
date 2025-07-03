@@ -56,7 +56,7 @@ async function testRoamifyStructureFix() {
           console.log('\nSample package structure:');
           console.log('- packageId:', samplePackage.packageId);
           console.log('- package:', samplePackage.package);
-          console.log('- day:', samplePackage.day);
+          console.log('- validity_days:', samplePackage.validity_days);
           console.log('- price:', samplePackage.price);
           console.log('- dataAmount:', samplePackage.dataAmount);
           console.log('- dataUnit:', samplePackage.dataUnit);

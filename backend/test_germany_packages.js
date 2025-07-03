@@ -14,7 +14,7 @@ async function testGermanyPackages() {
       console.log('\n📦 Packages for Germany:');
       response.data.forEach((pkg, index) => {
         console.log(`   ${index + 1}. ${pkg.name}`);
-        console.log(`      Data: ${pkg.data_amount}MB, Validity: ${pkg.validity_days} days`);
+        console.log(`      Data: ${pkg.data_amount}MB, Validity: ${pkg.validity_days} validity_days`);
         console.log(`      Price: $${pkg.sale_price}, ID: ${pkg.id}`);
         console.log(`      Country: ${pkg.country_name} (${pkg.country_code})`);
         console.log('');

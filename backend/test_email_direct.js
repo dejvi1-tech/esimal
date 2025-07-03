@@ -13,7 +13,7 @@ async function testEmail() {
         amount: 2.49,
         packageName: 'Test eSIM Package',
         dataAmount: '1GB',
-        validityDays: 30,
+        validity_days: 30,
         esimCode: 'TEST-ESIM-1234',
         qrCodeData: 'LPA:1$test.example.com$test-code',
         qrCodeUrl: '',

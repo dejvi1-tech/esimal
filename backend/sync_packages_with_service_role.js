@@ -122,7 +122,7 @@ async function syncPackagesWithServiceRole() {
       name: pkg.package || 'Unknown Package',
       description: pkg.description || '',
       data_amount: pkg.dataAmount || pkg.data || 0,
-      validity_days: pkg.day || pkg.validity || 0,
+      validity_days: pkg.validity || 0,
       price: pkg.price || 0,
       reseller_id: pkg.packageId, // For backward compatibility
       features: {

@@ -82,7 +82,7 @@ async function checkMyPackagesDuplicates() {
       console.log('\n❌ Found duplicate content:');
       Object.entries(actualDuplicateContent).forEach(([key, packages]) => {
         const [country, data, validity_days, price] = key.split('-');
-        console.log(`   Content: ${country} - ${data}MB - ${validity_days} days - $${price} (${packages.length} duplicates)`);
+        console.log(`   Content: ${country} - ${data}MB - ${validity_days} validity_days - $${price} (${packages.length} duplicates)`);
         packages.forEach((pkg, index) => {
           console.log(`     ${index + 1}. ID: ${pkg.id}, Created: ${pkg.created_at}, Visible: ${pkg.visible}`);
         });
@@ -105,7 +105,7 @@ async function checkMyPackagesDuplicates() {
         console.log(`   ${index + 1}. ID: ${pkg.id}`);
         console.log(`      Name: ${pkg.name}`);
         console.log(`      Country: ${pkg.country_name} (${pkg.country_code})`);
-        console.log(`      Data: ${pkg.data_amount}MB, Validity: ${pkg.validity_days} days`);
+        console.log(`      Data: ${pkg.data_amount}MB, Validity: ${pkg.validity_days} validity_days`);
         console.log(`      Price: $${pkg.sale_price}, Visible: ${pkg.visible}`);
         console.log(`      Created: ${pkg.created_at}`);
         console.log(`      Reseller ID: ${pkg.reseller_id}`);

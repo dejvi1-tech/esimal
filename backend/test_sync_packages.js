@@ -141,7 +141,7 @@ async function testSyncPackages() {
           if (!pkg.package) missingFields.push('package');
           if (!pkg.price) missingFields.push('price');
           if (!dataStr) missingFields.push('dataStr');
-          if (!pkg.day) missingFields.push('day');
+          if (!pkg.validity_days) missingFields.push('validity_days');
           if (!pkg.countryName) missingFields.push('countryName');
           if (missingFields.length > 0) {
             console.log(`Skipping package due to missing fields [${missingFields.join(', ')}]:`, pkg.package);
@@ -154,7 +154,7 @@ async function testSyncPackages() {
             description: pkg.package || '',
             price: pkg.price,
             data_amount: dataStr,
-            validity_days: pkg.day,
+            validity_days: pkg.validity_days,
             country_code: countryCode,
             country_name: pkg.countryName,
             operator: 'Roamify',
