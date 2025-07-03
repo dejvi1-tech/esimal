@@ -10,11 +10,6 @@ import {
   triggerManualSync, 
   clearPackageValidationCache,
   deduplicateMyPackages,
-  getAllUsers,
-  getAllOrders,
-  getStats,
-  updateUserRole,
-  createAdminUser,
   fixPackagesRoamifyConfig,
   fixSpecificFailingPackage
 } from '../controllers/adminController';
