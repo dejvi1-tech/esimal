@@ -547,7 +547,8 @@ const AdminPanel: React.FC = () => {
           data_amount = value;
         }
       }
-      const days = pkg.days || pkg.validity_days || 0;
+      // ✅ FIXED: Correctly map Roamify's 'days' field to database 'days' field
+      const days = pkg.days || pkg.day || pkg.validity_days || 0;
       const base_price = pkg.price || pkg.base_price || 0;
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
@@ -569,7 +570,7 @@ const AdminPanel: React.FC = () => {
         country_name,
         country_code,
         data_amount,
-        days,
+        days, // ✅ This now correctly maps to the database 'days' field
         base_price,
         sale_price,
         profit: sale_price - base_price,
@@ -627,7 +628,7 @@ const AdminPanel: React.FC = () => {
         country: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
         data: pkg.data || pkg.dataAmount || '',
-        days: pkg.days || pkg.validity_days || 0,
+        days: pkg.days || pkg.day || pkg.validity_days || 0, // ✅ Fixed mapping for Most Popular packages
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
@@ -745,20 +746,20 @@ const AdminPanel: React.FC = () => {
   const handleSyncRoamifyPackages = async () => {
     setSyncing(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/sync-roamify-packages`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/sync/roamify-packages`, {
         method: 'POST',
         headers: getAuthHeaders(),
       });
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(`Successfully synced ${result.syncedCount} packages from Roamify API`, { style: { color: 'black' } });
+        toast.success(`Successfully synced ${result.syncedCount} packages from Roamify API (${result.countries} countries)`, { style: { color: 'black' } });
         // Refresh the packages list
         await fetchRoamifyPackages();
       } else {
         if (handleAuthError(response)) return;
         const errorData = await response.json();
-        toast.error(`Failed to sync packages: ${errorData.error || 'Unknown error'}`, { style: { color: 'black' } });
+        toast.error(`Failed to sync packages: ${errorData.message || 'Unknown error'}`, { style: { color: 'black' } });
       }
     } catch (err) {
       console.error('Error syncing packages:', err);

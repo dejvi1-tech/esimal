@@ -13,6 +13,7 @@ import accountRoutes from './routes/accountRoutes';
 import adminRoutes from './routes/adminRoutes';
 import stripeRoutes from './routes/stripeRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import syncRoutes from './routes/syncRoutes';
 import { handleStripeWebhook } from './controllers/webhookController';
 import { ipWhitelist } from './middleware/ipWhitelist';
 import { BaseError } from './utils/errors';
@@ -103,6 +104,7 @@ app.use('/api/account', accountRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/sync', syncRoutes);
 
 // Direct routes to match frontend URLs
 app.get('/api/get-section-packages', getSectionPackages);
