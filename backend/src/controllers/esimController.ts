@@ -47,7 +47,7 @@ export const getAllEsims = asyncHandler(async (
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -99,7 +99,7 @@ export const getEsimByIccid = asyncHandler(async (
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -152,7 +152,7 @@ export const getEsimUsageDetails = asyncHandler(async (
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -283,7 +283,7 @@ export const getEsimsByUserId = asyncHandler(async (
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),

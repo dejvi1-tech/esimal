@@ -22,7 +22,7 @@ interface MostPopularPackage {
   country_name: string;
   country_code?: string;
   data_amount: number;
-  validity_days: number;
+  days: number;
   sale_price: number;
   reseller_id?: string;
   region?: string;
@@ -170,7 +170,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                            {pkg.validity_days} {t('days')}
+                            {pkg.days} {t('days')}
                           </span>
                         </li>
                         <li className="flex items-start">

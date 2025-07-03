@@ -11,7 +11,7 @@ interface MyPackage {
   name: string;
   country_name: string;
   data_amount: string;
-  validity_days: number;
+  days: number;
   sale_price: number;
   reseller_id: string;
 }
@@ -160,7 +160,7 @@ const MyPackagesSection: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4 text-green-500" />
-                      <span className="text-sm text-gray-600">{pkg.validity_days} days</span>
+                      <span className="text-sm text-gray-600">{pkg.days} days</span>
                     </div>
                   </div>
 

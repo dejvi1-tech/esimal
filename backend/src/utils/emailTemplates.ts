@@ -10,7 +10,7 @@ interface EmailTemplateData {
   packageName?: string;
   amount?: number;
   dataAmount?: string;
-  validityDays?: number;
+  days?: number;
   esimCode?: string;
   qrCodeData?: string;
   isGuestOrder?: boolean;
@@ -427,7 +427,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
         <li>Package: ${data.packageName}</li>
         <li>Amount: $${data.amount}</li>
         <li>Data: ${data.dataAmount}</li>
-        <li>Validity: ${data.validityDays} days</li>
+        <li>Validity: ${data.days} days</li>
       </ul>
 
       <p>To complete your top-up, please click the button below to proceed with payment:</p>
@@ -451,7 +451,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           <li><strong>Order ID:</strong> ${data.orderId}</li>
           <li><strong>Package:</strong> ${data.packageName}</li>
           <li><strong>Data Amount:</strong> ${data.dataAmount}</li>
-          <li><strong>Validity:</strong> ${data.validityDays} days</li>
+          <li><strong>Validity:</strong> ${data.days} days</li>
           <li><strong>Amount Paid:</strong> $${data.amount}</li>
         </ul>
       </div>

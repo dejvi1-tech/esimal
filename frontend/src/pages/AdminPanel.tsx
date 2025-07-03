@@ -9,7 +9,7 @@ interface Package {
   country_name: string;
   country_code?: string;
   data_amount: number;
-  validity_days: number;
+  days: number;
   base_price: number;
   sale_price: number;
   profit: number;
@@ -25,7 +25,6 @@ interface MainPackage {
   country_code?: string;
   data_amount?: number;
   data?: string;
-  validity_days?: number;
   days?: number;
   base_price?: number;
   price?: number;
@@ -41,7 +40,7 @@ interface RoamifyPackage {
   region?: string;
   description?: string;
   data?: string | number;
-  validity?: string | number;
+  days?: string | number;
   price?: number;
   
   // Original fields for backward compatibility
@@ -55,7 +54,6 @@ interface RoamifyPackage {
   dataUnit?: string;
   day?: number;
   days?: number;
-  validity_days?: number;
   base_price?: number;
   sale_price?: number;
   operator?: string;
@@ -324,7 +322,7 @@ const AdminPanel: React.FC = () => {
               name: p.description || p.packageName || p.name || p.package,
               country: p.country || p.country_name,
               data: p.data || p.dataAmount,
-              validity: p.validity || p.validity_days || p.days || p.day,
+              days: p.days || p.day,
               price: p.price || p.base_price
             })));
           });
@@ -336,7 +334,7 @@ const AdminPanel: React.FC = () => {
               name: p.description || p.packageName || p.name || p.package,
               country: p.country || p.country_name,
               data: p.data || p.dataAmount,
-              validity: p.validity || p.validity_days || p.days || p.day,
+              days: p.days || p.day,
               price: p.price || p.base_price
             })));
           });
@@ -392,16 +390,16 @@ const AdminPanel: React.FC = () => {
       }
     });
     
-    // Check for duplicate combinations (country + data + validity + price)
+    // Check for duplicate combinations (country + data + days + price)
     const combinationCounts: { [key: string]: RoamifyPackage[] } = {};
     packages.forEach(pkg => {
       // Use the new mapped fields from backend
       const country = pkg.country || pkg.country_name || 'unknown';
       const data = pkg.data || pkg.dataAmount || 'unknown';
-      const validity = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown';
+      const days = pkg.days || pkg.day || 'unknown';
       const price = pkg.price || pkg.base_price || 'unknown';
       
-      const combinationKey = `${country}|${data}|${validity}|${price}`;
+      const combinationKey = `${country}|${data}|${days}|${price}`;
       
       if (!combinationCounts[combinationKey]) {
         combinationCounts[combinationKey] = [];
@@ -499,7 +497,7 @@ const AdminPanel: React.FC = () => {
         country_name: pkg.country_name || pkg.country || '',
         country_code: pkg.country_code || '',
         data_amount: pkg.data_amount || 0,
-        validity_days: pkg.validity_days || pkg.days || 0,
+        days: pkg.days || pkg.validity_days || 0,
         base_price: pkg.base_price || pkg.price || 0,
         sale_price: pkg.base_price || pkg.price || 0,
         profit: 0
@@ -549,7 +547,7 @@ const AdminPanel: React.FC = () => {
           data_amount = value;
         }
       }
-      const validity_days = pkg.validity || pkg.validity_days || 0;
+      const days = pkg.days || pkg.validity_days || 0;
       const base_price = pkg.price || pkg.base_price || 0;
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
@@ -557,7 +555,7 @@ const AdminPanel: React.FC = () => {
       const region = pkg.region || '';
 
       // Frontend validation
-      if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price) {
+      if (!name || !country_name || !country_code || !data_amount || !days || !base_price) {
         toast.error('Cannot save: Missing required fields.', { style: { color: 'black' } });
         setError('Cannot save: Missing required fields.');
         setUpdating(null);
@@ -571,7 +569,7 @@ const AdminPanel: React.FC = () => {
         country_name,
         country_code,
         data_amount,
-        validity_days,
+        days,
         base_price,
         sale_price,
         profit: sale_price - base_price,
@@ -629,7 +627,7 @@ const AdminPanel: React.FC = () => {
         country: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
         data: pkg.data || pkg.dataAmount || '',
-        days: pkg.validity || pkg.validity_days || 0,
+        days: pkg.days || pkg.validity_days || 0,
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
@@ -949,12 +947,12 @@ const AdminPanel: React.FC = () => {
                           {editingMyPackage?.id === pkg.id ? (
                             <input
                               type="number"
-                              value={editingMyPackage.validity_days}
-                              onChange={(e) => setEditingMyPackage({...editingMyPackage, validity_days: Number(e.target.value)})}
+                              value={editingMyPackage.days}
+                              onChange={(e) => setEditingMyPackage({...editingMyPackage, days: Number(e.target.value)})}
                               className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
                             />
                           ) : (
-                            <span className="text-sm text-white">{pkg.validity_days}</span>
+                            <span className="text-sm text-white">{pkg.days}</span>
                           )}
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap">
@@ -1090,7 +1088,7 @@ const AdminPanel: React.FC = () => {
                                   <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
                                   {packages.map((pkg, index) => (
                                     <div key={index} className="text-sm text-red-700 ml-4">
-                                      {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.validity_days || pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
+                                      {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
                                     </div>
                                   ))}
                                 </div>
@@ -1253,7 +1251,7 @@ const AdminPanel: React.FC = () => {
                   <tbody>
                     {filteredRoamifyPackages.map((pkg) => {
                       const isDuplicateId = duplicateAnalysis.duplicateIds[pkg.id || pkg.packageId || ''];
-                      const combinationKey = `${pkg.country || pkg.country_name || 'unknown'}|${pkg.data || pkg.dataAmount || 'unknown'}|${pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'unknown'}|${pkg.price || pkg.base_price || 'unknown'}`;
+                      const combinationKey = `${pkg.country || pkg.country_name || 'unknown'}|${pkg.data || pkg.dataAmount || 'unknown'}|${pkg.days || pkg.day || 'unknown'}|${pkg.price || pkg.base_price || 'unknown'}`;
                       const isDuplicateCombo = duplicateAnalysis.duplicateCombinations[combinationKey];
                       
                       return (
@@ -1294,7 +1292,7 @@ const AdminPanel: React.FC = () => {
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap">
                             <span className="text-sm text-white">
-                              {pkg.validity || pkg.validity_days || pkg.days || pkg.day || 'N/A'}
+                              {pkg.days || pkg.day || 'N/A'}
                             </span>
                           </td>
                           <td className="px-3 py-4 whitespace-nowrap">

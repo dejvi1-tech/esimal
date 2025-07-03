@@ -29,7 +29,7 @@ interface PackageData {
   name: { al: string; en: string } | string;
   sale_price: number;
   data_amount: number;
-  validity_days: number;
+  days: number;
   country_name: { al: string; en: string } | string;
   image?: string;
 }

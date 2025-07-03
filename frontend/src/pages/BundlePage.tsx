@@ -11,7 +11,7 @@ interface Package {
   name: string;
   country_name: string;
   data_amount: number;
-  validity_days: number;
+  days: number;
   sale_price: number;
 }
 
@@ -34,7 +34,7 @@ const SimplePlanCard: React.FC<{
         </span>
       </div>
       <div className="flex items-center justify-between text-base text-gray-300">
-        <span>{pkg.validity_days} {t('days')}</span>
+        <span>{pkg.days} {t('days')}</span>
         <span className="font-bold text-lg text-white">€{typeof pkg.sale_price === 'number' && !isNaN(pkg.sale_price) ? pkg.sale_price.toFixed(2) : '0.00'}</span>
       </div>
     </div>

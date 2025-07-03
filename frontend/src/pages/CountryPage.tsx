@@ -11,7 +11,7 @@ interface Package {
   name: string;
   country_name: string;
   data_amount: number;
-  validity_days: number;
+  days: number;
   sale_price: number;
   region?: string;
 }
@@ -35,7 +35,7 @@ const SimplePlanCard: React.FC<{
         </span>
       </div>
       <div className="flex items-center justify-between text-sm text-gray-700 dark:text-gray-300">
-        <span>{pkg.validity_days} {t('days')}</span>
+        <span>{pkg.days} {t('days')}</span>
         <span className={`font-bold text-base ${selected ? 'text-purple-600 dark:text-purple-400' : 'text-gray-800 dark:text-gray-200'}`}>
           €{typeof pkg.sale_price === 'number' && !isNaN(pkg.sale_price) ? pkg.sale_price.toFixed(2) : '0.00'}
         </span>
@@ -65,7 +65,7 @@ const CountryPage: React.FC = () => {
         const uniquePackages = data.filter((pkg, index, self) =>
           index === self.findIndex((p) => (
             p.data_amount === pkg.data_amount &&
-            p.validity_days === pkg.validity_days &&
+            p.days === pkg.days &&
             p.sale_price === pkg.sale_price &&
             p.country_name === pkg.country_name
           ))

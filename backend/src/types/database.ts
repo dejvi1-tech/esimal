@@ -2,7 +2,7 @@ export interface Package {
   id: string;
   name: string;
   data_amount: number;
-  validity_days: number;
+  days: number;
   price: number;
   currency: string;
   country: string;

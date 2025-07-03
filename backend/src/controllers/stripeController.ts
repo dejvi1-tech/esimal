@@ -65,7 +65,7 @@ export const createPaymentIntent = async (
         userId: userId || 'guest',
         userEmail: userEmail,
       },
-      description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.validity_days} days`,
+      description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.days} days`,
     };
 
     const paymentIntent = await StripeService.createPaymentIntent(paymentIntentData);

@@ -12,7 +12,7 @@ interface SearchPackage {
   name: { [key: string]: string };
   country_name: { [key: string]: string };
   data_amount: number;
-  validity_days: number;
+  days: number;
   sale_price: number;
   reseller_id: string;
   region: string;
@@ -194,7 +194,7 @@ const SearchPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-green-500" />
                           <span className="text-sm text-gray-600">
-                            {pkg.validity_days} {t('days')}
+                            {pkg.days} {t('days')}
                           </span>
                         </div>
                       </div>

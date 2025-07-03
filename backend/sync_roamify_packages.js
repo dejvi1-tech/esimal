@@ -47,32 +47,38 @@ async function syncRoamifyPackages() {
 
     // Step 2: Transform Roamify packages to our format
     console.log('Transforming packages...');
-    const transformedPackages = roamifyPackages.map(pkg => ({
-      id: pkg.packageId, // Use packageId as the primary ID
-      name: pkg.name || pkg.packageId,
-      slug: pkg.packageId, // Use packageId as slug
-      reseller_id: pkg.packageId, // Use packageId as reseller_id for mapping
-      features: {
-        packageId: pkg.packageId, // Store the real Roamify packageId
-        dataAmount: pkg.dataAmount,
-        validityDays: pkg.validityDays,
-        price: pkg.price,
-        currency: pkg.currency,
-        countries: pkg.countries || [],
-        description: pkg.description,
-        isUnlimited: pkg.isUnlimited || false,
-      },
-      data_amount: pkg.dataAmount || 0,
-      validity_days: pkg.validityDays || 30,
-      base_price: pkg.price || 0,
-      sale_price: pkg.price || 0, // Initially same as base price
-      country_name: pkg.countryName || 'Global',
-      region: pkg.region || '',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      visible: true,
-      is_active: true,
-    }));
+    const transformedPackages = roamifyPackages.map(pkg => {
+      if (!pkg.days || typeof pkg.days !== 'number' || pkg.days <= 0) {
+        console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing or invalid days field (got: ${pkg.days})`);
+        return null;
+      }
+      return {
+        id: pkg.packageId, // Use packageId as the primary ID
+        name: pkg.name || pkg.packageId,
+        slug: pkg.packageId, // Use packageId as slug
+        reseller_id: pkg.packageId, // Use packageId as reseller_id for mapping
+        features: {
+          packageId: pkg.packageId, // Store the real Roamify packageId
+          dataAmount: pkg.dataAmount,
+          days: pkg.days,
+          price: pkg.price,
+          currency: pkg.currency,
+          countries: pkg.countries || [],
+          description: pkg.description,
+          isUnlimited: pkg.isUnlimited || false,
+        },
+        data_amount: pkg.dataAmount || 0,
+        days: pkg.days,
+        base_price: pkg.price || 0,
+        sale_price: pkg.price || 0, // Initially same as base price
+        country_name: pkg.countryName || 'Global',
+        region: pkg.region || '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        visible: true,
+        is_active: true,
+      };
+    }).filter(pkg => pkg !== null);
 
     console.log(`Transformed ${transformedPackages.length} packages`);
 
@@ -108,7 +114,7 @@ async function syncRoamifyPackages() {
       console.log(`${index + 1}. ${pkg.name}`);
       console.log(`   ID: ${pkg.id}`);
       console.log(`   Real Roamify Package ID: ${pkg.features.packageId}`);
-      console.log(`   Data: ${pkg.data_amount}GB, Validity: ${pkg.validity_days} days`);
+      console.log(`   Data: ${pkg.data_amount}GB, Validity: ${pkg.days} days`);
       console.log(`   Price: ${pkg.base_price} ${pkg.features.currency || 'USD'}`);
       console.log('   ---');
     });

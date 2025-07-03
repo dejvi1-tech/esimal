@@ -348,7 +348,7 @@ export const createOrder = async (
       status: status,
       amount: packageData.sale_price,
       data_amount: packageData.data_amount,
-      validity_days: packageData.validity_days,
+      days: packageData.days,
       country_name: packageData.country_name,
       created_at: new Date().toISOString(),
     };
@@ -374,7 +374,7 @@ export const createOrder = async (
           packageName: packageData.name,
           amount: packageData.sale_price,
           dataAmount: `${packageData.data_amount}GB`,
-          validityDays: packageData.validity_days,
+          validityDays: packageData.days,
           esimCode: esimCode,
           qrCodeData: qrCodeData,
           isGuestOrder: !userId,
@@ -399,7 +399,7 @@ export const createOrder = async (
         packageName: packageData.name,
         amount: packageData.sale_price,
         dataAmount: packageData.data_amount,
-        validityDays: packageData.validity_days,
+        validityDays: packageData.days,
       },
     });
   } catch (error: unknown) {
@@ -547,7 +547,7 @@ export const createMyPackageOrder = async (
       status: status,
       amount: packageData.sale_price,
       data_amount: packageData.data_amount,
-      validity_days: packageData.validity_days,
+      days: packageData.days,
       country_name: packageData.country_name,
       created_at: new Date().toISOString(),
     };
@@ -575,7 +575,7 @@ export const createMyPackageOrder = async (
           packageName: packageData.name,
           amount: packageData.sale_price,
           dataAmount: `${packageData.data_amount}GB`,
-          validityDays: packageData.validity_days,
+          validityDays: packageData.days,
           esimCode: esimCode,
           qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
           qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
@@ -608,7 +608,7 @@ export const createMyPackageOrder = async (
         packageName: packageData.name,
         amount: packageData.sale_price,
         dataAmount: packageData.data_amount,
-        validityDays: packageData.validity_days,
+        validityDays: packageData.days,
         name,
         surname,
         email: userEmail,
@@ -796,7 +796,7 @@ export const getOrderDetails = async (
       .from('orders')
       .select(`
         *,
-        package:my_packages(name, country_name, data_amount, validity_days)
+        package:my_packages(name, country_name, data_amount, days)
       `)
       .eq('id', orderId)
       .single();
