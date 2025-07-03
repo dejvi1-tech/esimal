@@ -29,6 +29,12 @@ import { getSectionPackages, searchPackages } from './controllers/packageControl
 // Load environment variables
 config();
 
+// Create admin client for operations that need service role
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
 const app = express();
 
 // Trust only 1 proxy (e.g. Render, Vercel) to safely support rate-limiting

@@ -419,11 +419,14 @@ export const searchPackages = async (
     // STRICT BEHAVIOR: Only return admin-approved packages from my_packages
     let packages, error;
     
+    // Ensure country is a string
+    const countryStr = Array.isArray(country) ? String(country[0]) : String(country);
+    
     // Handle special cases for merged countries
-    let searchCountry = country;
-    if (country.toLowerCase().includes('united arab emirates') || 
-        country.toLowerCase().includes('uae') ||
-        country.toLowerCase() === 'ae') {
+    let searchCountry = countryStr;
+    if (countryStr.toLowerCase().includes('united arab emirates') || 
+        countryStr.toLowerCase().includes('uae') ||
+        countryStr.toLowerCase() === 'ae') {
       searchCountry = 'Dubai';
     }
     

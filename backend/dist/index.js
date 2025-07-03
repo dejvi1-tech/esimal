@@ -18,11 +18,14 @@ const accountRoutes_1 = __importDefault(require("./routes/accountRoutes"));
 const adminRoutes_1 = __importDefault(require("./routes/adminRoutes"));
 const stripeRoutes_1 = __importDefault(require("./routes/stripeRoutes"));
 const paymentRoutes_1 = __importDefault(require("./routes/paymentRoutes"));
+const syncRoutes_1 = __importDefault(require("./routes/syncRoutes"));
 const webhookController_1 = require("./controllers/webhookController");
-const supabase_1 = require("./config/supabase");
+const supabase_js_1 = require("@supabase/supabase-js");
 const packageController_1 = require("./controllers/packageController");
 // Load environment variables
 (0, dotenv_1.config)();
+// Create admin client for operations that need service role
+const supabaseAdmin = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const app = (0, express_1.default)();
 // Trust only 1 proxy (e.g. Render, Vercel) to safely support rate-limiting
 app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
@@ -89,6 +92,7 @@ app.use('/api/account', accountRoutes_1.default);
 app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/stripe', stripeRoutes_1.default);
 app.use('/api/payments', paymentRoutes_1.default);
+app.use('/api/sync', syncRoutes_1.default);
 // Direct routes to match frontend URLs
 app.get('/api/get-section-packages', packageController_1.getSectionPackages);
 app.get('/api/search-packages', packageController_1.searchPackages);
@@ -132,19 +136,42 @@ app.post('/api/test-email', (req, res, next) => {
 // Add endpoint for frontend packages (plain array, only visible)
 app.get('/api/frontend-packages', async (req, res, next) => {
     try {
-        const { data, error } = await supabase_1.supabase
+        const { data, error } = await supabaseAdmin
             .from('my_packages')
             .select('id, name, country_name, data_amount, days, sale_price, reseller_id')
             .eq('visible', true)
+            .eq('show_on_frontend', true)
             .order('sale_price', { ascending: true });
         if (error) {
             res.status(500).json({ error: error.message });
             return;
         }
+        console.log(`[API] /api/frontend-packages returning ${data?.length || 0} admin-approved packages`);
         res.json(data || []);
     }
     catch (error) {
         res.status(500).json({ error: 'Failed to fetch packages' });
+    }
+});
+// Add endpoint for featured packages (same as frontend packages for now)
+app.get('/api/featured-packages', async (req, res, next) => {
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .limit(6) // Featured packages are typically limited
+            .order('sale_price', { ascending: true });
+        if (error) {
+            res.status(500).json({ error: error.message });
+            return;
+        }
+        console.log(`[API] /api/featured-packages returning ${data?.length || 0} admin-approved featured packages`);
+        res.json(data || []);
+    }
+    catch (error) {
+        res.status(500).json({ error: 'Failed to fetch featured packages' });
     }
 });
 // 404 Handler

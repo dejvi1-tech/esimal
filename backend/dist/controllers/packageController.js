@@ -86,9 +86,13 @@ const getAllPackages = async (req, res, next) => {
     try {
         const countryCode = req.query.country_code;
         console.log(`[API] /api/packages received country_code:`, countryCode); // DEBUG LOG
+        // STRICT BEHAVIOR: Only return packages that exist in my_packages (admin-approved)
+        // If no admin-approved packages exist for a country/slug, return empty list
         let query = supabaseAdmin
             .from('my_packages')
-            .select('*')
+            .select(`
+        *
+      `)
             .eq('visible', true)
             .eq('show_on_frontend', true);
         // If country_code is provided, filter by it. Otherwise, return all packages (for admin panel)
@@ -99,14 +103,23 @@ const getAllPackages = async (req, res, next) => {
         else {
             console.log(`[API] /api/packages returning all packages (no country filter)`);
         }
-        const { data: packages, error } = await query.order('sale_price', { ascending: true });
+        const { data, error } = await query.order('sale_price', { ascending: true });
         if (error) {
             throw error;
         }
-        console.log(`[API] /api/packages returning ${packages?.length || 0} packages`); // DEBUG LOG
+        if (!data || data.length === 0) {
+            console.log(`[API] No admin-approved packages found for country_code: ${countryCode || 'all'}`);
+            res.status(200).json({
+                status: 'success',
+                data: [],
+                message: 'No admin-approved packages available for this location'
+            });
+            return;
+        }
+        console.log(`[API] /api/packages returning ${data.length} packages from my_packages`);
         res.status(200).json({
             status: 'success',
-            data: packages,
+            data: data,
         });
     }
     catch (error) {
@@ -270,15 +283,18 @@ const getSectionPackages = async (req, res, next) => {
             });
             return;
         }
-        const { data: packages, error } = await supabase_1.supabase
+        // STRICT BEHAVIOR: Only return admin-approved packages
+        const { data: packages, error } = await supabaseAdmin
             .from('my_packages')
             .select('*')
+            .eq('visible', true)
             .eq('show_on_frontend', true)
             .eq('location_slug', 'most-popular')
             .order('homepage_order', { ascending: true });
         if (error) {
             throw error;
         }
+        console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
         res.json(packages || []);
     }
     catch (error) {
@@ -297,27 +313,52 @@ const searchPackages = async (req, res, next) => {
             });
             return;
         }
+        // STRICT BEHAVIOR: Only return admin-approved packages from my_packages
         let packages, error;
-        if (country === 'EU') {
+        // Ensure country is a string
+        const countryStr = Array.isArray(country) ? String(country[0]) : String(country);
+        // Handle special cases for merged countries
+        let searchCountry = countryStr;
+        if (countryStr.toLowerCase().includes('united arab emirates') ||
+            countryStr.toLowerCase().includes('uae') ||
+            countryStr.toLowerCase() === 'ae') {
+            searchCountry = 'Dubai';
+        }
+        if (searchCountry === 'EU') {
             // For Europe, match by country_code
-            ({ data: packages, error } = await supabase_1.supabase
+            ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
                 .select('*')
                 .eq('country_code', 'EU')
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
+                .order('sale_price', { ascending: true }));
+        }
+        else if (searchCountry.toLowerCase() === 'dubai') {
+            // For Dubai, match by country_code for exact results
+            ({ data: packages, error } = await supabaseAdmin
+                .from('my_packages')
+                .select('*')
+                .eq('country_code', 'AE')
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
                 .order('sale_price', { ascending: true }));
         }
         else {
             // For other countries, match by country_name
-            ({ data: packages, error } = await supabase_1.supabase
+            ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
                 .select('*')
-                .ilike('country_name', `%${country}%`)
+                .ilike('country_name', `%${searchCountry}%`)
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
                 .order('sale_price', { ascending: true }));
         }
         if (error) {
             console.error('Database error:', error);
             throw error;
         }
+        console.log(`[API] /api/search-packages returning ${packages?.length || 0} admin-approved packages for: ${country}`);
         res.json(packages || []);
     }
     catch (error) {
