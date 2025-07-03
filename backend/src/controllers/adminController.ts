@@ -605,11 +605,11 @@ export const fixPackagesRoamifyConfig = async (
   try {
     console.log('🔄 Starting fix for packages without Roamify configuration...');
 
-    // Get all packages from my_packages that don't have reseller_id or features.packageId
+    // Get all packages from my_packages that don't have features.packageId
     const { data: packagesNeedingFix, error: fetchError } = await supabaseAdmin
       .from('my_packages')
       .select('*')
-      .or('reseller_id.is.null,features.is.null');
+      .or('features.is.null,features->packageId.is.null');
 
     if (fetchError) throw fetchError;
 
@@ -623,73 +623,44 @@ export const fixPackagesRoamifyConfig = async (
       
       for (const pkg of batch) {
         try {
-          // Try to find a matching package in packages table by name and country
-          const { data: matchingPackage, error: matchError } = await supabaseAdmin
-            .from('packages')
-            .select('reseller_id, features')
-            .eq('country_name', pkg.country_name)
-            .eq('name', pkg.name)
-            .single();
+          // Create a generic Roamify package ID based on country and data
+          const countryCode = pkg.country_code?.toLowerCase() || 'global';
+          const dataAmount = Math.floor(pkg.data_amount || 1);
+          const days = pkg.days || 30;
+          const roamifyPackageId = `esim-${countryCode}-${days}days-${dataAmount}gb-all`;
+          
+          // Update the package with features.packageId (don't touch reseller_id since it's UUID)
+          const updateData = {
+            features: {
+              ...(pkg.features || {}), // Keep existing features
+              packageId: roamifyPackageId,
+              dataAmount: pkg.data_amount * 1024, // Convert GB to MB
+              days: pkg.days,
+              price: pkg.base_price,
+              currency: 'EUR',
+              plan: 'data-only',
+              activation: 'first-use',
+              isUnlimited: false,
+              withHotspot: true,
+              withDataRoaming: true,
+              geography: 'local',
+              region: pkg.region || 'Unknown',
+              countrySlug: countryCode,
+              notes: []
+            },
+            updated_at: new Date().toISOString()
+          };
 
-          if (!matchError && matchingPackage) {
-            // Update the my_packages entry with Roamify configuration
-            const updateData: any = {};
-            
-            if (matchingPackage.reseller_id && !pkg.reseller_id) {
-              updateData.reseller_id = matchingPackage.reseller_id;
-            }
-            
-            if (matchingPackage.features && !pkg.features) {
-              updateData.features = matchingPackage.features;
-            }
+          const { error: updateError } = await supabaseAdmin
+            .from('my_packages')
+            .update(updateData)
+            .eq('id', pkg.id);
 
-            if (Object.keys(updateData).length > 0) {
-              updateData.updated_at = new Date().toISOString();
-              
-              const { error: updateError } = await supabaseAdmin
-                .from('my_packages')
-                .update(updateData)
-                .eq('id', pkg.id);
-
-              if (!updateError) {
-                fixedCount++;
-                console.log(`✅ Fixed package: ${pkg.name} (${pkg.country_name})`);
-              } else {
-                console.error(`❌ Error updating package ${pkg.name}:`, updateError);
-              }
-            }
+          if (!updateError) {
+            fixedCount++;
+            console.log(`✅ Fixed package: ${pkg.name} (${pkg.country_name}) -> ${roamifyPackageId}`);
           } else {
-            // If no exact match, try to add a generic reseller_id based on country and data
-            const genericResellerId = `esim-${pkg.country_code?.toLowerCase() || 'global'}-${pkg.days}days-${Math.floor(pkg.data_amount)}gb-all`;
-            
-            const { error: genericUpdateError } = await supabaseAdmin
-              .from('my_packages')
-              .update({
-                reseller_id: genericResellerId,
-                features: {
-                  packageId: genericResellerId,
-                  dataAmount: pkg.data_amount * 1024, // Convert GB to MB
-                  days: pkg.days,
-                  price: pkg.base_price,
-                  currency: 'USD',
-                  plan: 'data-only',
-                  activation: 'first-use',
-                  isUnlimited: false,
-                  withHotspot: true,
-                  withDataRoaming: true,
-                  geography: 'local',
-                  region: pkg.region || 'Unknown'
-                },
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', pkg.id);
-
-            if (!genericUpdateError) {
-              fixedCount++;
-              console.log(`✅ Added generic config for package: ${pkg.name} (${pkg.country_name}) -> ${genericResellerId}`);
-            } else {
-              console.error(`❌ Error adding generic config for package ${pkg.name}:`, genericUpdateError);
-            }
+            console.error(`❌ Error updating package ${pkg.name}:`, updateError);
           }
         } catch (error) {
           console.error(`❌ Error processing package ${pkg.name}:`, error);
@@ -759,13 +730,13 @@ export const fixSpecificFailingPackage = async (
     const countryCode = packageData.country_code || 'al'; // Default to Albania
     const dataAmount = Math.floor(packageData.data_amount || 1);
     const days = packageData.days || 30;
-    const genericResellerId = `esim-${countryCode.toLowerCase()}-${days}days-${dataAmount}gb-all`;
+    const roamifyPackageId = `esim-${countryCode.toLowerCase()}-${days}days-${dataAmount}gb-all`;
 
     // Update the package with Roamify configuration
+    // Since reseller_id is UUID, we'll store the Roamify package ID in features.packageId
     const updateData = {
-      reseller_id: genericResellerId,
       features: {
-        packageId: genericResellerId,
+        packageId: roamifyPackageId,
         dataAmount: (packageData.data_amount || 1) * 1024, // Convert GB to MB
         days: packageData.days || 30,
         price: packageData.base_price || 2.49,
@@ -801,8 +772,7 @@ export const fixSpecificFailingPackage = async (
 
     console.log('✅ Package fixed successfully!');
     console.log('📦 New configuration:', {
-      reseller_id: genericResellerId,
-      features_packageId: genericResellerId,
+      features_packageId: roamifyPackageId,
       dataAmount: updateData.features.dataAmount,
       days: updateData.features.days
     });
@@ -816,8 +786,7 @@ export const fixSpecificFailingPackage = async (
         hasFeatures: !!packageData.features
       },
       newConfig: {
-        reseller_id: genericResellerId,
-        features_packageId: genericResellerId,
+        features_packageId: roamifyPackageId,
         dataAmount: updateData.features.dataAmount,
         days: updateData.features.days
       }
