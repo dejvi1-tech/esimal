@@ -6,9 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const orderController_1 = require("../controllers/orderController");
 const rateLimiter_1 = require("../middleware/rateLimiter");
+const packageValidation_1 = require("../middleware/packageValidation");
 const router = express_1.default.Router();
 // Public routes for creating orders
-router.post('/', rateLimiter_1.orderRateLimiter, async (req, res, next) => {
+router.post('/', rateLimiter_1.orderRateLimiter, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
     try {
         await (0, orderController_1.createOrder)(req, res, next);
     }
@@ -16,7 +17,7 @@ router.post('/', rateLimiter_1.orderRateLimiter, async (req, res, next) => {
         next(err);
     }
 });
-router.post('/my-packages', rateLimiter_1.orderRateLimiter, async (req, res, next) => {
+router.post('/my-packages', rateLimiter_1.orderRateLimiter, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
     try {
         await (0, orderController_1.createMyPackageOrder)(req, res, next);
     }

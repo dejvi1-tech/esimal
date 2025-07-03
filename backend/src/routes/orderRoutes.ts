@@ -9,18 +9,19 @@ import {
   getOrderDetails,
 } from '../controllers/orderController';
 import { orderRateLimiter } from '../middleware/rateLimiter';
+import { validatePackageBeforeCheckout, addValidationHeaders } from '../middleware/packageValidation';
 
 const router = express.Router();
 
 // Public routes for creating orders
-router.post('/', orderRateLimiter, async (req, res, next): Promise<void> => {
+router.post('/', orderRateLimiter, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
   try {
     await createOrder(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.post('/my-packages', orderRateLimiter, async (req, res, next): Promise<void> => {
+router.post('/my-packages', orderRateLimiter, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
   try {
     await createMyPackageOrder(req, res, next);
   } catch (err) {

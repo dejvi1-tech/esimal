@@ -24,5 +24,13 @@ router.post('/save-package', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHa
 router.delete('/delete-package/:id', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(packageController_1.deleteMyPackage));
 // Debug routes
 router.get('/debug-order/:orderId', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.debugOrder));
+// Package health and validation routes
+router.get('/packages/health', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.getPackageHealthOverview));
+router.get('/packages/sync-status', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.getSyncStatus));
+router.post('/packages/validate', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.triggerPackageValidation));
+router.get('/packages/invalid', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.getInvalidPackages));
+router.post('/packages/sync', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.triggerManualSync));
+router.delete('/packages/validation-cache', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.clearPackageValidationCache));
+router.post('/packages/deduplicate-my-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.deduplicateMyPackages));
 exports.default = router;
 //# sourceMappingURL=adminRoutes.js.map

@@ -44,6 +44,22 @@ export interface RoamifyApplyResponse {
   data: RoamifyEsimData;
 }
 
+export interface RoamifyPackage {
+  packageId: string;
+  // Add other package properties as needed
+}
+
+export interface RoamifyCountryPackages {
+  packages: RoamifyPackage[];
+  // Add other country properties as needed
+}
+
+export interface RoamifyPackagesResponse {
+  data: {
+    packages: RoamifyCountryPackages[];
+  };
+}
+
 type RoamifyEsimResponse = {
   data?: {
     esim?: {
@@ -87,7 +103,7 @@ export class RoamifyService {
    */
   static async validatePackageId(packageId: string): Promise<boolean> {
     try {
-      const response = await axios.get(`${this.baseUrl}/api/esim/packages`, {
+      const response = await axios.get<RoamifyPackagesResponse>(`${this.baseUrl}/api/esim/packages`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',
@@ -96,8 +112,8 @@ export class RoamifyService {
       });
 
       const countries = response.data.data?.packages || [];
-      const allPackages = countries.flatMap(country => 
-        (country.packages || []).map(pkg => pkg.packageId)
+      const allPackages = countries.flatMap((country: RoamifyCountryPackages) => 
+        (country.packages || []).map((pkg: RoamifyPackage) => pkg.packageId)
       );
 
       return allPackages.includes(packageId);

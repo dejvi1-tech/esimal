@@ -11,7 +11,10 @@ const emailService_1 = require("../services/emailService");
 const emailTemplates_1 = require("../utils/emailTemplates");
 const roamifyService_1 = require("../services/roamifyService");
 const esimUtils_1 = require("../utils/esimUtils");
+const supabase_js_1 = require("@supabase/supabase-js");
 const GUEST_USER_ID = process.env.GUEST_USER_ID || '00000000-0000-0000-0000-000000000000';
+// Create supabaseAdmin client for RLS-protected operations
+const supabaseAdmin = (0, supabase_js_1.createClient)(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 function validateUserOrderStatus(status) {
     const allowed = ['pending', 'active', 'expired', 'cancelled'];
     if (!allowed.includes(status)) {
@@ -80,7 +83,7 @@ const handleStripeWebhook = (req, res, next) => {
             const eventId = event.id;
             const eventType = event.type;
             // Check if we've already processed this event
-            const { data: existingEvent, error: checkError } = await supabase_1.supabase
+            const { data: existingEvent, error: checkError } = await supabaseAdmin
                 .from('processed_events')
                 .select('id, processed_at, status')
                 .eq('event_id', eventId)
@@ -99,7 +102,7 @@ const handleStripeWebhook = (req, res, next) => {
                 });
             }
             // Create processing record to mark this event as being handled
-            const { error: insertError } = await supabase_1.supabase
+            const { error: insertError } = await supabaseAdmin
                 .from('processed_events')
                 .insert({
                 event_id: eventId,
@@ -179,7 +182,7 @@ const handleStripeWebhook = (req, res, next) => {
             finally {
                 // Update processing status
                 if (!insertError) {
-                    await supabase_1.supabase
+                    await supabaseAdmin
                         .from('processed_events')
                         .update({
                         status: processingStatus,
@@ -602,7 +605,9 @@ async function deliverEsim(order, paymentIntent, metadata) {
         try {
             roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrderV2({
                 packageId: roamifyPackageId,
-                quantity: quantity
+                quantity: quantity,
+                countryName: packageData.country_name,
+                region: packageData.region
             });
             roamifySuccess = true;
             logger_1.logger.info(`✅ Roamify order created successfully`, {
@@ -615,6 +620,14 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 fallbackPackageId: roamifyOrder.fallbackPackageId,
                 paymentIntentId: paymentIntent.id,
             });
+            // Log warning if fallback was used
+            if (roamifyOrder.fallbackUsed) {
+                logger_1.logger.warn(`⚠️ Fallback package used for order ${orderId}`, {
+                    originalPackageId: roamifyOrder.originalPackageId,
+                    fallbackPackageId: roamifyOrder.fallbackPackageId,
+                    reason: 'Original package ID caused 500 error with Roamify API'
+                });
+            }
         }
         catch (v2Error) {
             logger_1.logger.error(`❌ Roamify order creation failed:`, v2Error);
@@ -633,7 +646,9 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 original_package_id: roamifyOrder.originalPackageId || packageId,
                 actual_package_id: roamifyOrder.fallbackPackageId || roamifyOrder.originalPackageId || packageId,
                 fallback_used: roamifyOrder.fallbackUsed || false,
-                roamify_success: roamifySuccess
+                fallback_package_id: roamifyOrder.fallbackPackageId,
+                roamify_success: roamifySuccess,
+                roamify_error_handled: roamifyOrder.fallbackUsed ? 'package_500_error_fallback_used' : null
             }
         })
             .eq('id', orderId);

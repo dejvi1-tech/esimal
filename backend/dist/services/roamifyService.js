@@ -9,6 +9,47 @@ const logger_1 = require("../utils/logger");
 const esimUtils_1 = require("../utils/esimUtils");
 class RoamifyService {
     /**
+     * Validate if a package ID exists in Roamify system
+     */
+    static async validatePackageId(packageId) {
+        try {
+            const response = await axios_1.default.get(`${this.baseUrl}/api/esim/packages`, {
+                headers: {
+                    'Authorization': `Bearer ${this.apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+                timeout: 10000,
+            });
+            const countries = response.data.data?.packages || [];
+            const allPackages = countries.flatMap((country) => (country.packages || []).map((pkg) => pkg.packageId));
+            return allPackages.includes(packageId);
+        }
+        catch (error) {
+            logger_1.logger.error('Error validating package ID with Roamify:', error);
+            return false;
+        }
+    }
+    /**
+     * Get a fallback package ID based on region or country
+     */
+    static getFallbackPackageId(countryName, region) {
+        if (!countryName && !region) {
+            return this.fallbackPackages.default;
+        }
+        const country = countryName?.toLowerCase() || '';
+        const reg = region?.toLowerCase() || '';
+        if (country.includes('united states') || country.includes('usa') || reg.includes('north america')) {
+            return this.fallbackPackages.usa;
+        }
+        if (reg.includes('europe') || country.includes('germany') || country.includes('italy') || country.includes('france')) {
+            return this.fallbackPackages.europe;
+        }
+        if (reg.includes('asia') || country.includes('japan') || country.includes('china') || country.includes('india')) {
+            return this.fallbackPackages.asia;
+        }
+        return this.fallbackPackages.default;
+    }
+    /**
      * Retry wrapper for API calls
      */
     static async retryApiCall(apiCall, operation, maxRetries = this.maxRetries) {
@@ -174,13 +215,21 @@ class RoamifyService {
     /**
      * Create eSIM order with Roamify (new API)
      */
-    static async createEsimOrderV2({ packageId, quantity = 1 }) {
+    static async createEsimOrderV2({ packageId, quantity = 1, countryName, region }) {
+        // Basic validation
+        if (!packageId || typeof packageId !== 'string' || packageId.trim() === '') {
+            logger_1.logger.error(`[ROAMIFY V2] Invalid package ID provided: ${packageId}`);
+            throw new Error(`Invalid package ID: ${packageId}`);
+        }
         return this.retryApiCall(async () => {
             const url = `${this.baseUrl}/api/esim/order`;
+            let actualPackageId = packageId;
+            let fallbackUsed = false;
+            // First, try with the original package ID
             const payload = {
                 items: [
                     {
-                        packageId: packageId,
+                        packageId: actualPackageId,
                         quantity: quantity
                     }
                 ]
@@ -219,7 +268,10 @@ class RoamifyService {
                 return {
                     orderId: orderId,
                     esimId: esimId,
-                    items: result.items || []
+                    items: result.items || [],
+                    fallbackUsed,
+                    originalPackageId: packageId,
+                    fallbackPackageId: fallbackUsed ? actualPackageId : undefined
                 };
             }
             catch (error) {
@@ -230,16 +282,61 @@ class RoamifyService {
                         data: error.response.data,
                         headers: error.response.headers
                     });
-                    // If it's a 500 error, try with a known working package ID as fallback
-                    if (error.response.status === 500) {
-                        logger_1.logger.error(`[ROAMIFY V2 DEBUG] 500 error detected for package ${packageId}`);
-                        throw error;
+                    // If it's a 500 error, try with a fallback package ID
+                    if (error.response.status === 500 && !fallbackUsed) {
+                        logger_1.logger.warn(`[ROAMIFY V2 DEBUG] 500 error detected for package ${packageId}, trying fallback`);
+                        const fallbackPackageId = this.getFallbackPackageId(countryName, region);
+                        logger_1.logger.info(`[ROAMIFY V2 DEBUG] Using fallback package ID: ${fallbackPackageId}`);
+                        // Retry with fallback package
+                        const fallbackPayload = {
+                            items: [
+                                {
+                                    packageId: fallbackPackageId,
+                                    quantity: quantity
+                                }
+                            ]
+                        };
+                        try {
+                            const fallbackResponse = await axios_1.default.post(url, fallbackPayload, { headers, timeout: 30000 });
+                            logger_1.logger.info('[ROAMIFY V2 DEBUG] Fallback request successful!');
+                            const fallbackData = fallbackResponse.data;
+                            let fallbackResult;
+                            if (fallbackData.data) {
+                                fallbackResult = fallbackData.data;
+                            }
+                            else if (fallbackData.orderId || fallbackData.esimId) {
+                                fallbackResult = fallbackData;
+                            }
+                            else {
+                                fallbackResult = fallbackData;
+                            }
+                            const fallbackEsimItem = fallbackResult.items && fallbackResult.items[0];
+                            const fallbackEsimId = fallbackEsimItem?.esimId || fallbackEsimItem?.iccid || fallbackEsimItem?.esim_code || fallbackEsimItem?.code;
+                            if (!fallbackEsimId) {
+                                throw new Error('No eSIM ID received from Roamify API (fallback)');
+                            }
+                            const fallbackOrderId = fallbackResult.id || fallbackResult.orderId;
+                            logger_1.logger.info(`✅ Fallback eSIM order created successfully. Order ID: ${fallbackOrderId}, eSIM ID: ${fallbackEsimId}`);
+                            return {
+                                orderId: fallbackOrderId,
+                                esimId: fallbackEsimId,
+                                items: fallbackResult.items || [],
+                                fallbackUsed: true,
+                                originalPackageId: packageId,
+                                fallbackPackageId: fallbackPackageId
+                            };
+                        }
+                        catch (fallbackError) {
+                            logger_1.logger.error(`[ROAMIFY V2 DEBUG] Fallback also failed:`, fallbackError.response?.data || fallbackError.message);
+                            throw error; // Throw original error
+                        }
                     }
+                    throw error;
                 }
                 else {
                     logger_1.logger.error(`[ROAMIFY V2 DEBUG] Network error with endpoint ${url}:`, error.message);
+                    throw error;
                 }
-                throw error;
             }
         }, `eSIM order creation for package ${packageId}`);
     }
@@ -504,4 +601,12 @@ RoamifyService.apiKey = process.env.ROAMIFY_API_KEY;
 RoamifyService.baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 RoamifyService.maxRetries = 3;
 RoamifyService.retryDelay = 2000; // 2 seconds
+// Known working fallback package IDs for different regions
+RoamifyService.fallbackPackages = {
+    'europe': 'esim-europe-30days-3gb-all',
+    'usa': 'esim-united-states-30days-3gb-all',
+    'global': 'esim-global-30days-3gb-all',
+    'asia': 'esim-asia-30days-3gb-all',
+    'default': 'esim-europe-30days-3gb-all'
+};
 //# sourceMappingURL=roamifyService.js.map

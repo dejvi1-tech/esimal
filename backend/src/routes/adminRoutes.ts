@@ -1,7 +1,16 @@
 import { Router } from 'express';
 const router = Router();
 import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage } from '../controllers/packageController';
-import { debugOrder } from '../controllers/adminController';
+import { 
+  debugOrder, 
+  getPackageHealthOverview, 
+  getSyncStatus, 
+  triggerPackageValidation, 
+  getInvalidPackages, 
+  triggerManualSync, 
+  clearPackageValidationCache,
+  deduplicateMyPackages
+} from '../controllers/adminController';
 import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -27,5 +36,14 @@ router.delete('/delete-package/:id', requireAdminAuth, asyncHandler(deleteMyPack
 
 // Debug routes
 router.get('/debug-order/:orderId', requireAdminAuth, asyncHandler(debugOrder));
+
+// Package health and validation routes
+router.get('/packages/health', requireAdminAuth, asyncHandler(getPackageHealthOverview));
+router.get('/packages/sync-status', requireAdminAuth, asyncHandler(getSyncStatus));
+router.post('/packages/validate', requireAdminAuth, asyncHandler(triggerPackageValidation));
+router.get('/packages/invalid', requireAdminAuth, asyncHandler(getInvalidPackages));
+router.post('/packages/sync', requireAdminAuth, asyncHandler(triggerManualSync));
+router.delete('/packages/validation-cache', requireAdminAuth, asyncHandler(clearPackageValidationCache));
+router.post('/packages/deduplicate-my-packages', requireAdminAuth, asyncHandler(deduplicateMyPackages));
 
 export default router; 
