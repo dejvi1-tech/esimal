@@ -9,7 +9,14 @@ import {
   getInvalidPackages, 
   triggerManualSync, 
   clearPackageValidationCache,
-  deduplicateMyPackages
+  deduplicateMyPackages,
+  getAllUsers,
+  getAllOrders,
+  getStats,
+  updateUserRole,
+  createAdminUser,
+  fixPackagesRoamifyConfig,
+  fixSpecificFailingPackage
 } from '../controllers/adminController';
 import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -45,5 +52,7 @@ router.get('/packages/invalid', requireAdminAuth, asyncHandler(getInvalidPackage
 router.post('/packages/sync', requireAdminAuth, asyncHandler(triggerManualSync));
 router.delete('/packages/validation-cache', requireAdminAuth, asyncHandler(clearPackageValidationCache));
 router.post('/packages/deduplicate-my-packages', requireAdminAuth, asyncHandler(deduplicateMyPackages));
+router.post('/packages/fix-roamify-config', requireAdminAuth, asyncHandler(fixPackagesRoamifyConfig));
+router.post('/packages/fix-specific-failing-package', requireAdminAuth, asyncHandler(fixSpecificFailingPackage));
 
 export default router; 
