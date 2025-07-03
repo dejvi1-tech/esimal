@@ -7,8 +7,15 @@ import { emailTemplates } from '../utils/emailTemplates';
 import { RoamifyService } from '../services/roamifyService';
 import { generateEsimCode, generateQRCodeData } from '../utils/esimUtils';
 import { UserOrderStatus } from '../types/database';
+import { createClient } from '@supabase/supabase-js';
 
 const GUEST_USER_ID = process.env.GUEST_USER_ID || '00000000-0000-0000-0000-000000000000';
+
+// Create supabaseAdmin client for RLS-protected operations
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 function validateUserOrderStatus(status: string): asserts status is UserOrderStatus {
   const allowed: UserOrderStatus[] = ['pending', 'active', 'expired', 'cancelled'];
@@ -88,7 +95,7 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       const eventType = event.type;
       
       // Check if we've already processed this event
-      const { data: existingEvent, error: checkError } = await supabase
+      const { data: existingEvent, error: checkError } = await supabaseAdmin
         .from('processed_events')
         .select('id, processed_at, status')
         .eq('event_id', eventId)
@@ -109,7 +116,7 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       }
 
       // Create processing record to mark this event as being handled
-      const { error: insertError } = await supabase
+      const { error: insertError } = await supabaseAdmin
         .from('processed_events')
         .insert({
           event_id: eventId,
@@ -191,7 +198,7 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       } finally {
         // Update processing status
         if (!insertError) {
-          await supabase
+          await supabaseAdmin
             .from('processed_events')
             .update({
               status: processingStatus,
