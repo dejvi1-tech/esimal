@@ -39,7 +39,7 @@ export const getAllEsims = asyncHandler(async (
     .from('esims')
     .select(`
       *,
-      user:users(email, first_name, last_name),
+              user:users(email, "firstName", "lastName"),
       order:orders (
         id,
         status,

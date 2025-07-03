@@ -658,7 +658,7 @@ export const getAllOrders = async (
       .select(`
         *,
         package:packages(*),
-        user:users(email, first_name, last_name)
+        user:users(email, "firstName", "lastName")
       `)
       .order('created_at', { ascending: false });
 
@@ -689,7 +689,7 @@ export const getOrder = async (
       .select(`
         *,
         package:packages(*),
-        user:users(email, first_name, last_name)
+        user:users(email, "firstName", "lastName")
       `)
       .eq('id', id)
       .single();

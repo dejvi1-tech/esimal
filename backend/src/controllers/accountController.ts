@@ -15,7 +15,7 @@ export const getAllUsers = asyncHandler(async (
 ) => {
   const { data: users, error } = await supabase
     .from('users')
-    .select('id, email, first_name, last_name, role, balance, currency, created_at, last_login_at')
+          .select('id, email, "firstName", "lastName", role, balance, currency, created_at, last_login_at')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -38,7 +38,7 @@ export const getUserById = asyncHandler(async (
 
   const { data: user, error } = await supabase
     .from('users')
-    .select('id, email, first_name, last_name, role, balance, currency, stripe_customer_id, created_at, last_login_at')
+    .select('id, email, "firstName", "lastName", role, balance, currency, stripe_customer_id, created_at, last_login_at')
     .eq('id', id)
     .single();
 
