@@ -28,7 +28,7 @@ async function fixMyPackagesDuplicates() {
 
     console.log(`📊 Total packages before cleanup: ${allPackages.length}`);
 
-    // Group packages by content (country, data, validity, price)
+    // Group packages by content (country, data, validity_days, price)
     const contentGroups = {};
     allPackages.forEach(pkg => {
       const key = `${pkg.country_name}-${pkg.data_amount}-${pkg.validity_days}-${pkg.sale_price}`;

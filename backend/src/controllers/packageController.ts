@@ -1064,7 +1064,7 @@ export const savePackage = async (
       country_name,
       country_code,
       data_amount,
-      validity_days,
+      validity_days, // Only accept validity_days
       base_price,
       sale_price,
       profit,
@@ -1083,19 +1083,12 @@ export const savePackage = async (
     // Calculate profit if not provided
     const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
 
-    // Parse validity string to integer days
-    let validityStr = req.body.validity || req.body.validity_days || req.body.day || req.body.days || '';
-    let parsedDays = null;
-    if (typeof validityStr === 'string') {
-      parsedDays = parseValidityToDays(validityStr);
-    } else if (typeof validityStr === 'number') {
-      parsedDays = validityStr;
-    }
-    if (parsedDays === null) {
-      logger.warn(`Could not parse validity string '${validityStr}' for package ${name}`);
+    // validity_days must be a number
+    if (typeof validity_days !== 'number' || validity_days <= 0) {
+      throw new ValidationError('validity_days must be a positive number');
     }
 
-    // Prepare package data
+    // Prepare package data (no 'validity' field)
     const packageData: {
       id: string;
       name: string;
@@ -1114,14 +1107,13 @@ export const savePackage = async (
       homepage_order: any;
       created_at: string;
       updated_at: string;
-      validity?: string;
     } = {
       id: id || uuidv4(), // Generate new UUID if not provided
       name,
       country_name,
       country_code: country_code.toUpperCase(),
       data_amount,
-      validity_days: parsedDays,
+      validity_days,
       base_price,
       sale_price,
       profit: calculatedProfit,
@@ -1133,7 +1125,6 @@ export const savePackage = async (
       homepage_order: homepage_order || 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      validity: validityStr
     };
 
     // Upsert package (insert or update)
