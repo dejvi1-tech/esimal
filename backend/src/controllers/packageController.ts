@@ -244,9 +244,10 @@ export const updatePackage = async (
     }
     // Overwrite all relevant fields
     updateData.validity = validityStr;
-    updateData.day = parsedDays;
-    updateData.days = parsedDays;
     updateData.validity_days = parsedDays;
+    // Remove day/days from updateData if present
+    delete updateData.day;
+    delete updateData.days;
 
     // Update package
     const { data: updatedPackage, error } = await supabase
@@ -1113,17 +1114,14 @@ export const savePackage = async (
       homepage_order: any;
       created_at: string;
       updated_at: string;
-      // Add these fields for dynamic assignment
       validity?: string;
-      day?: number | null;
-      days?: number | null;
     } = {
       id: id || uuidv4(), // Generate new UUID if not provided
       name,
       country_name,
       country_code: country_code.toUpperCase(),
       data_amount,
-      validity_days,
+      validity_days: parsedDays,
       base_price,
       sale_price,
       profit: calculatedProfit,
@@ -1134,14 +1132,9 @@ export const savePackage = async (
       location_slug: location_slug || null,
       homepage_order: homepage_order || 0,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      validity: validityStr
     };
-
-    // Overwrite all relevant fields
-    packageData.validity = validityStr;
-    packageData.day = parsedDays;
-    packageData.days = parsedDays;
-    packageData.validity_days = parsedDays;
 
     // Upsert package (insert or update)
     const { data: savedPackage, error } = await supabaseAdmin

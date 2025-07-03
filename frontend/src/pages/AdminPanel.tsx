@@ -128,7 +128,7 @@ const AdminPanel: React.FC = () => {
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('admin_token');
-    toast.success('Logged out successfully');
+    toast.success('Logged out successfully', { style: { color: 'black' } });
     navigate('/admin/login');
   };
 
@@ -136,7 +136,7 @@ const AdminPanel: React.FC = () => {
   const handleAuthError = (response: Response) => {
     if (response.status === 401) {
       localStorage.removeItem('admin_token');
-      toast.error('Session expired. Please login again.');
+      toast.error('Session expired. Please login again.', { style: { color: 'black' } });
       navigate('/admin/login');
       return true;
     }
@@ -549,7 +549,7 @@ const AdminPanel: React.FC = () => {
           data_amount = value;
         }
       }
-      const validity_days = pkg.validity || pkg.validity_days || pkg.days || pkg.day || 0;
+      const validity_days = pkg.validity || pkg.validity_days || 0;
       const base_price = pkg.price || pkg.base_price || 0;
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
@@ -558,7 +558,7 @@ const AdminPanel: React.FC = () => {
 
       // Frontend validation
       if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price) {
-        toast.error('Cannot save: Missing required fields.');
+        toast.error('Cannot save: Missing required fields.', { style: { color: 'black' } });
         setError('Cannot save: Missing required fields.');
         setUpdating(null);
         return;
@@ -591,20 +591,18 @@ const AdminPanel: React.FC = () => {
       if (response.ok) {
         await fetchMyPackages();
         setError(''); // Clear any previous errors
-        toast.success(country_name === "Europe & United States" 
-          ? 'Package saved successfully! Use "Save as Most Popular" to show in Most Popular section.'
-          : `Package saved successfully! It will appear on the ${country_name} page.`);
+        toast.success('Package saved successfully! Use "Save as Most Popular" to show in Most Popular section.', { style: { color: 'black' } });
       } else {
         if (handleAuthError(response)) return;
         const errorData = await response.json();
         const errorMessage = `Failed to save package: ${errorData.error || 'Unknown error'}`;
-        toast.error(errorMessage);
+        toast.error(errorMessage, { style: { color: 'black' } });
         setError(errorMessage);
       }
     } catch (err) {
       console.error('Error saving Roamify package:', err);
       const errorMessage = 'Failed to save package';
-      toast.error(errorMessage);
+      toast.error(errorMessage, { style: { color: 'black' } });
       setError(errorMessage);
     } finally {
       setUpdating(null);
@@ -616,7 +614,7 @@ const AdminPanel: React.FC = () => {
     try {
       // Check if the package is for Europe & United States
       if (pkg.country !== "Europe & United States") {
-        toast.error('Only Europe & United States packages can be saved as Most Popular. This package will be saved to its country-specific page instead.');
+        toast.error('Only Europe & United States packages can be saved as Most Popular. This package will be saved to its country-specific page instead.', { style: { color: 'black' } });
         // Automatically save it as a country-specific package instead
         await handleSaveRoamifyPackage(pkg);
         return;
@@ -631,7 +629,7 @@ const AdminPanel: React.FC = () => {
         country: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
         data: pkg.data || pkg.dataAmount || '',
-        days: pkg.validity || pkg.validity_days || pkg.days || pkg.day || 0,
+        days: pkg.validity || pkg.validity_days || 0,
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
@@ -649,18 +647,18 @@ const AdminPanel: React.FC = () => {
       if (response.ok) {
         await fetchMyPackages();
         setError(''); // Clear any previous errors
-        toast.success('Package saved to Most Popular section successfully!');
+        toast.success('Package saved to Most Popular section successfully!', { style: { color: 'black' } });
       } else {
         if (handleAuthError(response)) return;
         const errorData = await response.json();
         const errorMessage = `Failed to save package: ${errorData.error || 'Unknown error'}`;
-        toast.error(errorMessage);
+        toast.error(errorMessage, { style: { color: 'black' } });
         setError(errorMessage);
       }
     } catch (err) {
       console.error('Error saving as most popular:', err);
       const errorMessage = 'Failed to save package';
-      toast.error(errorMessage);
+      toast.error(errorMessage, { style: { color: 'black' } });
       setError(errorMessage);
     } finally {
       setUpdating(null);
@@ -717,7 +715,7 @@ const AdminPanel: React.FC = () => {
 
   const handleRemoveDuplicates = async () => {
     if (!duplicateAnalysis.hasDuplicates) {
-      toast.info('No duplicates found to remove');
+      toast.info('No duplicates found to remove', { style: { color: 'black' } });
       return;
     }
 
@@ -730,17 +728,17 @@ const AdminPanel: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(`Successfully removed ${result.removedCount} duplicate packages`);
+        toast.success(`Successfully removed ${result.removedCount} duplicate packages`, { style: { color: 'black' } });
         // Refresh the packages list
         await fetchRoamifyPackages();
       } else {
         if (handleAuthError(response)) return;
         const errorData = await response.json();
-        toast.error(`Failed to remove duplicates: ${errorData.error || 'Unknown error'}`);
+        toast.error(`Failed to remove duplicates: ${errorData.error || 'Unknown error'}`, { style: { color: 'black' } });
       }
     } catch (err) {
       console.error('Error removing duplicates:', err);
-      toast.error('Failed to remove duplicates');
+      toast.error('Failed to remove duplicates', { style: { color: 'black' } });
     } finally {
       setDeduplicating(false);
     }
@@ -756,17 +754,17 @@ const AdminPanel: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        toast.success(`Successfully synced ${result.syncedCount} packages from Roamify API`);
+        toast.success(`Successfully synced ${result.syncedCount} packages from Roamify API`, { style: { color: 'black' } });
         // Refresh the packages list
         await fetchRoamifyPackages();
       } else {
         if (handleAuthError(response)) return;
         const errorData = await response.json();
-        toast.error(`Failed to sync packages: ${errorData.error || 'Unknown error'}`);
+        toast.error(`Failed to sync packages: ${errorData.error || 'Unknown error'}`, { style: { color: 'black' } });
       }
     } catch (err) {
       console.error('Error syncing packages:', err);
-      toast.error('Failed to sync packages');
+      toast.error('Failed to sync packages', { style: { color: 'black' } });
     } finally {
       setSyncing(false);
     }
@@ -798,7 +796,7 @@ const AdminPanel: React.FC = () => {
         </header>
 
         {error && (
-          <div className="modal-glass p-4 rounded-2xl max-w-lg mx-auto mb-4 text-red-400 border border-red-400">
+          <div className="modal-glass p-4 rounded-2xl max-w-lg mx-auto mb-4 text-red-600 border border-red-400 bg-white">
             {error}
           </div>
         )}
@@ -953,7 +951,7 @@ const AdminPanel: React.FC = () => {
                               type="number"
                               value={editingMyPackage.validity_days}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, validity_days: Number(e.target.value)})}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
                             />
                           ) : (
                             <span className="text-sm text-white">{pkg.validity_days}</span>
@@ -966,7 +964,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.base_price}
                               onChange={(e) => setEditingMyPackage({...editingMyPackage, base_price: Number(e.target.value)})}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-gray-900 bg-white"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-black bg-white"
                             />
                           ) : (
                             <span className="text-sm text-white">${pkg.base_price}</span>
@@ -998,7 +996,7 @@ const AdminPanel: React.FC = () => {
                               step="0.01"
                               value={editingMyPackage.profit}
                               readOnly
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-gray-900"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm bg-gray-100 text-black"
                             />
                           ) : (
                             <span className={`text-sm ${pkg.profit > 0 ? 'text-green-400' : 'text-red-400'}`}>${typeof pkg.profit === 'number' && !isNaN(pkg.profit) ? pkg.profit.toFixed(2) : '0.00'}</span>
@@ -1060,7 +1058,7 @@ const AdminPanel: React.FC = () => {
             {/* Duplicate Analysis Display */}
             {!roamifyLoading && (
               <div className="mb-4 p-4 bg-white/10 rounded-lg border border-white/20">
-                <h3 className="text-lg font-semibold text-white mb-2">Package Analysis</h3>
+                <h3 className="text-lg font-semibold text-black mb-2">Package Analysis</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                   <div className="bg-white p-3 rounded border">
                     <div className="font-medium text-gray-700">Total Packages</div>
@@ -1068,15 +1066,11 @@ const AdminPanel: React.FC = () => {
                   </div>
                   <div className="bg-white p-3 rounded border">
                     <div className="font-medium text-gray-700">Duplicate IDs</div>
-                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
-                      {Object.keys(duplicateAnalysis.duplicateIds).length}
-                    </div>
+                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>{Object.keys(duplicateAnalysis.duplicateIds).length}</div>
                   </div>
                   <div className="bg-white p-3 rounded border">
                     <div className="font-medium text-gray-700">Duplicate Combinations</div>
-                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>
-                      {Object.keys(duplicateAnalysis.duplicateCombinations).length}
-                    </div>
+                    <div className={`text-2xl font-bold ${duplicateAnalysis.hasDuplicates ? 'text-red-600' : 'text-green-600'}`}>{Object.keys(duplicateAnalysis.duplicateCombinations).length}</div>
                   </div>
                 </div>
                 
