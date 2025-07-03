@@ -6,6 +6,7 @@ const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("../utils/logger");
 const errors_1 = require("../utils/errors");
 const uuid_1 = require("uuid");
+const esimUtils_1 = require("../utils/esimUtils");
 // At top of file
 const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 // Create admin client for operations that need service role
@@ -14,9 +15,9 @@ console.log('updatePackage controller loaded');
 // Admin-only function to create package
 const createPackage = async (req, res, next) => {
     try {
-        const { name, description, price, dataAmount, validityDays, country, operator, type, } = req.body;
+        const { name, description, price, dataAmount, days, country, operator, type, } = req.body;
         // Validate required fields
-        if (!name || !price || !dataAmount || !validityDays || !country || !operator || !type) {
+        if (!name || !price || !dataAmount || !days || !country || !operator || !type) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.required('All package fields'));
         }
         if (price <= 0) {
@@ -25,8 +26,8 @@ const createPackage = async (req, res, next) => {
         if (dataAmount <= 0) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Data amount'));
         }
-        if (validityDays <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Validity days'));
+        if (days <= 0) {
+            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Days'));
         }
         // Check if package with same name exists
         const { data: existingPackage } = await supabase_1.supabase
@@ -37,21 +38,34 @@ const createPackage = async (req, res, next) => {
         if (existingPackage) {
             throw new errors_1.ConflictError(errors_1.ErrorMessages.package.nameExists);
         }
+        // Parse validity string to integer days
+        let validityStr = req.body.validity || req.body.days || days || '';
+        let parsedDays = null;
+        if (typeof validityStr === 'string') {
+            parsedDays = (0, esimUtils_1.parseValidityToDays)(validityStr);
+        }
+        else if (typeof validityStr === 'number') {
+            parsedDays = validityStr;
+        }
+        if (parsedDays === null || parsedDays <= 0) {
+            logger_1.logger.warn(`Could not parse days string '${validityStr}' for package create name=${name}`);
+            return res.status(400).json({ status: 'error', message: 'Invalid or missing days field' });
+        }
+        // Overwrite all relevant fields
+        const packageData = {
+            name,
+            description,
+            price,
+            data_amount: dataAmount,
+            days: parsedDays,
+            country,
+            operator,
+            type,
+        };
         // Create package
         const { data: newPackage, error } = await supabase_1.supabase
             .from('packages')
-            .insert([
-            {
-                name,
-                description,
-                price,
-                data_amount: dataAmount,
-                validity_days: validityDays,
-                country,
-                operator,
-                type,
-            },
-        ])
+            .insert([packageData])
             .select()
             .single();
         if (error) {
@@ -144,9 +158,24 @@ const updatePackage = async (req, res, next) => {
         if (updateData.dataAmount !== undefined && updateData.dataAmount <= 0) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Data amount'));
         }
-        if (updateData.validityDays !== undefined && updateData.validityDays <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Validity days'));
+        if (updateData.days !== undefined && updateData.days <= 0) {
+            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Days'));
         }
+        // Parse validity string to integer days
+        let validityStr = updateData.validity || updateData.days || '';
+        let parsedDays = null;
+        if (typeof validityStr === 'string') {
+            parsedDays = (0, esimUtils_1.parseValidityToDays)(validityStr);
+        }
+        else if (typeof validityStr === 'number') {
+            parsedDays = validityStr;
+        }
+        if (parsedDays === null) {
+            logger_1.logger.warn(`Could not parse days string '${validityStr}' for package update id=${id}`);
+        }
+        // Overwrite all relevant fields
+        updateData.validity = validityStr;
+        updateData.days = parsedDays;
         // Update package
         const { data: updatedPackage, error } = await supabase_1.supabase
             .from('packages')
@@ -376,9 +405,9 @@ const getAllRoamifyPackages = async (req, res, next) => {
                 id: pkg.id,
                 country: pkg.country_name,
                 region: pkg.region || 'Global',
-                description: `${pkg.data_amount} - ${pkg.validity_days} days`,
+                description: `${pkg.data_amount} - ${pkg.days} days`,
                 data: pkg.data_amount,
-                validity: `${pkg.validity_days} days`,
+                validity: `${pkg.days} days`,
                 price: pkg.price,
                 // Add additional fields for backward compatibility
                 packageId: pkg.id,
@@ -388,9 +417,7 @@ const getAllRoamifyPackages = async (req, res, next) => {
                 country_name: pkg.country_name,
                 country_code: pkg.country_code,
                 dataAmount: pkg.data_amount,
-                day: pkg.validity_days,
-                days: pkg.validity_days,
-                validity_days: pkg.validity_days,
+                days: pkg.days,
                 base_price: pkg.price,
                 operator: pkg.operator,
                 features: pkg.features,
@@ -444,9 +471,9 @@ const getAllRoamifyPackages = async (req, res, next) => {
             id: pkg.id,
             country: pkg.country_name,
             region: pkg.region || 'Global',
-            description: `${pkg.data_amount} - ${pkg.validity_days} days`,
+            description: `${pkg.data_amount} - ${pkg.days} days`,
             data: pkg.data_amount,
-            validity: `${pkg.validity_days} days`,
+            validity: `${pkg.days} days`,
             price: pkg.price,
             // Add additional fields for backward compatibility
             packageId: pkg.id,
@@ -456,9 +483,7 @@ const getAllRoamifyPackages = async (req, res, next) => {
             country_name: pkg.country_name,
             country_code: pkg.country_code,
             dataAmount: pkg.data_amount,
-            day: pkg.validity_days,
-            days: pkg.validity_days,
-            validity_days: pkg.validity_days,
+            days: pkg.days,
             base_price: pkg.price,
             operator: pkg.operator,
             features: pkg.features,
@@ -579,7 +604,7 @@ const deduplicatePackages = async (req, res, next) => {
         packagesToKeep.forEach(pkg => {
             const country = pkg.country_name || pkg.country || '';
             const data = pkg.data_amount || pkg.data || '';
-            const days = pkg.validity_days || pkg.days || pkg.day || '';
+            const days = pkg.days || '';
             const price = pkg.price || pkg.base_price || '';
             const combinationKey = `${country}|${data}|${days}|${price}`;
             if (combinationMap.has(combinationKey)) {
@@ -641,7 +666,7 @@ function calculateCompleteness(pkg) {
         score += 1;
     if (pkg.data_amount || pkg.data)
         score += 2;
-    if (pkg.validity_days || pkg.days || pkg.day)
+    if (pkg.days)
         score += 2;
     if (pkg.price || pkg.base_price)
         score += 2;
@@ -745,6 +770,18 @@ const syncRoamifyPackages = async (req, res, next) => {
                                 dataStr = `${pkg.dataAmount}MB`;
                             }
                         }
+                        // Parse validity string to integer days
+                        let validityStr = pkg.validity || pkg.days || '';
+                        let parsedDays = null;
+                        if (typeof validityStr === 'string') {
+                            parsedDays = (0, esimUtils_1.parseValidityToDays)(validityStr);
+                        }
+                        else if (typeof validityStr === 'number') {
+                            parsedDays = validityStr;
+                        }
+                        if (parsedDays === null) {
+                            console.warn(`Could not parse days string '${validityStr}' for package ${pkg.package}`);
+                        }
                         // Validate country_code format
                         let countryCode = 'XX'; // Default fallback
                         if (pkg.countryCode) {
@@ -758,8 +795,8 @@ const syncRoamifyPackages = async (req, res, next) => {
                             missingFields.push('price');
                         if (!dataStr)
                             missingFields.push('dataStr');
-                        if (!pkg.day)
-                            missingFields.push('day');
+                        if (!parsedDays)
+                            missingFields.push('days');
                         if (!pkg.countryName)
                             missingFields.push('countryName');
                         if (missingFields.length > 0) {
@@ -772,7 +809,7 @@ const syncRoamifyPackages = async (req, res, next) => {
                             description: pkg.package || '',
                             price: pkg.price,
                             data_amount: dataStr,
-                            validity_days: pkg.day,
+                            days: parsedDays,
                             country_code: countryCode,
                             country_name: pkg.countryName,
                             operator: 'Roamify',
@@ -843,21 +880,38 @@ exports.syncRoamifyPackages = syncRoamifyPackages;
 // Secure admin endpoint: Save package to my_packages
 const savePackage = async (req, res, next) => {
     try {
-        const { id, name, country_name, country_code, data_amount, validity_days, base_price, sale_price, profit, reseller_id, region, show_on_frontend, location_slug, homepage_order } = req.body;
+        const { id, name, country_name, country_code, data_amount, days, // Only accept days
+        base_price, sale_price, profit, reseller_id, region, show_on_frontend, location_slug, homepage_order } = req.body;
+        // --- DAYS VALIDATION & COERCION ---
+        let parsedDays = null;
+        if (typeof days === 'number') {
+            parsedDays = days;
+        }
+        else if (typeof days === 'string') {
+            // Try to parse string to integer days
+            parsedDays = (0, esimUtils_1.parseValidityToDays)(days);
+        }
+        // Check for missing, null, zero, negative, or non-integer
+        if (parsedDays === null ||
+            typeof parsedDays !== 'number' ||
+            !Number.isInteger(parsedDays) ||
+            parsedDays <= 0) {
+            throw new errors_1.ValidationError('days must be a positive integer greater than zero');
+        }
         // Validate required fields
-        if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price || !sale_price) {
-            throw new errors_1.ValidationError('Missing required fields: name, country_name, country_code, data_amount, validity_days, base_price, sale_price');
+        if (!name || !country_name || !country_code || !data_amount || !base_price || !sale_price) {
+            throw new errors_1.ValidationError('Missing required fields: name, country_name, country_code, data_amount, days, base_price, sale_price');
         }
         // Calculate profit if not provided
         const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
-        // Prepare package data
+        // Prepare package data (no 'validity' field)
         const packageData = {
             id: id || (0, uuid_1.v4)(), // Generate new UUID if not provided
             name,
             country_name,
             country_code: country_code.toUpperCase(),
             data_amount,
-            validity_days,
+            days: parsedDays, // Always a positive integer
             base_price,
             sale_price,
             profit: calculatedProfit,
@@ -868,7 +922,7 @@ const savePackage = async (req, res, next) => {
             location_slug: location_slug || null,
             homepage_order: homepage_order || 0,
             created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
         };
         // Upsert package (insert or update)
         const { data: savedPackage, error } = await supabaseAdmin

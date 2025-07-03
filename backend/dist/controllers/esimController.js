@@ -45,7 +45,7 @@ exports.getAllEsims = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =>
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -87,7 +87,7 @@ exports.getEsimByIccid = (0, asyncHandler_1.asyncHandler)(async (req, res, next)
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -130,7 +130,7 @@ exports.getEsimUsageDetails = (0, asyncHandler_1.asyncHandler)(async (req, res, 
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),
@@ -231,7 +231,7 @@ exports.getEsimsByUserId = (0, asyncHandler_1.asyncHandler)(async (req, res, nex
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country,
           operator
         ),

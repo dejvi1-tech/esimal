@@ -134,7 +134,7 @@ app.get('/api/frontend-packages', async (req, res, next) => {
     try {
         const { data, error } = await supabase_1.supabase
             .from('my_packages')
-            .select('id, name, country_name, data_amount, validity_days, sale_price, reseller_id')
+            .select('id, name, country_name, data_amount, days, sale_price, reseller_id')
             .eq('visible', true)
             .order('sale_price', { ascending: true });
         if (error) {

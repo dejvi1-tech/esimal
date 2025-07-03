@@ -22,7 +22,7 @@ const debugOrder = async (req, res, next) => {
           id,
           name,
           data_amount,
-          validity_days,
+          days,
           country_name
         )
       `)

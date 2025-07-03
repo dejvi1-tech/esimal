@@ -318,7 +318,7 @@ const createOrder = async (req, res, next) => {
             status: status,
             amount: packageData.sale_price,
             data_amount: packageData.data_amount,
-            validity_days: packageData.validity_days,
+            days: packageData.days,
             country_name: packageData.country_name,
             created_at: new Date().toISOString(),
         };
@@ -341,7 +341,7 @@ const createOrder = async (req, res, next) => {
                     packageName: packageData.name,
                     amount: packageData.sale_price,
                     dataAmount: `${packageData.data_amount}GB`,
-                    validityDays: packageData.validity_days,
+                    days: packageData.days,
                     esimCode: esimCode,
                     qrCodeData: qrCodeData,
                     isGuestOrder: !userId,
@@ -365,7 +365,7 @@ const createOrder = async (req, res, next) => {
                 packageName: packageData.name,
                 amount: packageData.sale_price,
                 dataAmount: packageData.data_amount,
-                validityDays: packageData.validity_days,
+                days: packageData.days,
             },
         });
     }
@@ -456,26 +456,33 @@ const createMyPackageOrder = async (req, res, next) => {
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
             logger_1.logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+            // NEW: Poll for eSIM profile
+            let profile;
+            try {
+                profile = await roamifyService_1.RoamifyService.getEsimProfileWithPolling(roamifyOrderId);
+                const qrText = `LPA:1$${profile.smDpPlusAddress}$${profile.activationCode}`;
+                logger_1.logger.info(`[ROAMIFY] Final QR string: ${qrText}`);
+                realQRData = {
+                    lpaCode: qrText,
+                    qrCodeUrl: '',
+                    activationCode: profile.activationCode,
+                    iosQuickInstall: '',
+                };
+            }
+            catch (pollErr) {
+                logger_1.logger.error('Failed to fetch eSIM profile after order creation:', pollErr);
+                throw pollErr;
+            }
         }
         catch (roamifyError) {
             logger_1.logger.error('Failed to create Roamify order, using fallback:', roamifyError);
             // Fallback: Generate a unique eSIM code locally
             esimCode = await (0, esimUtils_1.generateEsimCode)();
             roamifyOrderId = `fallback-${Date.now()}`;
-            logger_1.logger.info(`Using fallback eSIM code: ${esimCode}`);
-        }
-        // Step 2: Generate real QR code from Roamify (with fallback)
-        logger_1.logger.info(`Generating real QR code for eSIM: ${esimCode}`);
-        try {
-            realQRData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimCode);
-        }
-        catch (qrError) {
-            logger_1.logger.error('Failed to generate real QR code, using fallback:', qrError);
-            // Fallback: Generate QR code locally
             const fallbackLpaCode = (0, esimUtils_1.generateQRCodeData)(esimCode, packageData.name);
             realQRData = {
                 lpaCode: fallbackLpaCode,
-                qrCodeUrl: '', // Will be generated in email template
+                qrCodeUrl: '',
                 activationCode: esimCode,
                 iosQuickInstall: '',
             };
@@ -499,7 +506,7 @@ const createMyPackageOrder = async (req, res, next) => {
             status: status,
             amount: packageData.sale_price,
             data_amount: packageData.data_amount,
-            validity_days: packageData.validity_days,
+            days: packageData.days,
             country_name: packageData.country_name,
             created_at: new Date().toISOString(),
         };
@@ -523,7 +530,7 @@ const createMyPackageOrder = async (req, res, next) => {
                     packageName: packageData.name,
                     amount: packageData.sale_price,
                     dataAmount: `${packageData.data_amount}GB`,
-                    validityDays: packageData.validity_days,
+                    days: packageData.days,
                     esimCode: esimCode,
                     qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
                     qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
@@ -555,7 +562,7 @@ const createMyPackageOrder = async (req, res, next) => {
                 packageName: packageData.name,
                 amount: packageData.sale_price,
                 dataAmount: packageData.data_amount,
-                validityDays: packageData.validity_days,
+                days: packageData.days,
                 name,
                 surname,
                 email: userEmail,
@@ -708,7 +715,7 @@ const getOrderDetails = async (req, res, next) => {
             .from('orders')
             .select(`
         *,
-        package:my_packages(name, country_name, data_amount, validity_days)
+        package:my_packages(name, country_name, data_amount, days)
       `)
             .eq('id', orderId)
             .single();

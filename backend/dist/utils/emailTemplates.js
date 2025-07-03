@@ -1,12 +1,8 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.emailTemplates = void 0;
 const dotenv_1 = require("dotenv");
 const qrCodeService_1 = require("../services/qrCodeService");
-const qrcode_1 = __importDefault(require("qrcode"));
 // Load environment variables
 (0, dotenv_1.config)();
 const baseTemplate = (content) => `
@@ -15,19 +11,22 @@ const baseTemplate = (content) => `
 <head>
   <meta charset="utf-8">
   <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #f8f9fa; padding: 20px; text-align: center; }
+    body { font-family: 'Orbitron', 'Exo', Arial, sans-serif; line-height: 1.6; color: #fff; background: #4B0082; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+    .header { background: none; padding: 20px; text-align: center; }
+    .header img { max-width: 180px; margin-bottom: 8px; }
     .content { padding: 20px; }
-    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+    .footer { text-align: center; padding: 20px; font-size: 12px; color: #e5e7eb; }
     .button { 
       display: inline-block;
       padding: 12px 24px;
-      background-color: #007bff;
-      color: white;
+      background-color: #fbbf24;
+      color: #4B0082;
       text-decoration: none;
       border-radius: 4px;
       margin: 20px 0;
+      font-weight: bold;
+      font-family: 'Orbitron', 'Exo', Arial, sans-serif;
     }
     .code { 
       font-family: monospace;
@@ -36,27 +35,32 @@ const baseTemplate = (content) => `
       border-radius: 4px;
       font-size: 16px;
       border: 1px solid #ddd;
+      color: #4B0082;
     }
     .qr-code {
       text-align: center;
       margin: 20px 0;
       padding: 20px;
-      background: #f8f9fa;
+      background: rgba(255,255,255,0.08);
       border-radius: 8px;
     }
     .qr-code img {
       max-width: 200px;
       height: auto;
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      background: #fff;
     }
     .order-details {
-      background: #f8f9fa;
+      background: rgba(255,255,255,0.08);
       padding: 15px;
       border-radius: 8px;
       margin: 20px 0;
+      color: #fff;
     }
     .order-details h3 {
       margin-top: 0;
-      color: #007bff;
+      color: #fbbf24;
     }
     .order-details ul {
       list-style: none;
@@ -74,10 +78,11 @@ const baseTemplate = (content) => `
       padding: 15px;
       border-radius: 8px;
       margin: 20px 0;
+      color: #4B0082;
     }
     .activation-steps h3 {
       margin-top: 0;
-      color: #28a745;
+      color: #fbbf24;
     }
     .activation-steps ol {
       margin: 10px 0;
@@ -88,14 +93,14 @@ const baseTemplate = (content) => `
 <body>
   <div class="container">
     <div class="header">
-      <h1>eSIM Marketplace</h1>
+      <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" />
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
       <p>This is an automated message, please do not reply directly to this email.</p>
-      <p>&copy; ${new Date().getFullYear()} eSIM Marketplace. All rights reserved.</p>
+      <p>&copy; ${new Date().getFullYear()} esimfly. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -110,42 +115,37 @@ exports.emailTemplates = {
             console.log('[EMAIL TEMPLATE DEBUG] Email data received:', {
                 hasQrCodeData: !!data.qrCodeData,
                 qrCodeDataLength: data.qrCodeData ? data.qrCodeData.length : 0,
+                qrCodeDataPreview: data.qrCodeData ? data.qrCodeData.substring(0, 50) + '...' : 'none',
                 hasEsimCode: !!data.esimCode,
                 esimCode: data.esimCode,
                 hasOrderId: !!data.orderId,
                 orderId: data.orderId,
                 packageName: data.packageName,
+                isRealRoamifyQR: data.qrCodeData && data.qrCodeData.includes('LPA:'),
             });
             try {
-                if (data.qrCodeData && data.qrCodeData !== '') {
-                    // Use the real LPA code from Roamify to generate QR code
-                    console.log('[EMAIL TEMPLATE DEBUG] Using real LPA code from Roamify');
-                    const lpaCode = data.qrCodeData;
-                    qrCodeDataUrl = await qrcode_1.default.toDataURL(lpaCode, {
-                        width: 300,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        }
-                    });
+                // PRIORITY 1: Use real LPA code from Roamify (this should be the primary source)
+                if (data.qrCodeData && data.qrCodeData !== '' && data.qrCodeData !== 'PENDING') {
+                    console.log('[EMAIL TEMPLATE DEBUG] ✅ Using REAL QR code data from Roamify');
+                    console.log('[EMAIL TEMPLATE DEBUG] Real QR data:', data.qrCodeData);
+                    // PRIMARY: Use external QR code service for Gmail compatibility
+                    const encodedData = encodeURIComponent(data.qrCodeData);
+                    qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
+                    console.log('[EMAIL TEMPLATE DEBUG] ✅ Using external QR service for Gmail compatibility');
+                    console.log('[EMAIL TEMPLATE DEBUG] QR URL:', qrCodeDataUrl);
                 }
                 else if (data.esimCode && data.esimCode !== 'PENDING' && data.esimCode !== '') {
-                    // Fallback: Generate QR code from eSIM code
-                    console.log('[EMAIL TEMPLATE DEBUG] Using eSIM code fallback, generating LPA data');
+                    // FALLBACK: Only use this if no real QR code data available
+                    console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Using FALLBACK eSIM code, no real QR data available');
+                    console.log('[EMAIL TEMPLATE DEBUG] Fallback eSIM code:', data.esimCode);
                     const lpaData = qrCodeService_1.QRCodeService.generateLPAData(data.esimCode, data.packageName || '');
-                    qrCodeDataUrl = await qrcode_1.default.toDataURL(lpaData, {
-                        width: 300,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        }
-                    });
+                    const encodedData = encodeURIComponent(lpaData);
+                    qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
+                    console.log('[EMAIL TEMPLATE DEBUG] ⚠️ Generated external QR URL from FALLBACK data');
                 }
                 else {
-                    // Final fallback: Generate placeholder QR code with order info
-                    console.log('[EMAIL TEMPLATE DEBUG] Using final fallback - no valid eSIM data available');
+                    // EMERGENCY FALLBACK: Generate placeholder QR code with order info
+                    console.log('[EMAIL TEMPLATE DEBUG] ❌ Using EMERGENCY fallback - no valid data available');
                     let placeholderData;
                     if (data.orderId) {
                         placeholderData = `Order: ${data.orderId}\nPackage: ${data.packageName || 'eSIM Package'}\nContact support for activation`;
@@ -153,28 +153,26 @@ exports.emailTemplates = {
                     else {
                         placeholderData = `eSIM Package: ${data.packageName || 'eSIM'}\nContact support for activation`;
                     }
-                    qrCodeDataUrl = await qrcode_1.default.toDataURL(placeholderData, {
-                        width: 300,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        }
-                    });
+                    const encodedData = encodeURIComponent(placeholderData);
+                    qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
+                    console.log('[EMAIL TEMPLATE DEBUG] ❌ Generated EMERGENCY PLACEHOLDER QR URL');
                 }
             }
             catch (error) {
-                console.error('Error generating QR code for email:', error);
-                // Emergency fallback: Use external service (less reliable but better than no QR code)
-                console.log('[EMAIL TEMPLATE DEBUG] Using emergency external fallback due to error');
+                console.error('❌ Error generating QR code for email:', error);
+                // Emergency fallback: Use external service with basic data
+                console.log('[EMAIL TEMPLATE DEBUG] 🚨 Using EXTERNAL emergency fallback due to error');
                 const fallbackData = data.qrCodeData || data.esimCode || 'eSIM';
-                qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fallbackData)}`;
+                const encodedData = encodeURIComponent(fallbackData);
+                qrCodeDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedData}&margin=10&format=png`;
+                console.log('[EMAIL TEMPLATE DEBUG] 🚨 External fallback URL:', qrCodeDataUrl);
             }
-            console.log('[EMAIL TEMPLATE DEBUG] Final QR code generated:', {
+            console.log('[EMAIL TEMPLATE DEBUG] Final QR code result:', {
                 qrCodeLength: qrCodeDataUrl.length,
-                isBase64: qrCodeDataUrl.startsWith('data:image/'),
                 isExternal: qrCodeDataUrl.startsWith('http'),
-                preview: qrCodeDataUrl.substring(0, 100) + '...'
+                isGmailCompatible: qrCodeDataUrl.includes('qrserver.com'),
+                preview: qrCodeDataUrl.substring(0, 100) + '...',
+                usedRealData: !!(data.qrCodeData && data.qrCodeData !== '' && data.qrCodeData !== 'PENDING')
             });
             // Compose the greeting
             const greetingName = data.firstName || data.name || '';
@@ -184,12 +182,12 @@ exports.emailTemplates = {
         <p>Përshëndetje ${greetingName},</p>
         <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
         <div class="qr-code">
-          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" style="max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px;" />
+          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" width="300" height="300" style="display: block; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px; margin: 0 auto;" />
         </div>
         <p><strong>Nr. eSim:</strong> ${esimId}</p>
         <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
         <p><strong>Iphone:</strong> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni <b>"Add eSIM"</b> (funksionon me iOS 17.4 e sipër).</p>
-        <p>Nëse nuk ju del &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
+        <p>Nëse nuk ju dal &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
       `);
         },
     },
@@ -270,7 +268,7 @@ exports.emailTemplates = {
     },
     // Refund Processed Template
     refundProcessed: {
-        subject: 'Refund Processed - eSIM Marketplace',
+        subject: 'Refund Processed - esimfly',
         html: (data) => baseTemplate(`
       <h2>💰 Refund Processed</h2>
       <p>Your refund has been successfully processed and will be credited back to your original payment method.</p>
@@ -298,7 +296,7 @@ exports.emailTemplates = {
     `),
     },
     passwordReset: {
-        subject: 'Password Reset - eSIM Marketplace',
+        subject: 'Password Reset - esimfly',
         html: (data) => baseTemplate(`
       <h2>Password Reset Request</h2>
       <p>We received a request to reset your password. Click the button below to reset it:</p>
@@ -310,9 +308,9 @@ exports.emailTemplates = {
     `),
     },
     accountVerification: {
-        subject: 'Verify Your Email - eSIM Marketplace',
+        subject: 'Verify Your Email - esimfly',
         html: (data) => baseTemplate(`
-      <h2>Welcome to eSIM Marketplace!</h2>
+      <h2>Welcome to esimfly!</h2>
       <p>Thank you for creating an account. Please verify your email address by clicking the button below:</p>
       
       <a href="${data.verificationUrl}" class="button">Verify Email</a>
@@ -322,7 +320,7 @@ exports.emailTemplates = {
     `),
     },
     orderCancellation: {
-        subject: 'Order Cancelled - eSIM Marketplace',
+        subject: 'Order Cancelled - esimfly',
         html: (data) => baseTemplate(`
       <h2>Order Cancellation Confirmation</h2>
       <p>Your order has been ${data.isRefunded ? 'cancelled and refunded' : 'cancelled'}.</p>
@@ -345,9 +343,9 @@ exports.emailTemplates = {
     `),
     },
     accountCreated: {
-        subject: 'Account Created - eSIM Marketplace',
+        subject: 'Account Created - esimfly',
         html: (data) => baseTemplate(`
-      <h2>Welcome to eSIM Marketplace!</h2>
+      <h2>Welcome to esimfly!</h2>
       <p>Your account has been successfully created.</p>
       
       <h3>Account Details:</h3>
@@ -361,7 +359,7 @@ exports.emailTemplates = {
     `),
     },
     topupOrderConfirmation: {
-        subject: 'Top-Up Order Confirmation - eSIM Marketplace',
+        subject: 'Top-Up Order Confirmation - esimfly',
         html: (data) => baseTemplate(`
       <h2>Top-Up Order Confirmation</h2>
       <p>Thank you for your top-up order!</p>
@@ -373,7 +371,7 @@ exports.emailTemplates = {
         <li>Package: ${data.packageName}</li>
         <li>Amount: $${data.amount}</li>
         <li>Data: ${data.dataAmount}</li>
-        <li>Validity: ${data.validityDays} days</li>
+        <li>Validity: ${data.days} days</li>
       </ul>
 
       <p>To complete your top-up, please click the button below to proceed with payment:</p>
@@ -382,5 +380,182 @@ exports.emailTemplates = {
       <p>If you have any questions, please contact our support team.</p>
     `),
     },
+    // NEW: Thank You Email Template (sent immediately after payment)
+    thankYou: {
+        subject: 'Thank you for your eSIM purchase!',
+        html: (data) => baseTemplate(`
+      <h2>🎉 Thank you for your purchase!</h2>
+      <p>Hi ${data.name || 'there'},</p>
+      <p>We're excited to confirm that your payment has been successfully processed and we're preparing your eSIM.</p>
+      
+      <div class="order-details">
+        <h3>📋 Order Summary:</h3>
+        <ul>
+          <li><strong>Order ID:</strong> ${data.orderId}</li>
+          <li><strong>Package:</strong> ${data.packageName}</li>
+          <li><strong>Data Amount:</strong> ${data.dataAmount}</li>
+          <li><strong>Validity:</strong> ${data.days} days</li>
+          <li><strong>Amount Paid:</strong> $${data.amount}</li>
+        </ul>
+      </div>
+
+      <div class="activation-steps">
+        <h3>⏱️ What happens next?</h3>
+        <p><strong>You'll receive a second email with your QR code and instructions within 5 minutes.</strong></p>
+        <p>This email will contain everything you need to activate your eSIM, including:</p>
+        <ul>
+          <li>Your unique QR code for installation</li>
+          <li>Step-by-step activation instructions</li>
+          <li>Your eSIM activation code</li>
+        </ul>
+      </div>
+
+      <p>If you don't receive the activation email within 5 minutes, please check your spam folder or contact our support team.</p>
+      
+      <p>Thank you for choosing esimfly!</p>
+      
+      ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
+    `),
+    },
+    // --- BEGIN: Branded Bilingual Order Confirmation Email ---
+    orderConfirmationBranded: {
+        subject: 'Konfirmim Porosie / Order Confirmation - esimfly',
+        html: (data) => `
+      <!DOCTYPE html>
+      <html lang="sq">
+      <head>
+        <meta charset="utf-8">
+        <title>Konfirmim Porosie / Order Confirmation</title>
+        <style>
+          body { background: #4B0082; color: #fff; font-family: 'Orbitron', 'Exo', Arial, sans-serif; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 32px 24px; }
+          .header { text-align: center; margin-bottom: 24px; }
+          .logo { max-width: 180px; margin-bottom: 12px; }
+          .title { font-size: 1.7em; font-weight: bold; margin-bottom: 8px; }
+          .accent { color: #fbbf24; font-weight: bold; }
+          .section { margin: 24px 0; }
+          .footer { text-align: center; font-size: 12px; color: #e5e7eb; margin-top: 32px; }
+          .lang { font-size: 0.95em; margin-bottom: 18px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" class="logo" />
+          </div>
+          <div class="lang">
+            <b>ALBANIAN</b>
+          </div>
+          <div class="title">Faleminderit për porosinë tuaj!</div>
+          <div class="section">
+            Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.<br/>
+            <br/>
+            Përshëndetje${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Në vijim do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
+          </div>
+          <div class="lang">
+            <b>ENGLISH</b>
+          </div>
+          <div class="title">Thank you for your order!</div>
+          <div class="section">
+            You will receive another email with <span class="accent">your eSIM details</span> in a few minutes.<br/>
+            <br/>
+            Hello${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Shortly, you will receive a separate email with the QR code to activate your eSIM card.
+          </div>
+          <div class="footer">
+            Nëse keni pyetje, na kontaktoni duke kthyer përgjigje këtij emaili.<br/>
+            If you have questions, just reply to this email.<br/>
+            <br/>
+            Nëse nuk doni të merrni email-e prej nesh, <a href="#" style="color:#fbbf24;">çregjistrohuni këtu</a>.<br/>
+            If you wish to unsubscribe, <a href="#" style="color:#fbbf24;">unsubscribe here</a>.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+    },
+    // --- END: Branded Bilingual Order Confirmation Email ---
+    // --- BEGIN: Branded Bilingual eSIM Details Email ---
+    esimDetailsBranded: {
+        subject: 'Detajet e eSIM / Your eSIM Details - esimfly',
+        html: (data) => `
+      <!DOCTYPE html>
+      <html lang="sq">
+      <head>
+        <meta charset="utf-8">
+        <title>Detajet e eSIM / Your eSIM Details</title>
+        <style>
+          body { background: #4B0082; color: #fff; font-family: 'Orbitron', 'Exo', Arial, sans-serif; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 32px 24px; }
+          .header { text-align: center; margin-bottom: 24px; }
+          .logo { max-width: 180px; margin-bottom: 12px; }
+          .title { font-size: 1.7em; font-weight: bold; margin-bottom: 8px; }
+          .accent { color: #fbbf24; font-weight: bold; }
+          .section { margin: 24px 0; }
+          .qr { text-align: center; margin: 24px 0; }
+          .qr img { max-width: 220px; border-radius: 12px; border: 2px solid #fbbf24; background: #fff; }
+          .footer { text-align: center; font-size: 12px; color: #e5e7eb; margin-top: 32px; }
+          .lang { font-size: 0.95em; margin-bottom: 18px; }
+          .steps { background: rgba(251,191,36,0.08); border-radius: 10px; padding: 16px; margin: 18px 0; color: #fff; }
+          .steps-title { color: #fbbf24; font-weight: bold; margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" class="logo" />
+          </div>
+          <div class="lang"><b>ALBANIAN</b></div>
+          <div class="title">Detajet e eSIM tuaj</div>
+          <div class="section">
+            Përshëndetje${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Më poshtë gjeni barkodin për të aktivizuar kartën tuaj eSIM.<br/>
+          </div>
+          <div class="qr">
+            <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
+          </div>
+          <div class="section"><b>Nr. eSIM:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="steps">
+            <div class="steps-title">Si ta instaloni:</div>
+            <ul>
+              <li><b>iPhone:</b> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni "Add eSIM" (iOS 17.4+).</li>
+              <li>Nëse nuk ju del, skanoni kodin QR me kameran ose shkoni tek Settings &gt; Mobile Service &gt; Add eSIM.</li>
+            </ul>
+          </div>
+          <div class="lang"><b>ENGLISH</b></div>
+          <div class="title">Your eSIM Details</div>
+          <div class="section">
+            Hello${data.firstName ? ' ' + data.firstName : ''},<br/>
+            Below is your QR code to activate your eSIM card.<br/>
+          </div>
+          <div class="qr">
+            <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
+          </div>
+          <div class="section"><b>eSIM Number:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="steps">
+            <div class="steps-title">How to install:</div>
+            <ul>
+              <li><b>iPhone:</b> Long-press the QR code image for 2 seconds until "Add eSIM" appears (iOS 17.4+).</li>
+              <li>If not, scan the QR code with your camera or go to Settings &gt; Mobile Service &gt; Add eSIM.</li>
+            </ul>
+          </div>
+          <div class="footer">
+            Nëse keni pyetje, na kontaktoni duke kthyer përgjigje këtij emaili.<br/>
+            If you have questions, just reply to this email.<br/>
+            <br/>
+            Nëse nuk doni të merrni email-e prej nesh, <a href="#" style="color:#fbbf24;">çregjistrohuni këtu</a>.<br/>
+            If you wish to unsubscribe, <a href="#" style="color:#fbbf24;">unsubscribe here</a>.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+    },
+    // --- END: Branded Bilingual eSIM Details Email ---
 };
 //# sourceMappingURL=emailTemplates.js.map

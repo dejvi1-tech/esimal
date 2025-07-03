@@ -157,12 +157,17 @@ function mapRoamifyToMyPackage(pkg) {
     const basePrice = pkg.price;
     const salePrice = pkg.price; // You can adjust this based on your pricing strategy
     const profit = salePrice - basePrice;
+    // Validate days
+    if (!pkg.day || typeof pkg.day !== 'number' || pkg.day <= 0) {
+        console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing or invalid day field (got: ${pkg.day})`);
+        return null;
+    }
     return {
         id: (0, uuid_1.v4)(), // Generate a new UUID for each package
         name: pkg.package,
         country_name: pkg.countryName,
         data_amount: dataAmountGB,
-        validity_days: pkg.day,
+        days: pkg.day, // Use Roamify's 'day' field
         base_price: basePrice,
         sale_price: salePrice,
         profit: profit
@@ -229,8 +234,12 @@ async function main() {
         const uniquePackages = deduplicatePackages(roamifyPackages);
         // Normalize and filter out any with null country fields
         const normalizedPackages = uniquePackages.map(normalizePackage).filter(pkg => pkg.country_name !== null && pkg.country_code !== null);
+        // Map and filter out invalid packages (missing/invalid days)
+        const mappedPackages = normalizedPackages
+            .map(mapRoamifyToMyPackage)
+            .filter((pkg) => pkg !== null);
         // Sync to database
-        await syncPackagesToDatabase(normalizedPackages);
+        await syncPackagesToDatabase(mappedPackages);
     }
     catch (error) {
         console.error('Error in main process:', error);

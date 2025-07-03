@@ -14,7 +14,7 @@ async function main() {
     }
     const { data: pkgs, error: pkgsError } = await supabase
         .from('packages')
-        .select('id');
+        .select('id, days');
     if (pkgsError) {
         console.error('Error fetching packages:', pkgsError.message);
         process.exit(1);
@@ -26,6 +26,10 @@ async function main() {
     if (missing.length) {
         console.error('Missing package mappings:', missing);
         process.exit(1);
+    }
+    const missingDays = pkgs.filter((p) => !p.days || p.days <= 0);
+    if (missingDays.length) {
+        console.error('Packages with missing or invalid days:', missingDays.map((p) => p.id));
     }
     console.log('All orders map to existing packages.');
 }

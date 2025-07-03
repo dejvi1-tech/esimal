@@ -3,7 +3,7 @@ CREATE TABLE my_packages (
   name text,
   country_name text,
   data_amount numeric,
-  validity_days integer,
+  days integer,
   base_price numeric,
   sale_price numeric,
   profit numeric,
