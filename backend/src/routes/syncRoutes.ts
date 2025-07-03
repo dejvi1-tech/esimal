@@ -1,7 +1,7 @@
 import express from 'express';
 import { syncRoamifyPackages, getSyncStatus, copyToMyPackages } from '../controllers/syncController';
 import { requireAdminAuth } from '../middleware/auth';
-import asyncHandler from '../utils/asyncHandler';
+import { asyncHandler } from '../utils/asyncHandler';
 
 const router = express.Router();
 
