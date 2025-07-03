@@ -72,4 +72,34 @@ export const generateQRCodeData = (esimCode: string, packageName: string): strin
  */
 export function isAxiosError(error: any): boolean {
   return error && typeof error === 'object' && 'isAxiosError' in error && error.isAxiosError === true;
+}
+
+/**
+ * Parses a validity string like '30 days' or '7 day' to an integer number of days.
+ * Returns null if parsing fails or the format is unexpected.
+ *
+ * Examples:
+ *   '30 days' => 30
+ *   '7 day'   => 7
+ *   '15days'  => 15
+ *   'invalid' => null
+ *
+ * Args:
+ *   validity (string): The validity string to parse.
+ *
+ * Returns:
+ *   number | null: The number of days, or null if parsing fails.
+ */
+export function parseValidityToDays(validity: string): number | null {
+  if (typeof validity !== 'string') return null;
+  const match = validity.match(/(\d+)\s*day(s)?/i);
+  if (match && match[1]) {
+    return parseInt(match[1], 10);
+  }
+  // Try to match just a number (e.g. '30')
+  const numMatch = validity.match(/^(\d+)$/);
+  if (numMatch && numMatch[1]) {
+    return parseInt(numMatch[1], 10);
+  }
+  return null;
 } 

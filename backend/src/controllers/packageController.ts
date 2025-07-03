@@ -10,6 +10,7 @@ import {
 } from '../utils/errors';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { parseValidityToDays } from '../utils/esimUtils';
 
 // At top of file
 const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -84,21 +85,35 @@ export const createPackage = async (
       throw new ConflictError(ErrorMessages.package.nameExists);
     }
 
+    // Parse validity string to integer days
+    let validityStr = req.body.validity || req.body.validity_days || req.body.day || req.body.days || validityDays || '';
+    let parsedDays = null;
+    if (typeof validityStr === 'string') {
+      parsedDays = parseValidityToDays(validityStr);
+    } else if (typeof validityStr === 'number') {
+      parsedDays = validityStr;
+    }
+    if (parsedDays === null) {
+      logger.warn(`Could not parse validity string '${validityStr}' for package create name=${name}`);
+    }
+    // Overwrite all relevant fields
+    const packageData = {
+      name,
+      description,
+      price,
+      data_amount: dataAmount,
+      validity: validityStr,
+      day: parsedDays,
+      days: parsedDays,
+      validity_days: parsedDays,
+      country,
+      operator,
+      type,
+    };
     // Create package
     const { data: newPackage, error } = await supabase
       .from('packages')
-      .insert([
-        {
-          name,
-          description,
-          price,
-          data_amount: dataAmount,
-          validity_days: validityDays,
-          country,
-          operator,
-          type,
-        },
-      ])
+      .insert([packageData])
       .select()
       .single();
 
@@ -215,6 +230,23 @@ export const updatePackage = async (
     if (updateData.validityDays !== undefined && updateData.validityDays <= 0) {
       throw new ValidationError(ErrorMessages.validation.positive('Validity days'));
     }
+
+    // Parse validity string to integer days
+    let validityStr = updateData.validity || updateData.validity_days || updateData.day || updateData.days || '';
+    let parsedDays = null;
+    if (typeof validityStr === 'string') {
+      parsedDays = parseValidityToDays(validityStr);
+    } else if (typeof validityStr === 'number') {
+      parsedDays = validityStr;
+    }
+    if (parsedDays === null) {
+      logger.warn(`Could not parse validity string '${validityStr}' for package update id=${id}`);
+    }
+    // Overwrite all relevant fields
+    updateData.validity = validityStr;
+    updateData.day = parsedDays;
+    updateData.days = parsedDays;
+    updateData.validity_days = parsedDays;
 
     // Update package
     const { data: updatedPackage, error } = await supabase
@@ -910,6 +942,18 @@ export const syncRoamifyPackages = async (
               }
             }
 
+            // Parse validity string to integer days
+            let validityStr = pkg.validity || pkg.day || pkg.days || pkg.validity_days || '';
+            let parsedDays = null;
+            if (typeof validityStr === 'string') {
+              parsedDays = parseValidityToDays(validityStr);
+            } else if (typeof validityStr === 'number') {
+              parsedDays = validityStr;
+            }
+            if (parsedDays === null) {
+              console.warn(`Could not parse validity string '${validityStr}' for package ${pkg.package}`);
+            }
+
             // Validate country_code format
             let countryCode = 'XX'; // Default fallback
             if (pkg.countryCode) {
@@ -921,7 +965,7 @@ export const syncRoamifyPackages = async (
             if (!pkg.package) missingFields.push('package');
             if (!pkg.price) missingFields.push('price');
             if (!dataStr) missingFields.push('dataStr');
-            if (!pkg.day) missingFields.push('day');
+            if (!parsedDays) missingFields.push('validity_days');
             if (!pkg.countryName) missingFields.push('countryName');
             if (missingFields.length > 0) {
               console.log(`Skipping package due to missing fields [${missingFields.join(', ')}]:`, pkg.package);
@@ -934,7 +978,10 @@ export const syncRoamifyPackages = async (
               description: pkg.package || '',
               price: pkg.price,
               data_amount: dataStr,
-              validity_days: pkg.day,
+              validity: validityStr, // Store original string for display
+              day: parsedDays,
+              days: parsedDays,
+              validity_days: parsedDays,
               country_code: countryCode,
               country_name: pkg.countryName,
               operator: 'Roamify',
@@ -1035,8 +1082,42 @@ export const savePackage = async (
     // Calculate profit if not provided
     const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
 
+    // Parse validity string to integer days
+    let validityStr = req.body.validity || req.body.validity_days || req.body.day || req.body.days || '';
+    let parsedDays = null;
+    if (typeof validityStr === 'string') {
+      parsedDays = parseValidityToDays(validityStr);
+    } else if (typeof validityStr === 'number') {
+      parsedDays = validityStr;
+    }
+    if (parsedDays === null) {
+      logger.warn(`Could not parse validity string '${validityStr}' for package ${name}`);
+    }
+
     // Prepare package data
-    const packageData = {
+    const packageData: {
+      id: string;
+      name: string;
+      country_name: string;
+      country_code: string;
+      data_amount: any;
+      validity_days: any;
+      base_price: any;
+      sale_price: any;
+      profit: any;
+      reseller_id: any;
+      region: any;
+      visible: boolean;
+      show_on_frontend: any;
+      location_slug: any;
+      homepage_order: any;
+      created_at: string;
+      updated_at: string;
+      // Add these fields for dynamic assignment
+      validity?: string;
+      day?: number | null;
+      days?: number | null;
+    } = {
       id: id || uuidv4(), // Generate new UUID if not provided
       name,
       country_name,
@@ -1055,6 +1136,12 @@ export const savePackage = async (
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    // Overwrite all relevant fields
+    packageData.validity = validityStr;
+    packageData.day = parsedDays;
+    packageData.days = parsedDays;
+    packageData.validity_days = parsedDays;
 
     // Upsert package (insert or update)
     const { data: savedPackage, error } = await supabaseAdmin
