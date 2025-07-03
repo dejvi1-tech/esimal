@@ -1075,18 +1075,31 @@ export const savePackage = async (
       homepage_order
     } = req.body;
 
+    // --- VALIDITY_DAYS VALIDATION & COERCION ---
+    let parsedValidityDays: number | null = null;
+    if (typeof validity_days === 'number') {
+      parsedValidityDays = validity_days;
+    } else if (typeof validity_days === 'string') {
+      // Try to parse string to integer days
+      parsedValidityDays = parseValidityToDays(validity_days);
+    }
+    // Check for missing, null, zero, negative, or non-integer
+    if (
+      parsedValidityDays === null ||
+      typeof parsedValidityDays !== 'number' ||
+      !Number.isInteger(parsedValidityDays) ||
+      parsedValidityDays <= 0
+    ) {
+      throw new ValidationError('validity_days must be a positive integer greater than zero');
+    }
+
     // Validate required fields
-    if (!name || !country_name || !country_code || !data_amount || !validity_days || !base_price || !sale_price) {
+    if (!name || !country_name || !country_code || !data_amount || !base_price || !sale_price) {
       throw new ValidationError('Missing required fields: name, country_name, country_code, data_amount, validity_days, base_price, sale_price');
     }
 
     // Calculate profit if not provided
     const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
-
-    // validity_days must be a number
-    if (typeof validity_days !== 'number' || validity_days <= 0) {
-      throw new ValidationError('validity_days must be a positive number');
-    }
 
     // Prepare package data (no 'validity' field)
     const packageData: {
@@ -1113,7 +1126,7 @@ export const savePackage = async (
       country_name,
       country_code: country_code.toUpperCase(),
       data_amount,
-      validity_days,
+      validity_days: parsedValidityDays, // Always a positive integer
       base_price,
       sale_price,
       profit: calculatedProfit,
