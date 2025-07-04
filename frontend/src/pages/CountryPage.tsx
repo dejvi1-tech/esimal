@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { europeanCountries } from '@/data/countries';
 import { formatDataAmount } from '@/utils/formatDataAmount';
 import { countrySlug, decodeSlug, capitalize } from '../lib/utils';
+import { supabase } from '../lib/supabaseClient';
 
 const planeBeachImage = '/static/esimfly-plane-beach.jpg';
 
@@ -81,34 +82,39 @@ const CountryPage: React.FC = () => {
     setCountryName('');
     setCountryFlag('');
 
-    // Try to fetch by country name first
     const fetchPackages = async () => {
       try {
-        // Try country name
-        const countryNameDecoded = decodeSlug(slug);
-        let res = await fetch(`${import.meta.env.VITE_API_URL}/api/packages?country_name=eq.${encodeURIComponent(countryNameDecoded)}`);
-        let data: Package[] = await res.json();
+        console.debug('CountryPage slug:', slug);
+        const fullName = decodeSlug(slug);
+        console.debug('Looking up packages for country_name ILIKE:', fullName);
+        let { data, error } = await supabase
+          .from('packages')
+          .select('*')
+          .ilike('country_name', fullName);
+        if (error) throw error;
         if (Array.isArray(data) && data.length > 0) {
           setPackages(data);
           setSelectedId(data[0]?.id || null);
-          setCountryName(countryNameDecoded);
-          setCountryFlag(''); // Optionally set flag if available
+          setCountryName(fullName);
+          setCountryFlag('');
           setLoading(false);
           return;
         }
-        // If no country packages, try region
-        const region = capitalize(slug);
-        res = await fetch(`${import.meta.env.VITE_API_URL}/api/packages?region=eq.${encodeURIComponent(region)}`);
-        data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setPackages(data);
-          setSelectedId(data[0]?.id || null);
-          setCountryName(region);
-          setCountryFlag(''); // Optionally set region flag if available
+        // Fallback to country_code
+        console.debug('No full-name match, trying country_code:', slug.toUpperCase());
+        const { data: byCode, error: codeError } = await supabase
+          .from('packages')
+          .select('*')
+          .eq('country_code', slug.toUpperCase());
+        if (codeError) throw codeError;
+        if (Array.isArray(byCode) && byCode.length > 0) {
+          setPackages(byCode);
+          setSelectedId(byCode[0]?.id || null);
+          setCountryName(fullName);
+          setCountryFlag('');
           setLoading(false);
           return;
         }
-        // If both empty
         setPackages([]);
         setLoading(false);
       } catch (e) {

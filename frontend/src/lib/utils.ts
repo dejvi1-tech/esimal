@@ -53,19 +53,18 @@ export function getCountryNameByCode(code: string): string | undefined {
 }
 
 /**
- * Decodes a slug back to a capitalized name (e.g., "north-america" -> "North America").
+ * Decodes a slug back to a title-cased name (e.g., "north-america" -> "North America").
  *
  * Args:
  *   slug (string): The slug to decode.
  *
  * Returns:
- *   string: The decoded, capitalized name.
+ *   string: The decoded, title-cased name.
  */
 export function decodeSlug(slug: string): string {
   return slug
-    .replace(/-/g, ' ')
-    .split(' ')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(' ');
 }
 
