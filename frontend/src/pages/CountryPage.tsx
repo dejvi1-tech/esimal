@@ -86,9 +86,9 @@ const CountryPage: React.FC = () => {
       try {
         console.debug('CountryPage slug:', slug);
         const fullName = decodeSlug(slug);
-        console.debug('Looking up packages for country_name ILIKE:', fullName);
+        console.debug('Looking up offers in my_packages for country_name ILIKE:', fullName);
         let { data, error } = await supabase
-          .from('packages')
+          .from('my_packages')
           .select('*')
           .ilike('country_name', fullName);
         if (error) throw error;
@@ -100,10 +100,10 @@ const CountryPage: React.FC = () => {
           setLoading(false);
           return;
         }
-        // Fallback to country_code
-        console.debug('No full-name match, trying country_code:', slug.toUpperCase());
+        // Fallback to country_code in my_packages
+        console.debug('No full-name match in my_packages, trying country_code:', slug.toUpperCase());
         const { data: byCode, error: codeError } = await supabase
-          .from('packages')
+          .from('my_packages')
           .select('*')
           .eq('country_code', slug.toUpperCase());
         if (codeError) throw codeError;
