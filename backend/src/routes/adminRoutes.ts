@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage } from '../controllers/packageController';
+import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage, runCompletePackageSync } from '../controllers/packageController';
 import { 
   debugOrder, 
   getPackageHealthOverview, 
@@ -49,6 +49,9 @@ router.delete('/packages/validation-cache', requireAdminAuth, asyncHandler(clear
 router.post('/packages/deduplicate-my-packages', requireAdminAuth, asyncHandler(deduplicateMyPackages));
 router.post('/packages/fix-roamify-config', requireAdminAuth, asyncHandler(fixPackagesRoamifyConfig));
 router.post('/packages/fix-specific-failing-package', requireAdminAuth, asyncHandler(fixSpecificFailingPackage));
+
+// 🚀 COMPLETE PACKAGE SYNC: Clear my_packages and sync with real Roamify package IDs
+router.post('/packages/complete-sync', requireAdminAuth, asyncHandler(runCompletePackageSync));
 
 // 🔧 TEMPORARY: Fix existing invalid package IDs
 router.post('/packages/fix-invalid-ids', requireAdminAuth, asyncHandler(async (req, res) => {
