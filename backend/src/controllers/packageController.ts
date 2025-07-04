@@ -1263,6 +1263,7 @@ export const savePackage = async (req: Request, res: Response) => {
 
     // Create package data
     const packageData = {
+      id: uuidv4(), // Generate a UUID for the package
       name,
       country_name,
       country_code: country_code.toUpperCase(),
