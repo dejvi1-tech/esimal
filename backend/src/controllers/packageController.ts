@@ -1242,6 +1242,7 @@ export const savePackage = async (
       // Try to parse string to integer days
       parsedDays = parseValidityToDays(days);
     }
+
     // Check for missing, null, zero, negative, or non-integer
     if (
       parsedDays === null ||
@@ -1254,18 +1255,30 @@ export const savePackage = async (
 
     // Validate required fields
     if (!name || !country_name || !country_code || !data_amount || !base_price || !sale_price) {
-      throw new ValidationError('Missing required fields: name, country_name, country_code, data_amount, days, base_price, sale_price');
+      throw new ValidationError(
+        'Missing required fields: name, country_name, country_code, data_amount, days, base_price, sale_price'
+      );
     }
 
     // Calculate profit if not provided
     const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
 
-    // Auto-generate Roamify package configuration
-    const countryCodeLower = country_code.toLowerCase();
-    const dataAmountInt = Math.floor(data_amount || 1);
-    const roamifyPackageId = `esim-${countryCodeLower}-${parsedDays}days-${dataAmountInt}gb-all`;
+    // ✅ FIXED: Use real Roamify package ID from reseller_id instead of auto-generating
+    let roamifyPackageId: string;
+    
+    if (reseller_id && reseller_id.length > 0) {
+      // Use the real Roamify package ID passed from admin panel
+      roamifyPackageId = reseller_id;
+      logger.info(`🎯 Using real Roamify package ID: ${roamifyPackageId}`);
+    } else {
+      // Fallback: Auto-generate only if no reseller_id provided (for manual entries)
+      const countryCodeLower = country_code.toLowerCase();
+      const dataAmountInt = Math.floor(data_amount || 1);
+      roamifyPackageId = `esim-${countryCodeLower}-${parsedDays}days-${dataAmountInt}gb-all`;
+      logger.warn(`⚠️ No reseller_id provided, auto-generating package ID: ${roamifyPackageId}`);
+    }
 
-    // Prepare package data with auto-generated features
+    // Prepare package data with real Roamify features
     const packageData: {
       id: string;
       name: string;
@@ -1301,9 +1314,9 @@ export const savePackage = async (
       show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
       location_slug: location_slug || null,
       homepage_order: homepage_order || 0,
-      // AUTO-GENERATE ROAMIFY FEATURES
+      // ✅ FIXED: Use REAL Roamify package ID in features
       features: {
-        packageId: roamifyPackageId,
+        packageId: roamifyPackageId, // Now uses the REAL package ID!
         dataAmount: data_amount,
         days: parsedDays,
         price: base_price,
@@ -1317,7 +1330,7 @@ export const savePackage = async (
         withDataRoaming: true,
         geography: 'local',
         region: region || 'Europe',
-        countrySlug: countryCodeLower,
+        countrySlug: country_code.toLowerCase(),
         notes: []
       },
       created_at: new Date().toISOString(),
@@ -1339,12 +1352,12 @@ export const savePackage = async (
       throw error;
     }
 
-    logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name} with Roamify config: ${roamifyPackageId}`);
+    logger.info(`✅ Package saved successfully: ${savedPackage.id} - ${savedPackage.name} with REAL Roamify ID: ${roamifyPackageId}`);
 
     res.status(200).json({
       status: 'success',
       data: savedPackage,
-      message: 'Package saved successfully with auto-generated Roamify configuration'
+      message: 'Package saved successfully with real Roamify configuration'
     });
   } catch (error) {
     logger.error('Error in savePackage:', error);
