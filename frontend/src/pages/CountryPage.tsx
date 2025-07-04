@@ -84,10 +84,13 @@ const CountryPage: React.FC = () => {
 
     const fetchPackages = async () => {
       try {
-        // Use backend API endpoint for fetching country packages
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${slug}`);
-        if (!response.ok) throw new Error('API error');
+        console.debug('[CountryPage] slug:', slug);
+        const apiUrl = `${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${slug}`;
+        console.debug('[CountryPage] Fetching:', apiUrl);
+        const response = await fetch(apiUrl);
+        console.debug('[CountryPage] Response status:', response.status);
         const data = await response.json();
+        console.debug('[CountryPage] Data received:', data);
         if (Array.isArray(data) && data.length > 0) {
           setPackages(data);
           setSelectedId(data[0]?.id || null);
@@ -96,9 +99,11 @@ const CountryPage: React.FC = () => {
           setLoading(false);
           return;
         }
+        console.warn(`[CountryPage] No packages found for slug: ${slug}`, { slug, apiUrl, response, data });
         setPackages([]);
         setLoading(false);
       } catch (e) {
+        console.error('[CountryPage] Error fetching packages:', e);
         setIsError(true);
         setLoading(false);
       }
