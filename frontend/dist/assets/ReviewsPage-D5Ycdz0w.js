@@ -1,1 +1,0 @@
-import{j as o}from"./ui-vendor-Cb7BQMVa.js";import{T as s}from"./TestimonialsSection-DDTUd5Mc.js";import"./react-vendor-gzvTUj6_.js";import"./index-DcjmXfUi.js";import"./utils-vendor-Dyq5Ev4R.js";import"./animation-vendor-U7UFP-tZ.js";const i=()=>o.jsx("div",{className:"pt-16",children:o.jsx(s,{})});export{i as default};

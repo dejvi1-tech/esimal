@@ -16,7 +16,7 @@ const CountrySearch: React.FC<CountrySearchProps> = ({ onCountrySelect, selected
 
   const USA_COUNTRY: Country = {
     code: 'US',
-    name: { al: 'SHBA', en: 'USA' },
+    name: { al: 'Shtetet e Bashkuara', en: 'United States' },
     flag: 'https://flagcdn.com/w40/us.png',
     region: 'North America',
     packages: europeanCountries[0]?.packages || []
