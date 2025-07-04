@@ -162,7 +162,7 @@ app.get('/api/frontend-packages', async (req: Request, res: Response, next: Next
       .select('id, name, country_name, data_amount, days, sale_price, reseller_id')
       .eq('visible', true)
       .eq('show_on_frontend', true)
-      .order('sale_price', { ascending: true });
+      .order('data_amount', { ascending: true });
     if (error) {
       res.status(500).json({ error: error.message });
       return;
@@ -180,10 +180,10 @@ app.get('/api/featured-packages', async (req: Request, res: Response, next: Next
     const { data, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
+      .eq('country_code', country)
       .eq('visible', true)
       .eq('show_on_frontend', true)
-      .limit(6) // Featured packages are typically limited
-      .order('sale_price', { ascending: true });
+      .order('data_amount', { ascending: true });
     if (error) {
       res.status(500).json({ error: error.message });
       return;

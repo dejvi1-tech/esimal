@@ -157,7 +157,7 @@ export const getAllPackages = async (
       console.log(`[API] /api/packages returning all packages (no country filter)`);
     }
 
-    const { data, error } = await query.order('sale_price', { ascending: true });
+    const { data, error } = await query.order('data_amount', { ascending: true });
 
     if (error) {
       throw error;
@@ -382,7 +382,7 @@ export const getSectionPackages = async (
         .eq('visible', true)
         .eq('show_on_frontend', true)
         .eq('location_slug', 'most-popular')
-        .order('homepage_order', { ascending: true }));
+        .order('data_amount', { ascending: true }));
       if (error) throw error;
       console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
       res.json(packages || []);
@@ -395,7 +395,7 @@ export const getSectionPackages = async (
       .eq('country_code', slug.toUpperCase())
       .eq('visible', true)
       .eq('show_on_frontend', true)
-      .order('sale_price', { ascending: true }));
+      .order('data_amount', { ascending: true }));
     if (error) throw error;
     if (Array.isArray(packages) && packages.length > 0) {
       console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_code: ${slug}`);
@@ -409,7 +409,7 @@ export const getSectionPackages = async (
       .ilike('country_name', `%${slug}%`)
       .eq('visible', true)
       .eq('show_on_frontend', true)
-      .order('sale_price', { ascending: true }));
+      .order('data_amount', { ascending: true }));
     if (error) throw error;
     if (Array.isArray(packages) && packages.length > 0) {
       console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_name: ${slug}`);
@@ -461,7 +461,7 @@ export const searchPackages = async (
         .eq('country_code', 'EU')
         .eq('visible', true)
         .eq('show_on_frontend', true)
-        .order('sale_price', { ascending: true }));
+        .order('data_amount', { ascending: true }));
     } else if (searchCountry.toLowerCase() === 'dubai') {
       // For Dubai, match by country_code for exact results
       ({ data: packages, error } = await supabaseAdmin
@@ -470,7 +470,7 @@ export const searchPackages = async (
         .eq('country_code', 'AE')
         .eq('visible', true)
         .eq('show_on_frontend', true)
-        .order('sale_price', { ascending: true }));
+        .order('data_amount', { ascending: true }));
     } else {
       // For other countries, match by country_name
       ({ data: packages, error } = await supabaseAdmin
@@ -479,7 +479,7 @@ export const searchPackages = async (
         .ilike('country_name', `%${searchCountry}%`)
         .eq('visible', true)
         .eq('show_on_frontend', true)
-        .order('sale_price', { ascending: true }));
+        .order('data_amount', { ascending: true }));
     }
 
     if (error) {
@@ -505,7 +505,7 @@ export const getMyPackages = async (
     const { data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('data_amount', { ascending: false });
     if (error) throw error;
     res.status(200).json({ status: 'success', data: packages });
   } catch (error) {
@@ -570,7 +570,7 @@ export const getAllRoamifyPackages = async (
           .from('packages')
           .select('*')
           .eq('is_active', true)
-          .order('country_name', { ascending: true })
+          .order('data_amount', { ascending: true })
           .range(offset, offset + chunkSize - 1);
 
         if (error) {
@@ -653,7 +653,7 @@ export const getAllRoamifyPackages = async (
       .from('packages')
       .select('*')
       .eq('is_active', true)
-      .order('country_name', { ascending: true })
+      .order('data_amount', { ascending: true })
       .range(offset, offset + limit - 1);
 
     if (error) {
@@ -731,7 +731,7 @@ export const getPackageCountries = async (
       .select('country_name')
       .neq('country_name', null)
       .neq('country_name', '')
-      .order('country_name', { ascending: true });
+      .order('data_amount', { ascending: true });
 
     if (error) throw error;
 
@@ -760,7 +760,7 @@ export const deduplicatePackages = async (
     const { data: allPackages, error: fetchError } = await supabaseAdmin
       .from('packages')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('data_amount', { ascending: false });
 
     if (fetchError) throw fetchError;
 
