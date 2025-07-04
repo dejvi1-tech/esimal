@@ -362,6 +362,32 @@ export const getCountries = async (
   }
 };
 
+// Helper function to decode slug back to country name
+function decodeSlug(slug: string): string {
+  return slug
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+// Helper function to get country mapping for special cases
+function getCountryMapping(slug: string): { countryName: string; countryCode: string } | null {
+  const mappings: { [key: string]: { countryName: string; countryCode: string } } = {
+    'united-states': { countryName: 'United States', countryCode: 'US' },
+    'united-kingdom': { countryName: 'United Kingdom', countryCode: 'GB' },
+    'united-arab-emirates': { countryName: 'Dubai', countryCode: 'AE' },
+    'uae': { countryName: 'Dubai', countryCode: 'AE' },
+    'dubai': { countryName: 'Dubai', countryCode: 'AE' },
+    'germany': { countryName: 'Germany', countryCode: 'DE' },
+    'france': { countryName: 'France', countryCode: 'FR' },
+    'italy': { countryName: 'Italy', countryCode: 'IT' },
+    'spain': { countryName: 'Spain', countryCode: 'ES' },
+    'europe': { countryName: 'Europe & United States', countryCode: 'EUUS' }
+  };
+  
+  return mappings[slug.toLowerCase()] || null;
+}
+
 // Get section packages (e.g., most popular)
 export const getSectionPackages = async (
   req: Request,
@@ -374,7 +400,10 @@ export const getSectionPackages = async (
       res.status(400).json({ status: 'error', message: 'Missing or invalid section slug' });
       return;
     }
+    
     let packages, error;
+    
+    // Handle special case for most-popular
     if (slug === 'most-popular') {
       ({ data: packages, error } = await supabaseAdmin
         .from('my_packages')
@@ -388,7 +417,45 @@ export const getSectionPackages = async (
       res.json(packages || []);
       return;
     }
-    // Try as country_code
+    
+    // Try to get country mapping for special cases
+    const countryMapping = getCountryMapping(slug);
+    
+    if (countryMapping) {
+      // For mapped countries, try exact country_name match first
+      ({ data: packages, error } = await supabaseAdmin
+        .from('my_packages')
+        .select('*')
+        .eq('country_name', countryMapping.countryName)
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
+        .order('data_amount', { ascending: true }));
+      
+      if (error) throw error;
+      if (Array.isArray(packages) && packages.length > 0) {
+        console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for mapped country: ${countryMapping.countryName}`);
+        res.json(packages);
+        return;
+      }
+      
+      // If no exact match, try country_code
+      ({ data: packages, error } = await supabaseAdmin
+        .from('my_packages')
+        .select('*')
+        .eq('country_code', countryMapping.countryCode)
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
+        .order('data_amount', { ascending: true }));
+      
+      if (error) throw error;
+      if (Array.isArray(packages) && packages.length > 0) {
+        console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_code: ${countryMapping.countryCode}`);
+        res.json(packages);
+        return;
+      }
+    }
+    
+    // Try as country_code (uppercase)
     ({ data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
@@ -402,7 +469,24 @@ export const getSectionPackages = async (
       res.json(packages);
       return;
     }
-    // Try as country_name
+    
+    // Try as decoded country name (e.g., "united-states" -> "United States")
+    const decodedCountryName = decodeSlug(slug);
+    ({ data: packages, error } = await supabaseAdmin
+      .from('my_packages')
+      .select('*')
+      .eq('country_name', decodedCountryName)
+      .eq('visible', true)
+      .eq('show_on_frontend', true)
+      .order('data_amount', { ascending: true }));
+    if (error) throw error;
+    if (Array.isArray(packages) && packages.length > 0) {
+      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for decoded country_name: ${decodedCountryName}`);
+      res.json(packages);
+      return;
+    }
+    
+    // Try as partial country_name match (original behavior)
     ({ data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
@@ -412,12 +496,30 @@ export const getSectionPackages = async (
       .order('data_amount', { ascending: true }));
     if (error) throw error;
     if (Array.isArray(packages) && packages.length > 0) {
-      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_name: ${slug}`);
+      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for partial country_name: ${slug}`);
       res.json(packages);
       return;
     }
+    
+    // Try as partial decoded country_name match
+    ({ data: packages, error } = await supabaseAdmin
+      .from('my_packages')
+      .select('*')
+      .ilike('country_name', `%${decodedCountryName}%`)
+      .eq('visible', true)
+      .eq('show_on_frontend', true)
+      .order('data_amount', { ascending: true }));
+    if (error) throw error;
+    if (Array.isArray(packages) && packages.length > 0) {
+      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for partial decoded country_name: ${decodedCountryName}`);
+      res.json(packages);
+      return;
+    }
+    
+    console.log(`[API] /api/packages/get-section-packages no packages found for slug: ${slug} (tried country mapping, country_code, decoded name: ${decodedCountryName})`);
     res.status(404).json({ status: 'error', message: `No packages found for slug: ${slug}` });
   } catch (error) {
+    console.error(`[API] /api/packages/get-section-packages error for slug: ${req.query.slug}:`, error);
     next(error);
   }
 };

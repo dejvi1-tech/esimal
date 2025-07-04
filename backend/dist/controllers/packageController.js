@@ -103,7 +103,7 @@ const getAllPackages = async (req, res, next) => {
         else {
             console.log(`[API] /api/packages returning all packages (no country filter)`);
         }
-        const { data, error } = await query.order('sale_price', { ascending: true });
+        const { data, error } = await query.order('data_amount', { ascending: true });
         if (error) {
             throw error;
         }
@@ -272,6 +272,29 @@ const getCountries = async (req, res, next) => {
     }
 };
 exports.getCountries = getCountries;
+// Helper function to decode slug back to country name
+function decodeSlug(slug) {
+    return slug
+        .split('-')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+}
+// Helper function to get country mapping for special cases
+function getCountryMapping(slug) {
+    const mappings = {
+        'united-states': { countryName: 'United States', countryCode: 'US' },
+        'united-kingdom': { countryName: 'United Kingdom', countryCode: 'GB' },
+        'united-arab-emirates': { countryName: 'Dubai', countryCode: 'AE' },
+        'uae': { countryName: 'Dubai', countryCode: 'AE' },
+        'dubai': { countryName: 'Dubai', countryCode: 'AE' },
+        'germany': { countryName: 'Germany', countryCode: 'DE' },
+        'france': { countryName: 'France', countryCode: 'FR' },
+        'italy': { countryName: 'Italy', countryCode: 'IT' },
+        'spain': { countryName: 'Spain', countryCode: 'ES' },
+        'europe': { countryName: 'Europe & United States', countryCode: 'EUUS' }
+    };
+    return mappings[slug.toLowerCase()] || null;
+}
 // Get section packages (e.g., most popular)
 const getSectionPackages = async (req, res, next) => {
     try {
@@ -281,6 +304,7 @@ const getSectionPackages = async (req, res, next) => {
             return;
         }
         let packages, error;
+        // Handle special case for most-popular
         if (slug === 'most-popular') {
             ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
@@ -288,21 +312,55 @@ const getSectionPackages = async (req, res, next) => {
                 .eq('visible', true)
                 .eq('show_on_frontend', true)
                 .eq('location_slug', 'most-popular')
-                .order('homepage_order', { ascending: true }));
+                .order('data_amount', { ascending: true }));
             if (error)
                 throw error;
             console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
             res.json(packages || []);
             return;
         }
-        // Try as country_code
+        // Try to get country mapping for special cases
+        const countryMapping = getCountryMapping(slug);
+        if (countryMapping) {
+            // For mapped countries, try exact country_name match first
+            ({ data: packages, error } = await supabaseAdmin
+                .from('my_packages')
+                .select('*')
+                .eq('country_name', countryMapping.countryName)
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
+                .order('data_amount', { ascending: true }));
+            if (error)
+                throw error;
+            if (Array.isArray(packages) && packages.length > 0) {
+                console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for mapped country: ${countryMapping.countryName}`);
+                res.json(packages);
+                return;
+            }
+            // If no exact match, try country_code
+            ({ data: packages, error } = await supabaseAdmin
+                .from('my_packages')
+                .select('*')
+                .eq('country_code', countryMapping.countryCode)
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
+                .order('data_amount', { ascending: true }));
+            if (error)
+                throw error;
+            if (Array.isArray(packages) && packages.length > 0) {
+                console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_code: ${countryMapping.countryCode}`);
+                res.json(packages);
+                return;
+            }
+        }
+        // Try as country_code (uppercase)
         ({ data: packages, error } = await supabaseAdmin
             .from('my_packages')
             .select('*')
             .eq('country_code', slug.toUpperCase())
             .eq('visible', true)
             .eq('show_on_frontend', true)
-            .order('sale_price', { ascending: true }));
+            .order('data_amount', { ascending: true }));
         if (error)
             throw error;
         if (Array.isArray(packages) && packages.length > 0) {
@@ -310,24 +368,57 @@ const getSectionPackages = async (req, res, next) => {
             res.json(packages);
             return;
         }
-        // Try as country_name
+        // Try as decoded country name (e.g., "united-states" -> "United States")
+        const decodedCountryName = decodeSlug(slug);
+        ({ data: packages, error } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .eq('country_name', decodedCountryName)
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('data_amount', { ascending: true }));
+        if (error)
+            throw error;
+        if (Array.isArray(packages) && packages.length > 0) {
+            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for decoded country_name: ${decodedCountryName}`);
+            res.json(packages);
+            return;
+        }
+        // Try as partial country_name match (original behavior)
         ({ data: packages, error } = await supabaseAdmin
             .from('my_packages')
             .select('*')
             .ilike('country_name', `%${slug}%`)
             .eq('visible', true)
             .eq('show_on_frontend', true)
-            .order('sale_price', { ascending: true }));
+            .order('data_amount', { ascending: true }));
         if (error)
             throw error;
         if (Array.isArray(packages) && packages.length > 0) {
-            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_name: ${slug}`);
+            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for partial country_name: ${slug}`);
             res.json(packages);
             return;
         }
+        // Try as partial decoded country_name match
+        ({ data: packages, error } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .ilike('country_name', `%${decodedCountryName}%`)
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('data_amount', { ascending: true }));
+        if (error)
+            throw error;
+        if (Array.isArray(packages) && packages.length > 0) {
+            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for partial decoded country_name: ${decodedCountryName}`);
+            res.json(packages);
+            return;
+        }
+        console.log(`[API] /api/packages/get-section-packages no packages found for slug: ${slug} (tried country mapping, country_code, decoded name: ${decodedCountryName})`);
         res.status(404).json({ status: 'error', message: `No packages found for slug: ${slug}` });
     }
     catch (error) {
+        console.error(`[API] /api/packages/get-section-packages error for slug: ${req.query.slug}:`, error);
         next(error);
     }
 };
@@ -362,7 +453,7 @@ const searchPackages = async (req, res, next) => {
                 .eq('country_code', 'EU')
                 .eq('visible', true)
                 .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                .order('data_amount', { ascending: true }));
         }
         else if (searchCountry.toLowerCase() === 'dubai') {
             // For Dubai, match by country_code for exact results
@@ -372,7 +463,7 @@ const searchPackages = async (req, res, next) => {
                 .eq('country_code', 'AE')
                 .eq('visible', true)
                 .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                .order('data_amount', { ascending: true }));
         }
         else {
             // For other countries, match by country_name
@@ -382,7 +473,7 @@ const searchPackages = async (req, res, next) => {
                 .ilike('country_name', `%${searchCountry}%`)
                 .eq('visible', true)
                 .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                .order('data_amount', { ascending: true }));
         }
         if (error) {
             console.error('Database error:', error);
@@ -403,7 +494,7 @@ const getMyPackages = async (req, res, next) => {
         const { data: packages, error } = await supabaseAdmin
             .from('my_packages')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('data_amount', { ascending: false });
         if (error)
             throw error;
         res.status(200).json({ status: 'success', data: packages });
@@ -458,7 +549,7 @@ const getAllRoamifyPackages = async (req, res, next) => {
                     .from('packages')
                     .select('*')
                     .eq('is_active', true)
-                    .order('country_name', { ascending: true })
+                    .order('data_amount', { ascending: true })
                     .range(offset, offset + chunkSize - 1);
                 if (error) {
                     console.error('Error fetching packages chunk:', error);
@@ -530,7 +621,7 @@ const getAllRoamifyPackages = async (req, res, next) => {
             .from('packages')
             .select('*')
             .eq('is_active', true)
-            .order('country_name', { ascending: true })
+            .order('data_amount', { ascending: true })
             .range(offset, offset + limit - 1);
         if (error) {
             console.error('Error fetching packages from database:', error);
@@ -599,7 +690,7 @@ const getPackageCountries = async (req, res, next) => {
             .select('country_name')
             .neq('country_name', null)
             .neq('country_name', '')
-            .order('country_name', { ascending: true });
+            .order('data_amount', { ascending: true });
         if (error)
             throw error;
         // Extract unique country names
@@ -623,7 +714,7 @@ const deduplicatePackages = async (req, res, next) => {
         const { data: allPackages, error: fetchError } = await supabaseAdmin
             .from('packages')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('data_amount', { ascending: false });
         if (fetchError)
             throw fetchError;
         if (!allPackages || allPackages.length === 0) {

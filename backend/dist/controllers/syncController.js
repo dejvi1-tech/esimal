@@ -7,6 +7,7 @@ exports.copyToMyPackages = exports.getSyncStatus = exports.syncRoamifyPackages =
 const supabase_js_1 = require("@supabase/supabase-js");
 const axios_1 = __importDefault(require("axios"));
 const uuid_1 = require("uuid");
+const dataAmountUtils_1 = require("../utils/dataAmountUtils");
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!supabaseUrl || !supabaseServiceRole) {
@@ -107,18 +108,20 @@ const syncRoamifyPackages = async (req, res, next) => {
             try {
                 // Generate UUID for database
                 const packageId = (0, uuid_1.v4)();
-                // Format data amount
-                const dataAmount = formatDataAmount(pkg.dataAmount || 0, pkg.dataUnit || 'MB', pkg.isUnlimited || false);
+                // Parse data amount properly using the utility
+                const dataAmountGB = pkg.isUnlimited ? 0 : (0, dataAmountUtils_1.parseDataAmountToGB)(pkg.dataUnit === 'GB' ? `${pkg.dataAmount}GB` : `${pkg.dataAmount}MB`);
+                // Format for display
+                const dataAmountDisplay = pkg.isUnlimited ? 'Unlimited' : (0, dataAmountUtils_1.formatDataAmountForDisplay)(dataAmountGB);
                 // Parse validity days
                 const days = parseValidityToDays(pkg.day);
                 // Create package object matching database schema
                 const packageData = {
                     id: packageId,
                     name: pkg.package || 'Unknown Package',
-                    description: `${dataAmount} for ${days} days in ${pkg.countryName}`,
+                    description: `${dataAmountDisplay} for ${days} days in ${pkg.countryName}`,
                     country_name: pkg.countryName || 'Unknown',
                     country_code: pkg.countryCode?.toUpperCase() || 'XX',
-                    data_amount: dataAmount,
+                    data_amount: dataAmountDisplay, // Store human-readable format for packages table
                     days: days,
                     price: parseFloat(pkg.price) || 0,
                     operator: 'Roamify', // Default operator
@@ -273,9 +276,11 @@ const copyToMyPackages = async (req, res, next) => {
         }
         // Transform packages for my_packages table
         const myPackagesToInsert = selectedPackages.map(pkg => {
+            // Parse data amount properly using the utility
+            const dataAmountGB = (0, dataAmountUtils_1.parseDataAmountToGB)(pkg.data_amount || pkg.features?.dataAmount);
             // Auto-generate Roamify package configuration if not present
             const countryCodeLower = pkg.country_code?.toLowerCase() || 'global';
-            const dataAmountInt = Math.floor(pkg.features?.dataAmount || pkg.data_amount || 1);
+            const dataAmountInt = Math.floor(dataAmountGB);
             const days = pkg.days || 30;
             const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${dataAmountInt}gb-all`;
             return {
@@ -283,7 +288,7 @@ const copyToMyPackages = async (req, res, next) => {
                 name: pkg.name,
                 country_name: pkg.country_name,
                 country_code: pkg.country_code,
-                data_amount: pkg.features?.dataAmount || 0, // Store original MB value
+                data_amount: dataAmountGB, // Store properly converted GB value
                 days: pkg.days,
                 base_price: pkg.price,
                 sale_price: pkg.price * 1.5, // Add 50% markup by default
@@ -300,7 +305,7 @@ const copyToMyPackages = async (req, res, next) => {
                 } : {
                     // Auto-generate features if not present
                     packageId: autoRoamifyPackageId,
-                    dataAmount: pkg.data_amount,
+                    dataAmount: dataAmountGB,
                     days: pkg.days || 30,
                     price: pkg.price || 5.0,
                     currency: 'EUR',
