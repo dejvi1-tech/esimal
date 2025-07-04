@@ -100,10 +100,6 @@ const AdminPanel: React.FC = () => {
   const [deduplicating, setDeduplicating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   
-  // Add state for original packages and view mode
-  const [originalRoamifyPackages, setOriginalRoamifyPackages] = useState<RoamifyPackage[]>([]);
-  const [isShowingDeduplicated, setIsShowingDeduplicated] = useState(false);
-  
   // Add duplicate analysis state
   const [duplicateAnalysis, setDuplicateAnalysis] = useState({
     totalPackages: 0,
@@ -346,8 +342,6 @@ const AdminPanel: React.FC = () => {
         }
         
         setRoamifyPackages(data);
-        setOriginalRoamifyPackages([...data]); // Store original for restoration
-        setIsShowingDeduplicated(false);
       } else {
         if (handleAuthError(response)) return;
         const text = await response.text();
@@ -770,67 +764,6 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Add client-side deduplication for immediate visual feedback
-  const handleRemoveDuplicatesClientSide = () => {
-    if (!duplicateAnalysis.hasDuplicates) {
-      toast.info('No duplicates found to remove', { style: { color: 'black' } });
-      return;
-    }
-
-    // Remove duplicates from the displayed list immediately
-    const deduplicatedPackages = deduplicatePackagesArray(roamifyPackages);
-    setRoamifyPackages(deduplicatedPackages);
-    setIsShowingDeduplicated(true);
-    
-    // Recalculate analysis
-    const newAnalysis = analyzePackagesForDuplicates(deduplicatedPackages);
-    setDuplicateAnalysis(newAnalysis);
-    
-    const removedCount = originalRoamifyPackages.length - deduplicatedPackages.length;
-    toast.success(`Removed ${removedCount} duplicates from display (use "Remove Duplicates Permanently" to save changes)`, { style: { color: 'black' } });
-  };
-
-  // Function to restore original packages view
-  const handleRestoreOriginalView = () => {
-    setRoamifyPackages([...originalRoamifyPackages]);
-    setIsShowingDeduplicated(false);
-    
-    // Recalculate analysis with original data
-    const originalAnalysis = analyzePackagesForDuplicates(originalRoamifyPackages);
-    setDuplicateAnalysis(originalAnalysis);
-    
-    toast.info('Restored original package list', { style: { color: 'black' } });
-  };
-
-  // Helper function to deduplicate packages array
-  const deduplicatePackagesArray = (packages: RoamifyPackage[]): RoamifyPackage[] => {
-    // Step 1: Remove duplicate IDs, keeping the first occurrence
-    const idMap = new Map<string, RoamifyPackage>();
-    packages.forEach(pkg => {
-      const id = pkg.id || pkg.packageId || '';
-      if (id && !idMap.has(id)) {
-        idMap.set(id, pkg);
-      }
-    });
-
-    // Step 2: Remove duplicate combinations
-    const combinationMap = new Map<string, RoamifyPackage>();
-    Array.from(idMap.values()).forEach(pkg => {
-      const country = pkg.country || pkg.country_name || 'unknown';
-      const data = pkg.data || pkg.dataAmount || 'unknown';
-      const days = pkg.days || pkg.day || 'unknown';
-      const price = pkg.price || pkg.base_price || 'unknown';
-      
-      const combinationKey = `${country}|${data}|${days}|${price}`;
-      
-      if (!combinationMap.has(combinationKey)) {
-        combinationMap.set(combinationKey, pkg);
-      }
-    });
-
-    return Array.from(combinationMap.values());
-  };
-
   const handleSyncRoamifyPackages = async () => {
     setSyncing(true);
     try {
@@ -852,56 +785,6 @@ const AdminPanel: React.FC = () => {
     } catch (err) {
       console.error('Error syncing packages:', err);
       toast.error('Failed to sync packages', { style: { color: 'black' } });
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  // Complete cleanup and fresh sync from Roamify API
-  const handleCompleteCleanup = async () => {
-    if (!window.confirm('This will DELETE ALL existing packages and fetch fresh data from Roamify API. This cannot be undone. Continue?')) {
-      return;
-    }
-
-    setSyncing(true);
-    try {
-      // Step 1: Clear all existing packages
-      toast.info('Step 1/2: Clearing existing packages...', { style: { color: 'black' } });
-      
-      const clearResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/clear-all-packages`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      });
-
-      if (!clearResponse.ok) {
-        throw new Error('Failed to clear existing packages');
-      }
-
-      // Step 2: Sync fresh data from Roamify API
-      toast.info('Step 2/2: Fetching fresh data from Roamify API...', { style: { color: 'black' } });
-      
-      const syncResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/sync/roamify-packages`, {
-        method: 'POST',
-        headers: getAuthHeaders(),
-      });
-
-      if (syncResponse.ok) {
-        const result = await syncResponse.json();
-        toast.success(`✅ Complete cleanup successful! Synced ${result.syncedCount} fresh packages from Roamify API`, { style: { color: 'black' } });
-        
-        // Refresh the packages list
-        await fetchRoamifyPackages();
-        
-        // Reset view state
-        setIsShowingDeduplicated(false);
-      } else {
-        if (handleAuthError(syncResponse)) return;
-        const errorData = await syncResponse.json();
-        toast.error(`Failed to sync fresh packages: ${errorData.message || 'Unknown error'}`, { style: { color: 'black' } });
-      }
-    } catch (err) {
-      console.error('Error during complete cleanup:', err);
-      toast.error('Failed to complete cleanup', { style: { color: 'black' } });
     } finally {
       setSyncing(false);
     }
@@ -1194,16 +1077,8 @@ const AdminPanel: React.FC = () => {
           {activeTab === 'roamifyPackages' && (
           <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Roamify Packages ({roamifyPackages.length}
-              {isShowingDeduplicated && ` of ${originalRoamifyPackages.length} - ${originalRoamifyPackages.length - roamifyPackages.length} duplicates hidden`})
-            </h2>
-            <p className="text-gray-200 mb-4">
-              Available packages from Roamify API - Edit sale price and save to your inventory
-              {isShowingDeduplicated && (
-                <span className="ml-2 text-green-300 font-semibold">• Currently showing deduplicated view</span>
-              )}
-            </p>
+            <h2 className="text-2xl font-bold text-white mb-2">Roamify Packages ({roamifyPackages.length})</h2>
+            <p className="text-gray-200 mb-4">Available packages from Roamify API - Edit sale price and save to your inventory</p>
             
             {/* Duplicate Analysis Display */}
             {!roamifyLoading && (
@@ -1319,113 +1194,55 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
 
-            {/* Remove Duplicates Buttons */}
+            {/* Remove Duplicates Button */}
             {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
-              <div className="mt-4 space-y-2">
-                <div className="flex gap-3 flex-wrap">
-                  <button
-                    onClick={handleRemoveDuplicatesClientSide}
-                    disabled={isShowingDeduplicated}
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    🔍 Remove Duplicates (Preview Only)
-                    <span className="text-xs bg-yellow-700 px-2 py-1 rounded">
-                      {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
-                    </span>
-                  </button>
-                  
-                  <button
-                    onClick={handleRemoveDuplicates}
-                    disabled={deduplicating}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {deduplicating ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Removing Permanently...
-                      </>
-                    ) : (
-                      <>
-                        🗑️ Remove Duplicates Permanently
-                        <span className="text-xs bg-red-700 px-2 py-1 rounded">
-                          Database
-                        </span>
-                      </>
-                    )}
-                  </button>
-
-                  {isShowingDeduplicated && (
-                    <button
-                      onClick={handleRestoreOriginalView}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
-                    >
-                      🔄 Restore Original View
-                      <span className="text-xs bg-blue-700 px-2 py-1 rounded">
-                        {originalRoamifyPackages.length} total
+              <div className="mt-4">
+                <button
+                  onClick={handleRemoveDuplicates}
+                  disabled={deduplicating}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {deduplicating ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Removing Duplicates...
+                    </>
+                  ) : (
+                    <>
+                      🗑️ Remove Duplicates
+                      <span className="text-xs bg-red-700 px-2 py-1 rounded">
+                        {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
                       </span>
-                    </button>
+                    </>
                   )}
-                </div>
-                
-                {isShowingDeduplicated && (
-                  <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded text-sm">
-                    ✅ Currently showing deduplicated view ({roamifyPackages.length} packages, {originalRoamifyPackages.length - roamifyPackages.length} duplicates removed)
-                  </div>
-                )}
-                
-                <div className="text-sm text-gray-300 space-y-1">
-                  <p>• <strong>Preview Only:</strong> Removes duplicates from the display immediately (no database changes)</p>
-                  <p>• <strong>Permanently:</strong> Removes duplicates from the database (cannot be undone)</p>
-                </div>
+                </button>
+                <p className="mt-1 text-sm text-gray-300">
+                  This will remove duplicate packages based on ID and combination matches
+                </p>
               </div>
             )}
 
             {/* Sync Roamify Packages Button */}
             <div className="mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <button
-                  onClick={handleSyncRoamifyPackages}
-                  disabled={syncing}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
-                >
-                  {syncing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Syncing from Roamify API...
-                    </>
-                  ) : (
-                    <>
-                      🔄 Sync from Roamify API
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={handleCompleteCleanup}
-                  disabled={syncing}
-                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center border-2 border-red-400 shadow-lg"
-                >
-                  {syncing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Complete Cleanup...
-                    </>
-                  ) : (
-                    <>
-                      🧹 Complete Cleanup & Fresh Sync
-                    </>
-                  )}
-                </button>
-              </div>
-              
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className="text-gray-300">
-                  <strong>Sync from Roamify API:</strong> Fetches latest packages and adds them to existing data
-                </div>
-                <div className="text-red-300 bg-red-900/20 p-2 rounded border border-red-500">
-                  <strong>⚠️ Complete Cleanup:</strong> DELETES ALL packages then fetches fresh data from Roamify API. Use this to eliminate all duplicates permanently and start with clean data.
-                </div>
-              </div>
+              <button
+                onClick={handleSyncRoamifyPackages}
+                disabled={syncing}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {syncing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Syncing from Roamify API...
+                  </>
+                ) : (
+                  <>
+                    🔄 Sync from Roamify API
+                  </>
+                )}
+              </button>
+              <p className="mt-1 text-sm text-gray-300">
+                This will fetch fresh data directly from Roamify API and sync to database
+              </p>
             </div>
 
             {/* Roamify Packages Table */}

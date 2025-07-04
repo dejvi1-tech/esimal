@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage, clearAllPackages } from '../controllers/packageController';
+import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage } from '../controllers/packageController';
 import { 
   debugOrder, 
   getPackageHealthOverview, 
@@ -32,7 +32,6 @@ router.get('/packages', requireAdminAuth, asyncHandler(getAllPackages));
 router.get('/all-roamify-packages', requireAdminAuth, asyncHandler(getAllRoamifyPackages));
 router.get('/package-countries', requireAdminAuth, asyncHandler(getPackageCountries));
 router.post('/deduplicate-packages', requireAdminAuth, asyncHandler(deduplicatePackages));
-router.delete('/clear-all-packages', requireAdminAuth, asyncHandler(clearAllPackages));
 router.post('/sync-roamify-packages', requireAdminAuth, asyncHandler(syncRoamifyPackages));
 router.post('/save-package', requireAdminAuth, asyncHandler(savePackage));
 router.delete('/delete-package/:id', requireAdminAuth, asyncHandler(deleteMyPackage));
