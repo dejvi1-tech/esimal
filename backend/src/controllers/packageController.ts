@@ -1313,37 +1313,12 @@ export const runCompletePackageSync = async (req: Request, res: Response) => {
   try {
     console.log('🚀 Starting complete package sync from admin panel...');
     
-    // Import and run the sync script
-    const { exec } = require('child_process');
-    const path = require('path');
-    
-    const scriptPath = path.join(__dirname, '../../complete_package_sync_fix.js');
-    
-    exec(`node ${scriptPath}`, { 
-      cwd: path.join(__dirname, '../../'),
-      env: { 
-        ...process.env,
-        NODE_ENV: 'production' 
-      }
-    }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('❌ Error running sync script:', error);
-        return res.status(500).json({ 
-          error: 'Failed to run sync script', 
-          details: error.message 
-        });
-      }
-      
-      console.log('✅ Sync script completed');
-      console.log('STDOUT:', stdout);
-      if (stderr) console.log('STDERR:', stderr);
-      
-      res.json({ 
-        success: true, 
-        message: 'Package sync completed successfully',
-        output: stdout,
-        errors: stderr || null
-      });
+    // For now, just return a success message
+    // The actual sync can be done via the run_complete_sync_via_admin.js script
+    res.json({ 
+      success: true, 
+      message: 'Complete package sync endpoint is ready. Use the external script to run the sync.',
+      instructions: 'Run: node run_complete_sync_via_admin.js'
     });
     
   } catch (error) {
