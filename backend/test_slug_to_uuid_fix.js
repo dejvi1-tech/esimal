@@ -16,7 +16,7 @@ async function testSlugToUuidFix() {
       .from('my_packages')
       .select('id, name, country_name, data_amount, validity_days, sale_price, reseller_id, visible, location_slug')
       .eq('visible', true)
-      .order('data_amount', { ascending: true });
+      .order('sale_price', { ascending: true });
 
     if (listError) {
       console.error('❌ Error listing packages:', listError);
