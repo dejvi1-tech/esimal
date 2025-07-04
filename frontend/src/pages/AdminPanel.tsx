@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { europeanCountries } from '../data/countries';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { countrySlug } from '../lib/utils';
 
 interface Package {
   id: string;
@@ -795,6 +796,11 @@ const AdminPanel: React.FC = () => {
     if (!form.country_name) errors.country_name = 'Country name is required';
     if (!form.data_amount) errors.data_amount = 'Data amount is required';
     return errors;
+  }
+
+  // Helper to build canonical country URL
+  function buildCountryUrl(name: string) {
+    return `/country/${countrySlug(name)}`;
   }
 
   return (

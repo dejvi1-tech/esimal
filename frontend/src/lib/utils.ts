@@ -18,3 +18,34 @@ export function formatDataAmount(amount: number): string {
   const mb = amount * 1024;
   return `${Number.isInteger(mb) ? mb : mb.toFixed(0)} MB`;
 }
+
+/**
+ * Converts a country name to a URL-friendly slug (e.g., "United States" -> "united-states").
+ *
+ * Args:
+ *   name (string): The country name.
+ *
+ * Returns:
+ *   string: The slugified country name.
+ */
+export function countrySlug(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+import { europeanCountries } from '../data/countries';
+
+/**
+ * Looks up the English country name by its 2-letter code (case-insensitive).
+ *
+ * Args:
+ *   code (string): The 2-letter country code (e.g., 'AL').
+ *
+ * Returns:
+ *   string | undefined: The English country name, or undefined if not found.
+ */
+export function getCountryNameByCode(code: string): string | undefined {
+  const country = europeanCountries.find(
+    c => c.code.toLowerCase() === code.toLowerCase()
+  );
+  return country?.name.en;
+}

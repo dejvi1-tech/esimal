@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { LanguageProvider } from './contexts/LanguageContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -20,6 +20,7 @@ import CheckoutCancelPage from './pages/CheckoutCancelPage';
 import IOS26Demo from './components/IOS26Demo';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
+import { getCountryNameByCode, countrySlug } from './lib/utils';
 
 function App() {
   return (
@@ -50,7 +51,7 @@ function App() {
                         <AdminPanel />
                       </ProtectedAdminRoute>
                     } />
-                    <Route path="/country/:code" element={<CountryPage />} />
+                    <Route path="/country/:code" element={<LegacyCountryRedirect />} />
                     <Route path="/search" element={<SearchPage />} />
                     {/* Redirect old /bundle/:country URLs to /country/:country */}
                     <Route path="/bundle/:country" element={<Navigate to="/country/:country" replace />} />
@@ -66,6 +67,19 @@ function App() {
       </HelmetProvider>
     </>
   );
+}
+
+/**
+ * Redirects /country/:code to /country/:full-country-name (slugified).
+ * If code is not found, redirects to /not-found.
+ */
+function LegacyCountryRedirect() {
+  const { code } = useParams();
+  const name = code ? getCountryNameByCode(code) : undefined;
+  if (!name) {
+    return <Navigate to="/not-found" replace />;
+  }
+  return <Navigate to={`/country/${countrySlug(name)}`} replace />;
 }
 
 export default App;

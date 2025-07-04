@@ -4,6 +4,7 @@ import CountrySearch from "./CountrySearch";
 import { Country } from "@/data/countries";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
+import { countrySlug } from '../lib/utils';
 
 // Custom 5G chip SVG
 const FiveGChipIcon = () => {
@@ -117,7 +118,7 @@ const HeroSection = () => {
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country);
     // Navigate to country page instead of packages page
-    navigate(`/country/${country.code}`);
+    navigate(`/country/${countrySlug(country.name.en)}`);
   };
 
   return (

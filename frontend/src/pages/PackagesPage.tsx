@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { europeanCountries } from '@/data/countries';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { countrySlug } from '../lib/utils';
 
 const PackagesPage: React.FC = () => {
   const { language } = useLanguage();
@@ -23,7 +24,7 @@ const PackagesPage: React.FC = () => {
             {uniqueCountries.map(country => (
               <Link
                 key={country.code}
-                to={`/country/${country.code.toLowerCase()}`}
+                to={`/country/${countrySlug(country.name.en)}`}
                 className="flex flex-col items-center p-4 bg-white/80 rounded-xl shadow hover:shadow-lg transition border border-gray-200 hover:border-blue-400"
               >
                 <img src={country.flag} alt={country.name[language]} className="w-16 h-12 rounded mb-2 object-cover" />
