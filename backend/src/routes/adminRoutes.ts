@@ -67,7 +67,7 @@ router.post('/packages/fix-invalid-ids', requireAdminAuth, asyncHandler(async (r
     res.status(500).json({
       status: 'error',
       message: 'Failed to run package ID fix',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }));
@@ -181,7 +181,7 @@ router.post('/packages/find-germany-packages', requireAdminAuth, asyncHandler(as
     res.status(500).json({
       status: 'error',
       message: 'Failed to find Germany packages',
-      error: error.message
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }));
