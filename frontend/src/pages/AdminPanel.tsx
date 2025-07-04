@@ -857,6 +857,56 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Complete cleanup and fresh sync from Roamify API
+  const handleCompleteCleanup = async () => {
+    if (!window.confirm('This will DELETE ALL existing packages and fetch fresh data from Roamify API. This cannot be undone. Continue?')) {
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      // Step 1: Clear all existing packages
+      toast.info('Step 1/2: Clearing existing packages...', { style: { color: 'black' } });
+      
+      const clearResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/clear-all-packages`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!clearResponse.ok) {
+        throw new Error('Failed to clear existing packages');
+      }
+
+      // Step 2: Sync fresh data from Roamify API
+      toast.info('Step 2/2: Fetching fresh data from Roamify API...', { style: { color: 'black' } });
+      
+      const syncResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/sync/roamify-packages`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+
+      if (syncResponse.ok) {
+        const result = await syncResponse.json();
+        toast.success(`✅ Complete cleanup successful! Synced ${result.syncedCount} fresh packages from Roamify API`, { style: { color: 'black' } });
+        
+        // Refresh the packages list
+        await fetchRoamifyPackages();
+        
+        // Reset view state
+        setIsShowingDeduplicated(false);
+      } else {
+        if (handleAuthError(syncResponse)) return;
+        const errorData = await syncResponse.json();
+        toast.error(`Failed to sync fresh packages: ${errorData.message || 'Unknown error'}`, { style: { color: 'black' } });
+      }
+    } catch (err) {
+      console.error('Error during complete cleanup:', err);
+      toast.error('Failed to complete cleanup', { style: { color: 'black' } });
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   function validateMyPackageForm(form: any) {
     const errors: {[key: string]: string} = {};
     if (!form.name) errors.name = 'Name is required';
@@ -1332,25 +1382,50 @@ const AdminPanel: React.FC = () => {
 
             {/* Sync Roamify Packages Button */}
             <div className="mt-4">
-              <button
-                onClick={handleSyncRoamifyPackages}
-                disabled={syncing}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {syncing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Syncing from Roamify API...
-                  </>
-                ) : (
-                  <>
-                    🔄 Sync from Roamify API
-                  </>
-                )}
-              </button>
-              <p className="mt-1 text-sm text-gray-300">
-                This will fetch fresh data directly from Roamify API and sync to database
-              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={handleSyncRoamifyPackages}
+                  disabled={syncing}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+                >
+                  {syncing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Syncing from Roamify API...
+                    </>
+                  ) : (
+                    <>
+                      🔄 Sync from Roamify API
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleCompleteCleanup}
+                  disabled={syncing}
+                  className="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-md hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center border-2 border-red-400 shadow-lg"
+                >
+                  {syncing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Complete Cleanup...
+                    </>
+                  ) : (
+                    <>
+                      🧹 Complete Cleanup & Fresh Sync
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="text-gray-300">
+                  <strong>Sync from Roamify API:</strong> Fetches latest packages and adds them to existing data
+                </div>
+                <div className="text-red-300 bg-red-900/20 p-2 rounded border border-red-500">
+                  <strong>⚠️ Complete Cleanup:</strong> DELETES ALL packages then fetches fresh data from Roamify API. Use this to eliminate all duplicates permanently and start with clean data.
+                </div>
+              </div>
             </div>
 
             {/* Roamify Packages Table */}

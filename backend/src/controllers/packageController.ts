@@ -1249,3 +1249,35 @@ export const savePackage = async (
     next(error);
   }
 };
+
+// Secure admin endpoint: Clear all packages from database
+export const clearAllPackages = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    console.log('Starting complete package cleanup...');
+    
+    // Clear packages table
+    const { error: packagesError } = await supabaseAdmin
+      .from('packages')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000'); // Keep a dummy record if needed
+
+    if (packagesError) {
+      console.error('Error clearing packages table:', packagesError);
+      throw packagesError;
+    }
+
+    console.log('Successfully cleared all packages from database');
+
+    res.status(200).json({
+      status: 'success',
+      message: 'All packages cleared successfully',
+    });
+  } catch (error) {
+    console.error('Error clearing all packages:', error);
+    next(error);
+  }
+};
