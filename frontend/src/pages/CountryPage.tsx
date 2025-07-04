@@ -63,7 +63,9 @@ const EmptyState: React.FC<{ message: string }> = ({ message }) => (
 );
 
 const CountryPage: React.FC = () => {
+  console.log("CountryPage mounted");
   const { slug } = useParams<{ slug: string }>();
+  console.log("slug param:", slug);
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
