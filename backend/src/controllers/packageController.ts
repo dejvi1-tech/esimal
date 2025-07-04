@@ -1238,22 +1238,26 @@ export const savePackage = async (req: Request, res: Response) => {
       });
     }
 
-    // ✅ CRITICAL FIX: Always use real Roamify package ID from reseller_id
-    // Never auto-generate fake package IDs
+    // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
+    // Allow null reseller_id since it's now a UUID foreign key
     let finalResellerId = reseller_id;
+    let roamifyPackageId = null;
     
-    if (!finalResellerId) {
-      console.error('❌ No reseller_id provided - this package will not work with Roamify API');
-      return res.status(400).json({ 
-        error: 'reseller_id is required (must be a valid Roamify package ID)' 
-      });
+    // First try to get Roamify package ID from features
+    if (features && features.packageId) {
+      roamifyPackageId = features.packageId;
+      console.log('✅ Using Roamify package ID from features:', roamifyPackageId);
     }
-
-    // Validate that reseller_id looks like a real Roamify package ID
-    if (!finalResellerId.startsWith('esim-') || finalResellerId.length < 10) {
-      console.error('❌ Invalid reseller_id format:', finalResellerId);
+    // Fallback to reseller_id if it's a valid Roamify package ID
+    else if (finalResellerId && finalResellerId.startsWith('esim-') && finalResellerId.length >= 10) {
+      roamifyPackageId = finalResellerId;
+      console.log('✅ Using Roamify package ID from reseller_id:', roamifyPackageId);
+    }
+    
+    if (!roamifyPackageId) {
+      console.error('❌ No valid Roamify package ID found in features.packageId or reseller_id');
       return res.status(400).json({ 
-        error: 'reseller_id must be a valid Roamify package ID (starts with esim- and is properly formatted)' 
+        error: 'A valid Roamify package ID must be provided in features.packageId or reseller_id' 
       });
     }
 
@@ -1267,7 +1271,7 @@ export const savePackage = async (req: Request, res: Response) => {
       base_price: parseFloat(base_price),
       sale_price: parseFloat(sale_price) || parseFloat(base_price),
       profit: parseFloat(profit) || 0,
-      reseller_id: finalResellerId,
+      reseller_id: finalResellerId, // Can be null now
       region: region || 'Unknown',
       visible: visible !== false,
       show_on_frontend: show_on_frontend !== false,
@@ -1275,17 +1279,17 @@ export const savePackage = async (req: Request, res: Response) => {
       homepage_order: parseInt(homepage_order) || 999,
       features: {
         ...features,
-        packageId: finalResellerId,
+        packageId: roamifyPackageId, // Use the real Roamify package ID
         dataAmount: parseFloat(data_amount),
         days: parseInt(days),
         currency: 'EUR',
         plan: 'data-only',
         activation: 'first-use',
-        realRoamifyPackageId: finalResellerId
+        realRoamifyPackageId: roamifyPackageId
       }
     };
 
-    console.log('✅ Saving package with REAL Roamify package ID:', finalResellerId);
+    console.log('✅ Saving package with REAL Roamify package ID:', roamifyPackageId);
 
     // Insert package
     const { data, error } = await supabase
