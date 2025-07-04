@@ -533,20 +533,30 @@ const AdminPanel: React.FC = () => {
       const name = pkg.description || pkg.packageName || pkg.name || pkg.package || 'Unknown Package';
       const country_name = pkg.country || pkg.country_name || '';
       const country_code = pkg.country_code || '';
-      // Parse data_amount as a number in MB (backend expects MB)
+      // Parse data_amount as a number in GB (backend now expects GB)
       let data_amount_raw = pkg.data || pkg.dataAmount || '';
       let data_amount = 0;
       if (typeof data_amount_raw === 'number') {
-        data_amount = data_amount_raw; // Assume already in MB if number
+        // If it's from Roamify API and unit is MB, convert to GB
+        if (pkg.dataUnit === 'MB') {
+          data_amount = data_amount_raw / 1024; // Convert MB to GB
+        } else {
+          data_amount = data_amount_raw; // Assume already in GB
+        }
       } else if (typeof data_amount_raw === 'string') {
         const match = data_amount_raw.match(/(\d+(?:\.\d+)?)(GB|MB|KB)?/i);
         if (match) {
           let value = parseFloat(match[1]);
           const unit = match[2]?.toUpperCase() || 'GB';
-          if (unit === 'GB') value = value * 1024; // Convert GB to MB
-          if (unit === 'KB') value = value / 1024; // Convert KB to MB
-          // if unit === 'MB', keep as is
-          data_amount = value;
+          if (unit === 'GB') {
+            data_amount = value; // Keep as GB
+          } else if (unit === 'MB') {
+            data_amount = value / 1024; // Convert MB to GB
+          } else if (unit === 'KB') {
+            data_amount = value / 1024 / 1024; // Convert KB to GB
+          } else {
+            data_amount = value; // Assume GB
+          }
         }
       }
       // ✅ FIXED: Correctly map Roamify's 'days' field to database 'days' field
@@ -625,20 +635,30 @@ const AdminPanel: React.FC = () => {
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
 
-      // Parse data_amount as number in MB (backend expects MB)
+      // Parse data_amount as number in GB (backend now expects GB)
       let data_amount_raw = pkg.data || pkg.dataAmount || '';
       let data_amount = 0;
       if (typeof data_amount_raw === 'number') {
-        data_amount = data_amount_raw; // Assume already in MB if number
+        // If it's from Roamify API and unit is MB, convert to GB
+        if (pkg.dataUnit === 'MB') {
+          data_amount = data_amount_raw / 1024; // Convert MB to GB
+        } else {
+          data_amount = data_amount_raw; // Assume already in GB
+        }
       } else if (typeof data_amount_raw === 'string') {
         const match = data_amount_raw.match(/(\d+(?:\.\d+)?)(GB|MB|KB)?/i);
         if (match) {
           let value = parseFloat(match[1]);
           const unit = match[2]?.toUpperCase() || 'GB';
-          if (unit === 'GB') value = value * 1024; // Convert GB to MB
-          if (unit === 'KB') value = value / 1024; // Convert KB to MB
-          // if unit === 'MB', keep as is
-          data_amount = value;
+          if (unit === 'GB') {
+            data_amount = value; // Keep as GB
+          } else if (unit === 'MB') {
+            data_amount = value / 1024; // Convert MB to GB
+          } else if (unit === 'KB') {
+            data_amount = value / 1024 / 1024; // Convert KB to GB
+          } else {
+            data_amount = value; // Assume GB
+          }
         }
       }
 
