@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wifi, Clock, Globe, ShoppingCart } from 'lucide-react';
-import { formatDataAmount } from '@/lib/utils';
+import { formatDataAmount } from '@/utils/formatDataAmount';
 
 interface FeaturedPackage {
   id: string;

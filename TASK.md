@@ -8,6 +8,14 @@
   - Seeded Supabase packages table with country-specific Roamify IDs (migration 20250630_seed_packages.sql)
   - Removed all fallback logic in delivery and Roamify services/controllers
   - Added /backend/src/scripts/validatePackages.ts and package.json script for daily validation
+- [x] Implemented formatDataAmount utility in src/utils/formatDataAmount.ts and updated all public package displays to use it for data_amount (2024-07-11)
+- [x] Frontend routing & packages page overhaul (remove /bundle, repurpose /packages, add redirect, update links) - Completed on 2024-07-07
+  - Removed all /bundle routes, links, and components
+  - Added redirect from /bundle/:country to /country/:country
+  - /packages now lists all available countries dynamically
+  - All navigation flows through /country/:country and /packages
+  - Obsolete files deleted: BundlePackagesSection.tsx, BundlePage.tsx
+  - No backend changes required
 
 ## Discovered During Work
-// Add any new sub-tasks or TODOs here as they arise. 
+// No new todos discovered during this task 

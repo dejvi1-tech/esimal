@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from './contexts/LanguageContext';
 import Layout from './components/Layout';
 import HomePage from './pages/HomePage';
@@ -14,7 +14,6 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import NotFound from './pages/NotFound';
 import CountryPage from './pages/CountryPage';
 import SearchPage from './pages/SearchPage';
-import BundlePage from './pages/BundlePage';
 import CheckBalancePage from './pages/CheckBalancePage';
 import CheckoutSuccessPage from './pages/CheckoutSuccessPage';
 import CheckoutCancelPage from './pages/CheckoutCancelPage';
@@ -53,7 +52,8 @@ function App() {
                     } />
                     <Route path="/country/:code" element={<CountryPage />} />
                     <Route path="/search" element={<SearchPage />} />
-                    <Route path="/bundle/:bundleId" element={<BundlePage />} />
+                    {/* Redirect old /bundle/:country URLs to /country/:country */}
+                    <Route path="/bundle/:country" element={<Navigate to="/country/:country" replace />} />
                     <Route path="/balance" element={<CheckBalancePage />} />
                     <Route path="/ios26-demo" element={<IOS26Demo />} />
                     <Route path="*" element={<NotFound />} />

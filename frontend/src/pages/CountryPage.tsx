@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { europeanCountries } from '@/data/countries';
-import { formatDataAmount } from '@/lib/utils';
+import { formatDataAmount } from '@/utils/formatDataAmount';
 
 const planeBeachImage = '/static/esimfly-plane-beach.jpg';
 

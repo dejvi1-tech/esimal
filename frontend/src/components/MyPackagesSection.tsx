@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Wifi, Clock, Globe, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { formatDataAmount } from '@/lib/utils';
+import { formatDataAmount } from '@/utils/formatDataAmount';
 
 interface MyPackage {
   id: string;

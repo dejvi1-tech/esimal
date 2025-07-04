@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import CoverageModal from '@/components/CoverageModal';
 import { europeCoverage } from '@/data/coverageData';
+import { formatDataAmount } from '@/utils/formatDataAmount';
 
 interface MostPopularPackage {
   id: string;
@@ -149,7 +150,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                                                          {pkg.data_amount === 0 ? t('unlimited_data') : `${parseFloat(pkg.data_amount.toFixed(2))} ${t('gb_internet')}`}
+                            {pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount)}
                           </span>
                         </li>
                         <li className="flex items-center">
