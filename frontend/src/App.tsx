@@ -62,7 +62,15 @@ function App() {
                     <Route path="/bundle/:country" element={<Navigate to={({ params }) => `/country/${params.country}`} replace />} />
                     <Route path="/country/:code" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.code)}`} replace />} />
                     {/* Main country route above catch-all */}
-                    <Route path="/country/:slug" element={<CountryPage />} />
+                    <Route
+                      path="/country/:slug"
+                      element={
+                        <>
+                          {console.log('Matched country route with slug:', useParams().slug)}
+                          <CountryPage />
+                        </>
+                      }
+                    />
                     <Route path="/search" element={<SearchPage />} />
                     <Route path="/balance" element={<CheckBalancePage />} />
                     <Route path="/ios26-demo" element={<IOS26Demo />} />
