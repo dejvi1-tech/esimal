@@ -59,14 +59,14 @@ function App() {
                       </ProtectedAdminRoute>
                     } />
                     {/* Legacy redirects */}
-                    <Route path="/bundle/:country" element={<Navigate to={({ params }) => `/country/${params.country}`} replace />} />
-                    <Route path="/country/:code" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.code)}`} replace />} />
+                    <Route path="/bundle/:slug" element={<Navigate to={({ params }) => `/country/${params.slug}`} replace />} />
+                    <Route path="/country/:slug" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.slug)}`} replace />} />
                     {/* Main country route above catch-all */}
                     <Route
-                      path="/country/:country"
+                      path="/country/:slug"
                       element={
                         <>
-                          {console.log('Matched country route with param:', useParams().country)}
+                          {console.log('Matched country route with param:', useParams().slug)}
                           <CountryPage />
                         </>
                       }
@@ -91,8 +91,8 @@ function App() {
  * If code is not found, redirects to /not-found.
  */
 function LegacyCountryRedirect() {
-  const { code } = useParams();
-  const name = code ? getCountryNameByCode(code) : undefined;
+  const { slug } = useParams();
+  const name = slug ? getCountryNameByCode(slug) : undefined;
   if (!name) {
     return <Navigate to="/not-found" replace />;
   }

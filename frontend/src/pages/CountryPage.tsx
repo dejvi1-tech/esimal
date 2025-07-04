@@ -64,8 +64,8 @@ const EmptyState: React.FC<{ message: string }> = ({ message }) => (
 
 const CountryPage: React.FC = () => {
   console.log("CountryPage mounted");
-  const { country } = useParams<{ country: string }>();
-  console.log("country param:", country);
+  const { slug } = useParams<{ slug: string }>();
+  console.log("slug param:", slug);
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
@@ -76,7 +76,7 @@ const CountryPage: React.FC = () => {
   const [countryFlag, setCountryFlag] = useState<string>('');
 
   useEffect(() => {
-    if (!country) return;
+    if (!slug) return;
     setLoading(true);
     setIsError(false);
     setPackages([]);
@@ -86,8 +86,8 @@ const CountryPage: React.FC = () => {
 
     const fetchPackages = async () => {
       try {
-        console.debug('[CountryPage] country:', country);
-        const apiUrl = `${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${country}`;
+        console.debug('[CountryPage] slug:', slug);
+        const apiUrl = `${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${slug}`;
         console.debug('[CountryPage] Fetching:', apiUrl);
         const response = await fetch(apiUrl);
         console.debug('[CountryPage] Response status:', response.status);
@@ -96,12 +96,12 @@ const CountryPage: React.FC = () => {
         if (Array.isArray(data) && data.length > 0) {
           setPackages(data);
           setSelectedId(data[0]?.id || null);
-          setCountryName(decodeSlug(country));
+          setCountryName(decodeSlug(slug));
           setCountryFlag('');
           setLoading(false);
           return;
         }
-        console.warn(`[CountryPage] No packages found for country: ${country}`, { country, apiUrl, response, data });
+        console.warn(`[CountryPage] No packages found for slug: ${slug}`, { slug, apiUrl, response, data });
         setPackages([]);
         setLoading(false);
       } catch (e) {
@@ -111,7 +111,7 @@ const CountryPage: React.FC = () => {
       }
     };
     fetchPackages();
-  }, [country, language]);
+  }, [slug, language]);
 
   if (loading) {
     return (
@@ -123,7 +123,7 @@ const CountryPage: React.FC = () => {
   }
 
   if (isError) return <ErrorBanner message="Couldn't load packages." />;
-  if (packages.length === 0) return <EmptyState message={`No offers for "${country}"`} />;
+  if (packages.length === 0) return <EmptyState message={`No offers for \"${slug}\"`} />;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -161,7 +161,7 @@ const CountryPage: React.FC = () => {
               style={{ letterSpacing: '0.03em' }}
               onClick={() => {
                 if (selectedId) {
-                  navigate(`/checkout?country=${country}&package=${selectedId}`);
+                  navigate(`/checkout?country=${slug}&package=${selectedId}`);
                 }
               }}
               disabled={!selectedId}

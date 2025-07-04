@@ -20,7 +20,7 @@ describe('CountryPage', () => {
     render(
       <MemoryRouter initialEntries={["/country/albania"]}>
         <Routes>
-          <Route path="/country/:country" element={<CountryPage />} />
+          <Route path="/country/:slug" element={<CountryPage />} />
         </Routes>
       </MemoryRouter>
     );
@@ -35,7 +35,7 @@ describe('CountryPage', () => {
     render(
       <MemoryRouter initialEntries={["/country/europe"]}>
         <Routes>
-          <Route path="/country/:country" element={<CountryPage />} />
+          <Route path="/country/:slug" element={<CountryPage />} />
         </Routes>
       </MemoryRouter>
     );
@@ -50,7 +50,7 @@ describe('CountryPage', () => {
     render(
       <MemoryRouter initialEntries={["/country/unknown"]}>
         <Routes>
-          <Route path="/country/:country" element={<CountryPage />} />
+          <Route path="/country/:slug" element={<CountryPage />} />
         </Routes>
       </MemoryRouter>
     );
@@ -62,7 +62,7 @@ describe('CountryPage', () => {
     render(
       <MemoryRouter initialEntries={["/country/albania"]}>
         <Routes>
-          <Route path="/country/:country" element={<CountryPage />} />
+          <Route path="/country/:slug" element={<CountryPage />} />
         </Routes>
       </MemoryRouter>
     );
