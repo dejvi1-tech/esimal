@@ -276,26 +276,56 @@ exports.getCountries = getCountries;
 const getSectionPackages = async (req, res, next) => {
     try {
         const { slug } = req.query;
-        if (slug !== 'most-popular') {
-            res.status(400).json({
-                status: 'error',
-                message: 'Invalid section slug'
-            });
+        if (!slug || typeof slug !== 'string') {
+            res.status(400).json({ status: 'error', message: 'Missing or invalid section slug' });
             return;
         }
-        // STRICT BEHAVIOR: Only return admin-approved packages
-        const { data: packages, error } = await supabaseAdmin
+        let packages, error;
+        if (slug === 'most-popular') {
+            ({ data: packages, error } = await supabaseAdmin
+                .from('my_packages')
+                .select('*')
+                .eq('visible', true)
+                .eq('show_on_frontend', true)
+                .eq('location_slug', 'most-popular')
+                .order('homepage_order', { ascending: true }));
+            if (error)
+                throw error;
+            console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
+            res.json(packages || []);
+            return;
+        }
+        // Try as country_code
+        ({ data: packages, error } = await supabaseAdmin
             .from('my_packages')
             .select('*')
+            .eq('country_code', slug.toUpperCase())
             .eq('visible', true)
             .eq('show_on_frontend', true)
-            .eq('location_slug', 'most-popular')
-            .order('homepage_order', { ascending: true });
-        if (error) {
+            .order('sale_price', { ascending: true }));
+        if (error)
             throw error;
+        if (Array.isArray(packages) && packages.length > 0) {
+            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_code: ${slug}`);
+            res.json(packages);
+            return;
         }
-        console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
-        res.json(packages || []);
+        // Try as country_name
+        ({ data: packages, error } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .ilike('country_name', `%${slug}%`)
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('sale_price', { ascending: true }));
+        if (error)
+            throw error;
+        if (Array.isArray(packages) && packages.length > 0) {
+            console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_name: ${slug}`);
+            res.json(packages);
+            return;
+        }
+        res.status(404).json({ status: 'error', message: `No packages found for slug: ${slug}` });
     }
     catch (error) {
         next(error);
@@ -945,7 +975,11 @@ const savePackage = async (req, res, next) => {
         }
         // Calculate profit if not provided
         const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
-        // Prepare package data (no 'validity' field)
+        // Auto-generate Roamify package configuration
+        const countryCodeLower = country_code.toLowerCase();
+        const dataAmountInt = Math.floor(data_amount || 1);
+        const roamifyPackageId = `esim-${countryCodeLower}-${parsedDays}days-${dataAmountInt}gb-all`;
+        // Prepare package data with auto-generated features
         const packageData = {
             id: id || (0, uuid_1.v4)(), // Generate new UUID if not provided
             name,
@@ -962,6 +996,25 @@ const savePackage = async (req, res, next) => {
             show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
             location_slug: location_slug || null,
             homepage_order: homepage_order || 0,
+            // AUTO-GENERATE ROAMIFY FEATURES
+            features: {
+                packageId: roamifyPackageId,
+                dataAmount: data_amount,
+                days: parsedDays,
+                price: base_price,
+                currency: 'EUR',
+                plan: 'data-only',
+                activation: 'first-use',
+                isUnlimited: false,
+                withSMS: false,
+                withCall: false,
+                withHotspot: true,
+                withDataRoaming: true,
+                geography: 'local',
+                region: region || 'Europe',
+                countrySlug: countryCodeLower,
+                notes: []
+            },
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };
@@ -978,11 +1031,11 @@ const savePackage = async (req, res, next) => {
             logger_1.logger.error('Error saving package:', error);
             throw error;
         }
-        logger_1.logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name}`);
+        logger_1.logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name} with Roamify config: ${roamifyPackageId}`);
         res.status(200).json({
             status: 'success',
             data: savedPackage,
-            message: 'Package saved successfully'
+            message: 'Package saved successfully with auto-generated Roamify configuration'
         });
     }
     catch (error) {

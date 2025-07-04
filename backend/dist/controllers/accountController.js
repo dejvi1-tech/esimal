@@ -14,7 +14,7 @@ const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.
 exports.getAllUsers = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
     const { data: users, error } = await supabase_1.supabase
         .from('users')
-        .select('id, email, first_name, last_name, role, balance, currency, created_at, last_login_at')
+        .select('id, email, "firstName", "lastName", role, balance, currency, created_at, last_login_at')
         .order('created_at', { ascending: false });
     if (error) {
         return next(new appError_1.AppError('Error fetching users', 500));
@@ -29,7 +29,7 @@ exports.getUserById = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =>
     const { id } = req.params;
     const { data: user, error } = await supabase_1.supabase
         .from('users')
-        .select('id, email, first_name, last_name, role, balance, currency, stripe_customer_id, created_at, last_login_at')
+        .select('id, email, "firstName", "lastName", role, balance, currency, stripe_customer_id, created_at, last_login_at')
         .eq('id', id)
         .single();
     if (error) {

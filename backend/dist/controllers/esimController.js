@@ -37,7 +37,7 @@ exports.getAllEsims = (0, asyncHandler_1.asyncHandler)(async (req, res, next) =>
         .from('esims')
         .select(`
       *,
-      user:users(email, first_name, last_name),
+              user:users(email, "firstName", "lastName"),
       order:orders (
         id,
         status,

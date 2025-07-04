@@ -686,8 +686,8 @@ async function deliverEsim(order, paymentIntent, metadata) {
                         id: GUEST_USER_ID,
                         email: 'guest@esimal.com',
                         password: 'disabled-account',
-                        first_name: 'Guest',
-                        last_name: 'User',
+                        firstName: 'Guest',
+                        lastName: 'User',
                         role: 'user'
                     })
                         .select()

@@ -605,7 +605,7 @@ const getAllOrders = async (req, res, next) => {
             .select(`
         *,
         package:packages(*),
-        user:users(email, first_name, last_name)
+        user:users(email, "firstName", "lastName")
       `)
             .order('created_at', { ascending: false });
         if (error) {
@@ -630,7 +630,7 @@ const getOrder = async (req, res, next) => {
             .select(`
         *,
         package:packages(*),
-        user:users(email, first_name, last_name)
+        user:users(email, "firstName", "lastName")
       `)
             .eq('id', id)
             .single();

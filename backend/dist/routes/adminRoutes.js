@@ -32,5 +32,7 @@ router.get('/packages/invalid', auth_1.requireAdminAuth, (0, asyncHandler_1.asyn
 router.post('/packages/sync', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.triggerManualSync));
 router.delete('/packages/validation-cache', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.clearPackageValidationCache));
 router.post('/packages/deduplicate-my-packages', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.deduplicateMyPackages));
+router.post('/packages/fix-roamify-config', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.fixPackagesRoamifyConfig));
+router.post('/packages/fix-specific-failing-package', auth_1.requireAdminAuth, (0, asyncHandler_1.asyncHandler)(adminController_1.fixSpecificFailingPackage));
 exports.default = router;
 //# sourceMappingURL=adminRoutes.js.map

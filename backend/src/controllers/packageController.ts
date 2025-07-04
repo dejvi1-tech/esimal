@@ -370,30 +370,53 @@ export const getSectionPackages = async (
 ): Promise<void> => {
   try {
     const { slug } = req.query;
-    
-    if (slug !== 'most-popular') {
-      res.status(400).json({ 
-        status: 'error', 
-        message: 'Invalid section slug' 
-      });
+    if (!slug || typeof slug !== 'string') {
+      res.status(400).json({ status: 'error', message: 'Missing or invalid section slug' });
       return;
     }
-
-    // STRICT BEHAVIOR: Only return admin-approved packages
-    const { data: packages, error } = await supabaseAdmin
+    let packages, error;
+    if (slug === 'most-popular') {
+      ({ data: packages, error } = await supabaseAdmin
+        .from('my_packages')
+        .select('*')
+        .eq('visible', true)
+        .eq('show_on_frontend', true)
+        .eq('location_slug', 'most-popular')
+        .order('homepage_order', { ascending: true }));
+      if (error) throw error;
+      console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
+      res.json(packages || []);
+      return;
+    }
+    // Try as country_code
+    ({ data: packages, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
+      .eq('country_code', slug.toUpperCase())
       .eq('visible', true)
       .eq('show_on_frontend', true)
-      .eq('location_slug', 'most-popular')
-      .order('homepage_order', { ascending: true });
-
-    if (error) {
-      throw error;
+      .order('sale_price', { ascending: true }));
+    if (error) throw error;
+    if (Array.isArray(packages) && packages.length > 0) {
+      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_code: ${slug}`);
+      res.json(packages);
+      return;
     }
-
-    console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
-    res.json(packages || []);
+    // Try as country_name
+    ({ data: packages, error } = await supabaseAdmin
+      .from('my_packages')
+      .select('*')
+      .ilike('country_name', `%${slug}%`)
+      .eq('visible', true)
+      .eq('show_on_frontend', true)
+      .order('sale_price', { ascending: true }));
+    if (error) throw error;
+    if (Array.isArray(packages) && packages.length > 0) {
+      console.log(`[API] /api/packages/get-section-packages returning ${packages.length} packages for country_name: ${slug}`);
+      res.json(packages);
+      return;
+    }
+    res.status(404).json({ status: 'error', message: `No packages found for slug: ${slug}` });
   } catch (error) {
     next(error);
   }

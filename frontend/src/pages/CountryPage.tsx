@@ -84,33 +84,14 @@ const CountryPage: React.FC = () => {
 
     const fetchPackages = async () => {
       try {
-        console.debug('CountryPage slug:', slug);
-        const fullName = decodeSlug(slug);
-        console.debug('Looking up offers in my_packages for country_name ILIKE:', fullName);
-        let { data, error } = await supabase
-          .from('my_packages')
-          .select('*')
-          .ilike('country_name', fullName);
-        if (error) throw error;
+        // Use backend API endpoint for fetching country packages
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${slug}`);
+        if (!response.ok) throw new Error('API error');
+        const data = await response.json();
         if (Array.isArray(data) && data.length > 0) {
           setPackages(data);
           setSelectedId(data[0]?.id || null);
-          setCountryName(fullName);
-          setCountryFlag('');
-          setLoading(false);
-          return;
-        }
-        // Fallback to country_code in my_packages
-        console.debug('No full-name match in my_packages, trying country_code:', slug.toUpperCase());
-        const { data: byCode, error: codeError } = await supabase
-          .from('my_packages')
-          .select('*')
-          .eq('country_code', slug.toUpperCase());
-        if (codeError) throw codeError;
-        if (Array.isArray(byCode) && byCode.length > 0) {
-          setPackages(byCode);
-          setSelectedId(byCode[0]?.id || null);
-          setCountryName(fullName);
+          setCountryName(decodeSlug(slug));
           setCountryFlag('');
           setLoading(false);
           return;

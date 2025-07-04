@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deduplicateMyPackages = exports.clearPackageValidationCache = exports.triggerManualSync = exports.getInvalidPackages = exports.triggerPackageValidation = exports.getSyncStatus = exports.getPackageHealthOverview = exports.debugOrder = void 0;
+exports.fixSpecificFailingPackage = exports.fixPackagesRoamifyConfig = exports.deduplicateMyPackages = exports.clearPackageValidationCache = exports.triggerManualSync = exports.getInvalidPackages = exports.triggerPackageValidation = exports.getSyncStatus = exports.getPackageHealthOverview = exports.debugOrder = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("../utils/logger");
@@ -508,4 +508,179 @@ function calculateMyPackageCompleteness(pkg) {
         score += 1;
     return score;
 }
+// Fix packages that don't have proper Roamify configuration
+const fixPackagesRoamifyConfig = async (req, res, next) => {
+    try {
+        console.log('🔄 Starting fix for packages without Roamify configuration...');
+        // Get all packages from my_packages that don't have features.packageId
+        const { data: packagesNeedingFix, error: fetchError } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .or('features.is.null,features->packageId.is.null');
+        if (fetchError)
+            throw fetchError;
+        console.log(`Found ${packagesNeedingFix.length} packages that need Roamify configuration`);
+        let fixedCount = 0;
+        const batchSize = 10;
+        for (let i = 0; i < packagesNeedingFix.length; i += batchSize) {
+            const batch = packagesNeedingFix.slice(i, i + batchSize);
+            for (const pkg of batch) {
+                try {
+                    // Create a generic Roamify package ID based on country and data
+                    const countryCode = pkg.country_code?.toLowerCase() || 'global';
+                    const dataAmount = Math.floor(pkg.data_amount || 1);
+                    const days = pkg.days || 30;
+                    const roamifyPackageId = `esim-${countryCode}-${days}days-${dataAmount}gb-all`;
+                    // Update the package with features.packageId (don't touch reseller_id since it's UUID)
+                    const updateData = {
+                        features: {
+                            ...(pkg.features || {}), // Keep existing features
+                            packageId: roamifyPackageId,
+                            dataAmount: pkg.data_amount,
+                            days: pkg.days,
+                            price: pkg.base_price,
+                            currency: 'EUR',
+                            plan: 'data-only',
+                            activation: 'first-use',
+                            isUnlimited: false,
+                            withHotspot: true,
+                            withDataRoaming: true,
+                            geography: 'local',
+                            region: pkg.region || 'Unknown',
+                            countrySlug: countryCode,
+                            notes: []
+                        },
+                        updated_at: new Date().toISOString()
+                    };
+                    const { error: updateError } = await supabaseAdmin
+                        .from('my_packages')
+                        .update(updateData)
+                        .eq('id', pkg.id);
+                    if (!updateError) {
+                        fixedCount++;
+                        console.log(`✅ Fixed package: ${pkg.name} (${pkg.country_name}) -> ${roamifyPackageId}`);
+                    }
+                    else {
+                        console.error(`❌ Error updating package ${pkg.name}:`, updateError);
+                    }
+                }
+                catch (error) {
+                    console.error(`❌ Error processing package ${pkg.name}:`, error);
+                }
+            }
+        }
+        console.log(`🎉 Fixed ${fixedCount} packages with Roamify configuration`);
+        res.status(200).json({
+            status: 'success',
+            message: `Fixed ${fixedCount} packages with Roamify configuration`,
+            totalPackagesChecked: packagesNeedingFix.length,
+            fixedCount
+        });
+    }
+    catch (error) {
+        console.error('Error fixing packages Roamify configuration:', error);
+        next(error);
+    }
+};
+exports.fixPackagesRoamifyConfig = fixPackagesRoamifyConfig;
+// Quick fix for the specific failing package
+const fixSpecificFailingPackage = async (req, res, next) => {
+    try {
+        const packageId = '5ecb7401-a4c8-4168-a295-0054ca092889';
+        console.log(`🔄 Fixing specific failing package: ${packageId}`);
+        // Get the current package data
+        const { data: packageData, error: fetchError } = await supabaseAdmin
+            .from('my_packages')
+            .select('*')
+            .eq('id', packageId)
+            .single();
+        if (fetchError) {
+            console.error('❌ Error fetching package:', fetchError);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Error fetching package',
+                error: fetchError.message
+            });
+        }
+        if (!packageData) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'Package not found'
+            });
+        }
+        console.log('📦 Current package data:', {
+            name: packageData.name,
+            country: packageData.country_name,
+            data_amount: packageData.data_amount,
+            days: packageData.days,
+            hasResellerId: !!packageData.reseller_id,
+            hasFeatures: !!packageData.features
+        });
+        // Create a generic reseller_id based on package details
+        const countryCode = packageData.country_code || 'al'; // Default to Albania
+        const dataAmount = Math.floor(packageData.data_amount || 1);
+        const days = packageData.days || 30;
+        const roamifyPackageId = `esim-${countryCode.toLowerCase()}-${days}days-${dataAmount}gb-all`;
+        // Update the package with Roamify configuration
+        // Since reseller_id is UUID, we'll store the Roamify package ID in features.packageId
+        const updateData = {
+            features: {
+                packageId: roamifyPackageId,
+                dataAmount: packageData.data_amount,
+                days: packageData.days || 30,
+                price: packageData.base_price || 2.49,
+                currency: 'EUR',
+                plan: 'data-only',
+                activation: 'first-use',
+                isUnlimited: false,
+                withSMS: false,
+                withCall: false,
+                withHotspot: true,
+                withDataRoaming: true,
+                geography: 'local',
+                region: packageData.region || 'Europe',
+                countrySlug: countryCode.toLowerCase(),
+                notes: []
+            },
+            updated_at: new Date().toISOString()
+        };
+        const { error: updateError } = await supabaseAdmin
+            .from('my_packages')
+            .update(updateData)
+            .eq('id', packageId);
+        if (updateError) {
+            console.error('❌ Error updating package:', updateError);
+            return res.status(500).json({
+                status: 'error',
+                message: 'Error updating package',
+                error: updateError.message
+            });
+        }
+        console.log('✅ Package fixed successfully!');
+        console.log('📦 New configuration:', {
+            features_packageId: roamifyPackageId,
+            dataAmount: updateData.features.dataAmount,
+            days: updateData.features.days
+        });
+        res.status(200).json({
+            status: 'success',
+            message: 'Package fixed successfully',
+            packageId: packageId,
+            oldConfig: {
+                hasResellerId: !!packageData.reseller_id,
+                hasFeatures: !!packageData.features
+            },
+            newConfig: {
+                features_packageId: roamifyPackageId,
+                dataAmount: updateData.features.dataAmount,
+                days: updateData.features.days
+            }
+        });
+    }
+    catch (error) {
+        console.error('❌ Unexpected error:', error);
+        next(error);
+    }
+};
+exports.fixSpecificFailingPackage = fixSpecificFailingPackage;
 //# sourceMappingURL=adminController.js.map
