@@ -16,7 +16,7 @@ async function testSlugToUuidConversion() {
       .from('my_packages')
       .select('id, name, country_name, data_amount, validity_days, sale_price, reseller_id, visible')
       .eq('visible', true)
-      .order('sale_price', { ascending: true });
+      .order('data_amount', { ascending: true });
 
     if (listError) {
       console.error('❌ Error listing packages:', listError);

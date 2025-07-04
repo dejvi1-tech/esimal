@@ -103,7 +103,7 @@ const getAllPackages = async (req, res, next) => {
         else {
             console.log(`[API] /api/packages returning all packages (no country filter)`);
         }
-        const { data, error } = await query.order('sale_price', { ascending: true });
+        const { data, error } = await query.order('data_amount', { ascending: true });
         if (error) {
             throw error;
         }
@@ -302,7 +302,7 @@ const getSectionPackages = async (req, res, next) => {
             .eq('country_code', slug.toUpperCase())
             .eq('visible', true)
             .eq('show_on_frontend', true)
-            .order('sale_price', { ascending: true }));
+            .order('data_amount', { ascending: true }));
         if (error)
             throw error;
         if (Array.isArray(packages) && packages.length > 0) {
@@ -317,7 +317,7 @@ const getSectionPackages = async (req, res, next) => {
             .ilike('country_name', `%${slug}%`)
             .eq('visible', true)
             .eq('show_on_frontend', true)
-            .order('sale_price', { ascending: true }));
+            .order('data_amount', { ascending: true }));
         if (error)
             throw error;
         if (Array.isArray(packages) && packages.length > 0) {
@@ -359,30 +359,30 @@ const searchPackages = async (req, res, next) => {
             ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
                 .select('*')
-                .eq('country_code', 'EU')
-                .eq('visible', true)
-                .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                            .eq('country_code', 'EU')
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('data_amount', { ascending: true }));
         }
         else if (searchCountry.toLowerCase() === 'dubai') {
             // For Dubai, match by country_code for exact results
             ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
                 .select('*')
-                .eq('country_code', 'AE')
-                .eq('visible', true)
-                .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                            .eq('country_code', 'AE')
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('data_amount', { ascending: true }));
         }
         else {
             // For other countries, match by country_name
             ({ data: packages, error } = await supabaseAdmin
                 .from('my_packages')
                 .select('*')
-                .ilike('country_name', `%${searchCountry}%`)
-                .eq('visible', true)
-                .eq('show_on_frontend', true)
-                .order('sale_price', { ascending: true }));
+                            .ilike('country_name', `%${searchCountry}%`)
+            .eq('visible', true)
+            .eq('show_on_frontend', true)
+            .order('data_amount', { ascending: true }));
         }
         if (error) {
             console.error('Database error:', error);
