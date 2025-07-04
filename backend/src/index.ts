@@ -177,13 +177,20 @@ app.get('/api/frontend-packages', async (req: Request, res: Response, next: Next
 // Add endpoint for featured packages (same as frontend packages for now)
 app.get('/api/featured-packages', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { data, error } = await supabaseAdmin
+    const { country } = req.query;
+    let query = supabaseAdmin
       .from('my_packages')
       .select('*')
-      .eq('country_code', country)
       .eq('visible', true)
-      .eq('show_on_frontend', true)
-      .order('data_amount', { ascending: true });
+      .eq('show_on_frontend', true);
+    
+    // Only filter by country if country parameter is provided
+    if (country && typeof country === 'string') {
+      query = query.eq('country_code', country);
+    }
+    
+    const { data, error } = await query.order('data_amount', { ascending: true });
+    
     if (error) {
       res.status(500).json({ error: error.message });
       return;
