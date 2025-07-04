@@ -63,10 +63,10 @@ function App() {
                     <Route path="/country/:code" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.code)}`} replace />} />
                     {/* Main country route above catch-all */}
                     <Route
-                      path="/country/:slug"
+                      path="/country/:country"
                       element={
                         <>
-                          {console.log('Matched country route with slug:', useParams().slug)}
+                          {console.log('Matched country route with param:', useParams().country)}
                           <CountryPage />
                         </>
                       }
