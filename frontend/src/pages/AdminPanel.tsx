@@ -100,6 +100,10 @@ const AdminPanel: React.FC = () => {
   const [deduplicating, setDeduplicating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   
+  // Add state for original packages and view mode
+  const [originalRoamifyPackages, setOriginalRoamifyPackages] = useState<RoamifyPackage[]>([]);
+  const [isShowingDeduplicated, setIsShowingDeduplicated] = useState(false);
+  
   // Add duplicate analysis state
   const [duplicateAnalysis, setDuplicateAnalysis] = useState({
     totalPackages: 0,
@@ -342,6 +346,8 @@ const AdminPanel: React.FC = () => {
         }
         
         setRoamifyPackages(data);
+        setOriginalRoamifyPackages([...data]); // Store original for restoration
+        setIsShowingDeduplicated(false);
       } else {
         if (handleAuthError(response)) return;
         const text = await response.text();
@@ -764,6 +770,67 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  // Add client-side deduplication for immediate visual feedback
+  const handleRemoveDuplicatesClientSide = () => {
+    if (!duplicateAnalysis.hasDuplicates) {
+      toast.info('No duplicates found to remove', { style: { color: 'black' } });
+      return;
+    }
+
+    // Remove duplicates from the displayed list immediately
+    const deduplicatedPackages = deduplicatePackagesArray(roamifyPackages);
+    setRoamifyPackages(deduplicatedPackages);
+    setIsShowingDeduplicated(true);
+    
+    // Recalculate analysis
+    const newAnalysis = analyzePackagesForDuplicates(deduplicatedPackages);
+    setDuplicateAnalysis(newAnalysis);
+    
+    const removedCount = originalRoamifyPackages.length - deduplicatedPackages.length;
+    toast.success(`Removed ${removedCount} duplicates from display (use "Remove Duplicates Permanently" to save changes)`, { style: { color: 'black' } });
+  };
+
+  // Function to restore original packages view
+  const handleRestoreOriginalView = () => {
+    setRoamifyPackages([...originalRoamifyPackages]);
+    setIsShowingDeduplicated(false);
+    
+    // Recalculate analysis with original data
+    const originalAnalysis = analyzePackagesForDuplicates(originalRoamifyPackages);
+    setDuplicateAnalysis(originalAnalysis);
+    
+    toast.info('Restored original package list', { style: { color: 'black' } });
+  };
+
+  // Helper function to deduplicate packages array
+  const deduplicatePackagesArray = (packages: RoamifyPackage[]): RoamifyPackage[] => {
+    // Step 1: Remove duplicate IDs, keeping the first occurrence
+    const idMap = new Map<string, RoamifyPackage>();
+    packages.forEach(pkg => {
+      const id = pkg.id || pkg.packageId || '';
+      if (id && !idMap.has(id)) {
+        idMap.set(id, pkg);
+      }
+    });
+
+    // Step 2: Remove duplicate combinations
+    const combinationMap = new Map<string, RoamifyPackage>();
+    Array.from(idMap.values()).forEach(pkg => {
+      const country = pkg.country || pkg.country_name || 'unknown';
+      const data = pkg.data || pkg.dataAmount || 'unknown';
+      const days = pkg.days || pkg.day || 'unknown';
+      const price = pkg.price || pkg.base_price || 'unknown';
+      
+      const combinationKey = `${country}|${data}|${days}|${price}`;
+      
+      if (!combinationMap.has(combinationKey)) {
+        combinationMap.set(combinationKey, pkg);
+      }
+    });
+
+    return Array.from(combinationMap.values());
+  };
+
   const handleSyncRoamifyPackages = async () => {
     setSyncing(true);
     try {
@@ -1077,8 +1144,16 @@ const AdminPanel: React.FC = () => {
           {activeTab === 'roamifyPackages' && (
           <div className="w-full">
           <div className="glass-light p-6 rounded-2xl shadow-none mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Roamify Packages ({roamifyPackages.length})</h2>
-            <p className="text-gray-200 mb-4">Available packages from Roamify API - Edit sale price and save to your inventory</p>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Roamify Packages ({roamifyPackages.length}
+              {isShowingDeduplicated && ` of ${originalRoamifyPackages.length} - ${originalRoamifyPackages.length - roamifyPackages.length} duplicates hidden`})
+            </h2>
+            <p className="text-gray-200 mb-4">
+              Available packages from Roamify API - Edit sale price and save to your inventory
+              {isShowingDeduplicated && (
+                <span className="ml-2 text-green-300 font-semibold">• Currently showing deduplicated view</span>
+              )}
+            </p>
             
             {/* Duplicate Analysis Display */}
             {!roamifyLoading && (
@@ -1194,31 +1269,64 @@ const AdminPanel: React.FC = () => {
               </select>
             </div>
 
-            {/* Remove Duplicates Button */}
+            {/* Remove Duplicates Buttons */}
             {!roamifyLoading && duplicateAnalysis.hasDuplicates && (
-              <div className="mt-4">
-                <button
-                  onClick={handleRemoveDuplicates}
-                  disabled={deduplicating}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {deduplicating ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Removing Duplicates...
-                    </>
-                  ) : (
-                    <>
-                      🗑️ Remove Duplicates
-                      <span className="text-xs bg-red-700 px-2 py-1 rounded">
-                        {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
+              <div className="mt-4 space-y-2">
+                <div className="flex gap-3 flex-wrap">
+                  <button
+                    onClick={handleRemoveDuplicatesClientSide}
+                    disabled={isShowingDeduplicated}
+                    className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    🔍 Remove Duplicates (Preview Only)
+                    <span className="text-xs bg-yellow-700 px-2 py-1 rounded">
+                      {Object.keys(duplicateAnalysis.duplicateIds).length + Object.keys(duplicateAnalysis.duplicateCombinations).length} groups
+                    </span>
+                  </button>
+                  
+                  <button
+                    onClick={handleRemoveDuplicates}
+                    disabled={deduplicating}
+                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {deduplicating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Removing Permanently...
+                      </>
+                    ) : (
+                      <>
+                        🗑️ Remove Duplicates Permanently
+                        <span className="text-xs bg-red-700 px-2 py-1 rounded">
+                          Database
+                        </span>
+                      </>
+                    )}
+                  </button>
+
+                  {isShowingDeduplicated && (
+                    <button
+                      onClick={handleRestoreOriginalView}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+                    >
+                      🔄 Restore Original View
+                      <span className="text-xs bg-blue-700 px-2 py-1 rounded">
+                        {originalRoamifyPackages.length} total
                       </span>
-                    </>
+                    </button>
                   )}
-                </button>
-                <p className="mt-1 text-sm text-gray-300">
-                  This will remove duplicate packages based on ID and combination matches
-                </p>
+                </div>
+                
+                {isShowingDeduplicated && (
+                  <div className="bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded text-sm">
+                    ✅ Currently showing deduplicated view ({roamifyPackages.length} packages, {originalRoamifyPackages.length - roamifyPackages.length} duplicates removed)
+                  </div>
+                )}
+                
+                <div className="text-sm text-gray-300 space-y-1">
+                  <p>• <strong>Preview Only:</strong> Removes duplicates from the display immediately (no database changes)</p>
+                  <p>• <strong>Permanently:</strong> Removes duplicates from the database (cannot be undone)</p>
+                </div>
               </div>
             )}
 
