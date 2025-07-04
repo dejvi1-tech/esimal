@@ -41,39 +41,39 @@ function App() {
               <Route path="/checkout/*" element={<CheckoutPage />} />
               <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
               <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
-              
+
+              {/* Main country route - top-level */}
+              <Route
+                path="/country/:slug"
+                element={
+                  <>
+                    {console.log('CountryPage mounted')}
+                    <CountryPage />
+                  </>
+                }
+              />
+
               {/* All other routes with Layout */}
               <Route path="/*" element={
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/about" element={<AboutUsPage />} />
-                    <Route path="/packages" element={<PackagesPage />} />
-                    <Route path="/how-it-works" element={<HowItWorksPage />} />
-                    <Route path="/reviews" element={<ReviewsPage />} />
-                    <Route path="/support" element={<SupportPage />} />
-                    <Route path="/admin/login" element={<AdminLoginPage />} />
-                    <Route path="/admin" element={
+                    <Route path="" element={<HomePage />} />
+                    <Route path="about" element={<AboutUsPage />} />
+                    <Route path="packages" element={<PackagesPage />} />
+                    <Route path="how-it-works" element={<HowItWorksPage />} />
+                    <Route path="reviews" element={<ReviewsPage />} />
+                    <Route path="support" element={<SupportPage />} />
+                    <Route path="admin/login" element={<AdminLoginPage />} />
+                    <Route path="admin" element={
                       <ProtectedAdminRoute>
                         <AdminPanel />
                       </ProtectedAdminRoute>
                     } />
                     {/* Legacy redirects */}
-                    <Route path="/bundle/:slug" element={<Navigate to={({ params }) => `/country/${params.slug}`} replace />} />
-                    <Route path="/country/:slug" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.slug)}`} replace />} />
-                    {/* Main country route above catch-all */}
-                    <Route
-                      path="/country/:slug"
-                      element={
-                        <>
-                          {console.log('Matched country route with param:', useParams().slug)}
-                          <CountryPage />
-                        </>
-                      }
-                    />
-                    <Route path="/search" element={<SearchPage />} />
-                    <Route path="/balance" element={<CheckBalancePage />} />
-                    <Route path="/ios26-demo" element={<IOS26Demo />} />
+                    <Route path="bundle/:slug" element={<Navigate to={({ params }) => `/country/${params.slug}`} replace />} />
+                    <Route path="search" element={<SearchPage />} />
+                    <Route path="balance" element={<CheckBalancePage />} />
+                    <Route path="ios26-demo" element={<IOS26Demo />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Layout>
