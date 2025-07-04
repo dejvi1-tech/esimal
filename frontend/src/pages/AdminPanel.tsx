@@ -586,11 +586,21 @@ const AdminPanel: React.FC = () => {
         base_price,
         sale_price,
         profit: sale_price - base_price,
-        reseller_id,
+        reseller_id: null, // Set to null since it's now a UUID foreign key
         region,
         show_on_frontend: true,
         location_slug: country_name === "Europe & United States" ? "" : country_code.toLowerCase(),
-        homepage_order: 0
+        homepage_order: 0,
+        features: {
+          packageId: reseller_id, // Store the real Roamify package ID here
+          dataAmount: data_amount,
+          days: days,
+          price: base_price,
+          currency: 'EUR',
+          plan: 'data-only',
+          activation: 'first-use',
+          realRoamifyPackageId: reseller_id
+        }
       };
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
@@ -671,11 +681,21 @@ const AdminPanel: React.FC = () => {
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
-        reseller_id: pkg.id || pkg.packageId || '',
+        reseller_id: null, // Set to null since it's now a UUID foreign key
         region: pkg.region || '',
         show_on_frontend: true,
         location_slug: "most-popular",
-        homepage_order: 1
+        homepage_order: 1,
+        features: {
+          packageId: pkg.id || pkg.packageId || '', // Store the real Roamify package ID here
+          dataAmount: data_amount,
+          days: pkg.days || pkg.day || pkg.validity_days || 0,
+          price: base_price,
+          currency: 'EUR',
+          plan: 'data-only',
+          activation: 'first-use',
+          realRoamifyPackageId: pkg.id || pkg.packageId || ''
+        }
       };
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/save-package`, {
