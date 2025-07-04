@@ -180,7 +180,6 @@ app.get('/api/featured-packages', async (req: Request, res: Response, next: Next
     const { data, error } = await supabaseAdmin
       .from('my_packages')
       .select('*')
-      .eq('country_code', country)
       .eq('visible', true)
       .eq('show_on_frontend', true)
       .order('data_amount', { ascending: true });
