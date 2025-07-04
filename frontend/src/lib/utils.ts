@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import slugifyRaw from 'slugify';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,6 +22,7 @@ export function formatDataAmount(amount: number): string {
 
 /**
  * Converts a country name to a URL-friendly slug (e.g., "United States" -> "united-states").
+ * Uses slugify for strict, lower-case slugs.
  *
  * Args:
  *   name (string): The country name.
@@ -29,7 +31,7 @@ export function formatDataAmount(amount: number): string {
  *   string: The slugified country name.
  */
 export function countrySlug(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, '-');
+  return slugifyRaw(name, { lower: true, strict: true });
 }
 
 import { europeanCountries } from '../data/countries';

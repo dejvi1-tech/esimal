@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { europeanCountries } from '@/data/countries';
 import { formatDataAmount } from '@/utils/formatDataAmount';
+import { countrySlug } from '../lib/utils';
 
 const planeBeachImage = '/static/esimfly-plane-beach.jpg';
 
@@ -44,23 +45,46 @@ const SimplePlanCard: React.FC<{
   );
 };
 
+// Minimal ErrorBanner component
+const ErrorBanner: React.FC<{ message: string }> = ({ message }) => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+    <h2 className="text-3xl font-bold mb-4 text-red-500">Error</h2>
+    <p className="text-gray-700 dark:text-gray-300">{message}</p>
+  </div>
+);
+
+// Minimal EmptyState component
+const EmptyState: React.FC<{ message: string }> = ({ message }) => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
+    <h2 className="text-3xl font-bold mb-4 text-gray-800 dark:text-gray-200">No Packages</h2>
+    <p className="text-gray-700 dark:text-gray-300 text-lg">{message}</p>
+  </div>
+);
+
 const CountryPage: React.FC = () => {
-  const { code } = useParams<{ code: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isError, setIsError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [countryName, setCountryName] = useState<string>('');
   const [countryFlag, setCountryFlag] = useState<string>('');
 
   useEffect(() => {
-    if (!code) return;
+    if (!slug) return;
     setLoading(true);
-    setError('');
-    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(code)}&lang=${language}`)
-      .then(res => res.json())
+    setIsError(false);
+    // Find country by slug
+    const countryObj = europeanCountries.find(c => countrySlug(c.name[language]) === slug);
+    setCountryName(countryObj ? countryObj.name[language] : slug.replace(/-/g, ' '));
+    setCountryFlag(countryObj ? countryObj.flag : '');
+    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(countryObj ? countryObj.code : slug)}&lang=${language}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch');
+        return res.json();
+      })
       .then((data: Package[]) => {
         const uniquePackages = data.filter((pkg, index, self) =>
           index === self.findIndex((p) => (
@@ -73,15 +97,12 @@ const CountryPage: React.FC = () => {
         setPackages(uniquePackages);
         setSelectedId(uniquePackages[0]?.id || null);
         setLoading(false);
-        const countryObj = europeanCountries.find(c => c.code === code);
-        setCountryName(countryObj ? countryObj.name[language] : code.toUpperCase());
-        setCountryFlag(countryObj ? countryObj.flag : '');
       })
       .catch(() => {
-        setError(t('failed_to_fetch_packages'));
+        setIsError(true);
         setLoading(false);
       });
-  }, [code, language]);
+  }, [slug, language]);
 
   if (loading) {
     return (
@@ -92,23 +113,8 @@ const CountryPage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <h2 className="text-3xl font-bold mb-4 text-red-500">Error</h2>
-        <p className="text-gray-700 dark:text-gray-300">{error}</p>
-      </div>
-    );
-  }
-
-  if (!packages || packages.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-4">
-        <h2 className="text-3xl font-bold mb-4 text-gray-800 dark:text-gray-200">{countryName}</h2>
-        <p className="text-gray-700 dark:text-gray-300 text-lg">{t('no_packages_available')}</p>
-      </div>
-    );
-  }
+  if (isError) return <ErrorBanner message="Couldn't load packages." />;
+  if (packages.length === 0) return <EmptyState message={`No packages found for "${slug}"`} />;
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -146,7 +152,7 @@ const CountryPage: React.FC = () => {
               style={{ letterSpacing: '0.03em' }}
               onClick={() => {
                 if (selectedId) {
-                  navigate(`/checkout?country=${code}&package=${selectedId}`);
+                  navigate(`/checkout?country=${slug}&package=${selectedId}`);
                 }
               }}
               disabled={!selectedId}

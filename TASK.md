@@ -16,6 +16,12 @@
   - All navigation flows through /country/:country and /packages
   - Obsolete files deleted: BundlePackagesSection.tsx, BundlePage.tsx
   - No backend changes required
+- [x] Fix 404 on `/country/:slug` routes and enforce slug consistency (2024-07-08)
+  - Moved `/country/:slug` route above catch-all in router
+  - Added legacy redirects for `/bundle/:country` and `/country/:code`
+  - Centralized slug generation with `countrySlug` using `slugify`
+  - Updated all links, fetches, and helpers to use slugified country names
+  - Updated CountryPage to show empty/error states instead of 404
 
 ## Discovered During Work
 // No new todos discovered during this task 

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Wifi, Clock, Globe, ShoppingCart } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDataAmount } from '@/utils/formatDataAmount';
+import { countrySlug } from '@/utils/countrySlug';
 
 interface MyPackage {
   id: string;

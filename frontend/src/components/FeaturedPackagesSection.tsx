@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Wifi, Clock, Globe, ShoppingCart } from 'lucide-react';
 import { formatDataAmount } from '@/utils/formatDataAmount';
+import { countrySlug } from '@/utils/countrySlug';
 
 interface FeaturedPackage {
   id: string;

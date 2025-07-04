@@ -22,6 +22,13 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
 
+// Helper for legacy /country/:code redirect
+function generateFullCountryPath(code: string | undefined): string {
+  if (!code) return 'not-found';
+  const name = getCountryNameByCode(code);
+  return name ? countrySlug(name) : code;
+}
+
 function App() {
   return (
     <>
@@ -51,10 +58,12 @@ function App() {
                         <AdminPanel />
                       </ProtectedAdminRoute>
                     } />
-                    <Route path="/country/:code" element={<LegacyCountryRedirect />} />
+                    {/* Legacy redirects */}
+                    <Route path="/bundle/:country" element={<Navigate to={({ params }) => `/country/${params.country}`} replace />} />
+                    <Route path="/country/:code" element={<Navigate to={({ params }) => `/country/${generateFullCountryPath(params.code)}`} replace />} />
+                    {/* Main country route above catch-all */}
+                    <Route path="/country/:slug" element={<CountryPage />} />
                     <Route path="/search" element={<SearchPage />} />
-                    {/* Redirect old /bundle/:country URLs to /country/:country */}
-                    <Route path="/bundle/:country" element={<Navigate to="/country/:country" replace />} />
                     <Route path="/balance" element={<CheckBalancePage />} />
                     <Route path="/ios26-demo" element={<IOS26Demo />} />
                     <Route path="*" element={<NotFound />} />
