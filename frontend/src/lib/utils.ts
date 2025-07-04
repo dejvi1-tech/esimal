@@ -51,3 +51,33 @@ export function getCountryNameByCode(code: string): string | undefined {
   );
   return country?.name.en;
 }
+
+/**
+ * Decodes a slug back to a capitalized name (e.g., "north-america" -> "North America").
+ *
+ * Args:
+ *   slug (string): The slug to decode.
+ *
+ * Returns:
+ *   string: The decoded, capitalized name.
+ */
+export function decodeSlug(slug: string): string {
+  return slug
+    .replace(/-/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/**
+ * Capitalizes the first letter of a slug (e.g., "europe" -> "Europe").
+ *
+ * Args:
+ *   slug (string): The slug to capitalize.
+ *
+ * Returns:
+ *   string: The capitalized string.
+ */
+export function capitalize(slug: string): string {
+  return slug.charAt(0).toUpperCase() + slug.slice(1);
+}

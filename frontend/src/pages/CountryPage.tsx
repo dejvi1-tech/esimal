@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { europeanCountries } from '@/data/countries';
 import { formatDataAmount } from '@/utils/formatDataAmount';
-import { countrySlug } from '../lib/utils';
+import { countrySlug, decodeSlug, capitalize } from '../lib/utils';
 
 const planeBeachImage = '/static/esimfly-plane-beach.jpg';
 
@@ -76,32 +76,47 @@ const CountryPage: React.FC = () => {
     if (!slug) return;
     setLoading(true);
     setIsError(false);
-    // Find country by slug
-    const countryObj = europeanCountries.find(c => countrySlug(c.name[language]) === slug);
-    setCountryName(countryObj ? countryObj.name[language] : slug.replace(/-/g, ' '));
-    setCountryFlag(countryObj ? countryObj.flag : '');
-    fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(countryObj ? countryObj.code : slug)}&lang=${language}`)
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch');
-        return res.json();
-      })
-      .then((data: Package[]) => {
-        const uniquePackages = data.filter((pkg, index, self) =>
-          index === self.findIndex((p) => (
-            p.data_amount === pkg.data_amount &&
-            p.days === pkg.days &&
-            p.sale_price === pkg.sale_price &&
-            p.country_name === pkg.country_name
-          ))
-        );
-        setPackages(uniquePackages);
-        setSelectedId(uniquePackages[0]?.id || null);
+    setPackages([]);
+    setSelectedId(null);
+    setCountryName('');
+    setCountryFlag('');
+
+    // Try to fetch by country name first
+    const fetchPackages = async () => {
+      try {
+        // Try country name
+        const countryNameDecoded = decodeSlug(slug);
+        let res = await fetch(`${import.meta.env.VITE_API_URL}/api/packages?country_name=eq.${encodeURIComponent(countryNameDecoded)}`);
+        let data: Package[] = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setPackages(data);
+          setSelectedId(data[0]?.id || null);
+          setCountryName(countryNameDecoded);
+          setCountryFlag(''); // Optionally set flag if available
+          setLoading(false);
+          return;
+        }
+        // If no country packages, try region
+        const region = capitalize(slug);
+        res = await fetch(`${import.meta.env.VITE_API_URL}/api/packages?region=eq.${encodeURIComponent(region)}`);
+        data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setPackages(data);
+          setSelectedId(data[0]?.id || null);
+          setCountryName(region);
+          setCountryFlag(''); // Optionally set region flag if available
+          setLoading(false);
+          return;
+        }
+        // If both empty
+        setPackages([]);
         setLoading(false);
-      })
-      .catch(() => {
+      } catch (e) {
         setIsError(true);
         setLoading(false);
-      });
+      }
+    };
+    fetchPackages();
   }, [slug, language]);
 
   if (loading) {
@@ -114,7 +129,7 @@ const CountryPage: React.FC = () => {
   }
 
   if (isError) return <ErrorBanner message="Couldn't load packages." />;
-  if (packages.length === 0) return <EmptyState message={`No packages found for "${slug}"`} />;
+  if (packages.length === 0) return <EmptyState message={`No offers for "${slug}"`} />;
 
   return (
     <div className="container mx-auto px-4 py-12">

@@ -22,6 +22,10 @@
   - Centralized slug generation with `countrySlug` using `slugify`
   - Updated all links, fetches, and helpers to use slugified country names
   - Updated CountryPage to show empty/error states instead of 404
+- [x] Enhance /country/:slug to show both country and region pages (2024-07-11)
+  - CountryPage now detects if slug is a country or region, tries country fetch, then region fallback
+  - Added decodeSlug and capitalize helpers to src/lib/utils.ts
+  - Added/updated unit tests for slug helpers and CountryPage (country, region, empty, error cases)
 
 ## Discovered During Work
 // No new todos discovered during this task 
