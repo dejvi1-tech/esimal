@@ -10,6 +10,7 @@ import { PaymentForm, PaymentFormRef } from '@/components/PaymentForm';
 import europeFlag from '../assets/images/europe.png';
 import italyFlag from '../assets/images/italy.png';
 import { europeanCountries } from '@/data/countries';
+import { formatDataAmount } from '@/utils/formatDataAmount';
 
 console.log('VITE_STRIPE_PUBLIC_KEY:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -355,6 +356,21 @@ const CheckoutPage: React.FC = () => {
             {/* Right: Order Summary */}
             <div className="w-full md:w-96 bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-6 flex flex-col justify-center items-center" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
               <h3 className="text-xl font-bold mb-4 text-gray-900 border-b-2 border-blue-100 pb-3 w-full text-center">Përmbledhje Porosie</h3>
+              
+              {/* Package Summary */}
+              <div className="w-full mb-6">
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-600 mb-2">Package:</div>
+                  <div className="text-lg font-semibold text-gray-900">
+                    {formatDataAmount(packageData.data_amount)} - {packageData.days} days - {
+                      typeof packageData.country_name === 'object' 
+                        ? packageData.country_name.en 
+                        : packageData.country_name
+                    }
+                  </div>
+                </div>
+              </div>
+
               <div className="flex flex-col justify-center items-center w-full">
                 <span className="font-bold text-xl text-gray-900 mb-2">Totali</span>
                 <span className="font-bold text-3xl text-blue-600">€{typeof total === 'number' && !isNaN(total) ? total.toFixed(2) : '0.00'}</span>
