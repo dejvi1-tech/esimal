@@ -140,9 +140,13 @@ class RoamifyService {
             logger_1.logger.info(`Creating eSIM order with Roamify for package: ${packageId}`);
             const url = `${this.baseUrl}/api/esim/order`;
             const payload = {
-                packageId: packageId,
-                quantity: quantity,
-                ...(days && { days: days })
+                items: [
+                    {
+                        packageId: packageId,
+                        quantity: quantity,
+                        days: days || 30 // Default to 30 days if not specified
+                    }
+                ]
             };
             const headers = {
                 'Authorization': `Bearer ${this.apiKey}`,
@@ -183,9 +187,13 @@ class RoamifyService {
             let fallbackUsed = false;
             // First, try with the original package ID
             const payload = {
-                packageId: actualPackageId,
-                quantity: quantity,
-                ...(days && { days: days })
+                items: [
+                    {
+                        packageId: actualPackageId,
+                        quantity: quantity,
+                        days: days || 30 // Default to 30 days if not specified
+                    }
+                ]
             };
             const headers = {
                 'Authorization': `Bearer ${this.apiKey}`,
@@ -222,11 +230,15 @@ class RoamifyService {
                     if (fallbackPackageId !== packageId) {
                         actualPackageId = fallbackPackageId;
                         fallbackUsed = true;
-                        // Fixed: Use correct payload structure
+                        // Fixed: Use correct payload structure with items array
                         const fallbackPayload = {
-                            packageId: actualPackageId,
-                            quantity: quantity,
-                            ...(days && { days: days })
+                            items: [
+                                {
+                                    packageId: actualPackageId,
+                                    quantity: quantity,
+                                    days: days || 30 // Default to 30 days if not specified
+                                }
+                            ]
                         };
                         logger_1.logger.info(`[ROAMIFY V2 DEBUG] Retrying with fallback package: ${actualPackageId}`);
                         const fallbackResponse = await axios_1.default.post(url, fallbackPayload, { headers });
@@ -261,10 +273,16 @@ class RoamifyService {
     static async createOrderV2(packageId) {
         // Use the official V2 endpoint and payload shape per Roamify API docs
         const url = `${this.baseUrl}/api/esim/order`;
-        const body = JSON.stringify({
-            packageId: packageId,
-            quantity: 1
-        });
+        const payload = {
+            items: [
+                {
+                    packageId: packageId,
+                    quantity: 1,
+                    days: 30 // Default to 30 days
+                }
+            ]
+        };
+        const body = JSON.stringify(payload);
         const headers = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.apiKey}`

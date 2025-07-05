@@ -41,5 +41,13 @@
   - Added decodeSlug and capitalize helpers to src/lib/utils.ts
   - Added/updated unit tests for slug helpers and CountryPage (country, region, empty, error cases)
 
+## [COMPLETED] Switch Roamify V2 order payload to use items array (2025-01-04)
+- [x] **TypeScript Interfaces**: Added `RoamifyOrderItem` and `RoamifyEsimOrderRequest` interfaces to `roamifyService.ts`
+- [x] **Service Updates**: Updated `createEsimOrder`, `createEsimOrderV2`, and `createOrderV2` methods to use new items array format
+- [x] **Payload Structure**: Changed from top-level `{ packageId, quantity, days }` to `{ items: [{ packageId, quantity, days }] }`
+- [x] **Default Values**: Added default `days: 30` when not specified to ensure compatibility
+- [x] **Testing**: Created `test_roamify_v2_payload.js` to verify new format works and old format fails as expected
+- [x] **Backward Compatibility**: All existing method signatures remain unchanged, only internal payload structure updated
+
 ## Discovered During Work
 // No new todos discovered during this task 

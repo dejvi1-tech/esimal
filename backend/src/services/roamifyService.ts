@@ -83,6 +83,17 @@ type EsimApplyResponse = {
   };
 };
 
+// New TypeScript interfaces for Roamify V2 order request
+export interface RoamifyOrderItem {
+  packageId: string;
+  quantity: number;
+  days: number;
+}
+
+export interface RoamifyEsimOrderRequest {
+  items: RoamifyOrderItem[];
+}
+
 export class RoamifyService {
   private static apiKey = process.env.ROAMIFY_API_KEY;
   private static baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -273,10 +284,14 @@ export class RoamifyService {
 
       const url = `${this.baseUrl}/api/esim/order`;
       
-      const payload = {
-        packageId: packageId,
-        quantity: quantity,
-        ...(days && { days: days })
+      const payload: RoamifyEsimOrderRequest = {
+        items: [
+          {
+            packageId: packageId,
+            quantity: quantity,
+            days: days || 30 // Default to 30 days if not specified
+          }
+        ]
       };
       
       const headers = {
@@ -338,10 +353,14 @@ export class RoamifyService {
       let fallbackUsed = false;
       
       // First, try with the original package ID
-      const payload = {
-        packageId: actualPackageId,
-        quantity: quantity,
-        ...(days && { days: days })
+      const payload: RoamifyEsimOrderRequest = {
+        items: [
+          {
+            packageId: actualPackageId,
+            quantity: quantity,
+            days: days || 30 // Default to 30 days if not specified
+          }
+        ]
       };
       
       const headers = {
@@ -388,11 +407,15 @@ export class RoamifyService {
             actualPackageId = fallbackPackageId;
             fallbackUsed = true;
             
-            // Fixed: Use correct payload structure
-            const fallbackPayload = {
-              packageId: actualPackageId,
-              quantity: quantity,
-              ...(days && { days: days })
+            // Fixed: Use correct payload structure with items array
+            const fallbackPayload: RoamifyEsimOrderRequest = {
+              items: [
+                {
+                  packageId: actualPackageId,
+                  quantity: quantity,
+                  days: days || 30 // Default to 30 days if not specified
+                }
+              ]
             };
             
             logger.info(`[ROAMIFY V2 DEBUG] Retrying with fallback package: ${actualPackageId}`);
@@ -435,10 +458,16 @@ export class RoamifyService {
   static async createOrderV2(packageId: string): Promise<any> {
     // Use the official V2 endpoint and payload shape per Roamify API docs
     const url = `${this.baseUrl}/api/esim/order`;
-    const body = JSON.stringify({
-      packageId: packageId,
-      quantity: 1
-    });
+    const payload: RoamifyEsimOrderRequest = {
+      items: [
+        {
+          packageId: packageId,
+          quantity: 1,
+          days: 30 // Default to 30 days
+        }
+      ]
+    };
+    const body = JSON.stringify(payload);
 
     const headers = {
       'Content-Type': 'application/json',
