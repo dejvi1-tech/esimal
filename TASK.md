@@ -56,5 +56,13 @@
 - [x] Updated test_roamify_v2_payload.js and added test_payload_structure.js to verify correct payload
 - [x] Verified build and payload structure; all code, types, and tests now match Roamify V2 API requirements
 
+## [COMPLETED] Extract esimId from Roamify V2 response payload (2025-01-04)
+- [x] **TypeScript Interfaces**: Added `RoamifyEsimOrderItem` and `RoamifyEsimOrderResponse` interfaces to match V2 API structure
+- [x] **Service Updates**: Updated `createEsimOrder`, `createEsimOrderV2`, and `createOrderV2` methods to extract eSIM ID from `resp.data.data.items[0].esimId`
+- [x] **Error Handling**: Added proper validation to throw error if eSIM ID is missing or invalid
+- [x] **Type Safety**: Added proper TypeScript typing with `axios.post<RoamifyEsimOrderResponse>()`
+- [x] **Testing**: Created and ran `test_esim_id_extraction.js` to verify extraction logic works correctly
+- [x] **Fallback Support**: Updated fallback logic in `createEsimOrderV2` to also extract eSIM ID from V2 response structure
+
 ## Discovered During Work
 // No new todos discovered during this task 

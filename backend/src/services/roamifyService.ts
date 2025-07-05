@@ -93,6 +93,21 @@ export interface RoamifyEsimOrderRequest {
   items: RoamifyOrderItem[];
 }
 
+// New TypeScript interfaces for Roamify V2 response structure
+export interface RoamifyEsimOrderItem {
+  packageId: string;
+  quantity: number;
+  esimId: string;
+}
+
+export interface RoamifyEsimOrderResponse {
+  status: string;
+  data: {
+    orderId: string;
+    items: RoamifyEsimOrderItem[];
+  }
+}
+
 export class RoamifyService {
   private static apiKey = process.env.ROAMIFY_API_KEY;
   private static baseUrl = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -301,7 +316,7 @@ export class RoamifyService {
       logger.info('[ROAMIFY DEBUG] Request Payload:', JSON.stringify(payload));
       logger.info('[ROAMIFY DEBUG] Request Headers:', JSON.stringify(headers));
 
-      const response = await axios.post(url, payload, { headers });
+      const response = await axios.post<RoamifyEsimOrderResponse>(url, payload, { headers });
 
       if (response.data.status !== 'success' || !response.data.data) {
         throw new Error('Failed to create eSIM order with Roamify');
@@ -309,15 +324,21 @@ export class RoamifyService {
 
       const orderData = response.data.data;
       
+      // Extract eSIM ID from the V2 response structure
+      const esimId = orderData.items[0]?.esimId;
+      if (!esimId) {
+        throw new Error(`Invalid eSIM ID received from Roamify: ${esimId}`);
+      }
+      
       logger.info(`eSIM order created successfully:`, {
         orderId: orderData.orderId,
-        esimId: orderData.esimId,
+        esimId: esimId,
         packageId: packageId
       });
 
       return {
         orderId: orderData.orderId,
-        esimId: orderData.esimId,
+        esimId: esimId,
         items: orderData.items || []
       };
     }, `Creating eSIM order for package ${packageId}`);
@@ -368,7 +389,7 @@ export class RoamifyService {
       logger.info('[ROAMIFY V2 DEBUG] Request Headers:', JSON.stringify(headers));
 
       try {
-        const response = await axios.post(url, payload, { headers });
+        const response = await axios.post<RoamifyEsimOrderResponse>(url, payload, { headers });
         
         if (response.data.status !== 'success' || !response.data.data) {
           throw new Error('Failed to create eSIM order with Roamify');
@@ -376,16 +397,22 @@ export class RoamifyService {
 
         const orderData = response.data.data;
         
+        // Extract eSIM ID from the V2 response structure
+        const esimId = orderData.items[0]?.esimId;
+        if (!esimId) {
+          throw new Error(`Invalid eSIM ID received from Roamify: ${esimId}`);
+        }
+        
         logger.info(`[ROAMIFY V2] eSIM order created successfully:`, {
           orderId: orderData.orderId,
-          esimId: orderData.esimId,
+          esimId: esimId,
           packageId: actualPackageId,
           fallbackUsed
         });
 
         return {
           orderId: orderData.orderId,
-          esimId: orderData.esimId,
+          esimId: esimId,
           items: orderData.items || [],
           fallbackUsed
         };
@@ -414,7 +441,7 @@ export class RoamifyService {
             
             logger.info(`[ROAMIFY V2 DEBUG] Retrying with fallback package: ${actualPackageId}`);
             
-            const fallbackResponse = await axios.post(url, fallbackPayload, { headers });
+            const fallbackResponse = await axios.post<RoamifyEsimOrderResponse>(url, fallbackPayload, { headers });
             
             if (fallbackResponse.data.status !== 'success' || !fallbackResponse.data.data) {
               throw new Error('Failed to create eSIM order with fallback package');
@@ -422,9 +449,15 @@ export class RoamifyService {
 
             const fallbackOrderData = fallbackResponse.data.data;
             
+            // Extract eSIM ID from the V2 response structure
+            const fallbackEsimId = fallbackOrderData.items[0]?.esimId;
+            if (!fallbackEsimId) {
+              throw new Error(`Invalid eSIM ID received from Roamify fallback: ${fallbackEsimId}`);
+            }
+            
             logger.info(`[ROAMIFY V2] eSIM order created successfully with fallback:`, {
               orderId: fallbackOrderData.orderId,
-              esimId: fallbackOrderData.esimId,
+              esimId: fallbackEsimId,
               originalPackageId: packageId,
               fallbackPackageId: actualPackageId,
               fallbackUsed
@@ -432,7 +465,7 @@ export class RoamifyService {
 
             return {
               orderId: fallbackOrderData.orderId,
-              esimId: fallbackOrderData.esimId,
+              esimId: fallbackEsimId,
               items: fallbackOrderData.items || [],
               fallbackUsed,
               originalPackageId: packageId,
@@ -449,7 +482,7 @@ export class RoamifyService {
   /**
    * Create eSIM order using the official V2 endpoint and payload shape
    */
-  static async createOrderV2(packageId: string): Promise<any> {
+  static async createOrderV2(packageId: string): Promise<RoamifyEsimOrderResponse> {
     // Use the official V2 endpoint and payload shape per Roamify API docs
     const url = `${this.baseUrl}/api/esim/order`;
     const payload: RoamifyEsimOrderRequest = {
@@ -467,7 +500,7 @@ export class RoamifyService {
       'Authorization': `Bearer ${this.apiKey}`
     };
 
-    const response = await axios.post(url, body, { headers });
+    const response = await axios.post<RoamifyEsimOrderResponse>(url, body, { headers });
 
     return response.data;
   }
