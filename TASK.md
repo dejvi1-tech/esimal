@@ -79,6 +79,16 @@
 ## Discovered During Work
 // No new todos discovered during this task
 
+## [COMPLETED] Implement simple Roamify eSIM order creation function (2025-01-05)
+- [x] **Created `roamifyUtils.ts`**: Added simple `createEsimOrder` function matching exact API specification
+- [x] **Correct Payload Structure**: Implements `{ items: [{ packageId, quantity: 1 }] }` format
+- [x] **Proper Headers**: Uses Authorization Bearer token and Content-Type application/json
+- [x] **Error Handling**: Includes proper error handling with try-catch
+- [x] **Test Script**: Created `test_simple_roamify_order.js` to verify function works correctly
+- [x] **Documentation**: Added JSDoc comments explaining usage and parameters
+- [x] **Example Usage**: Included example usage function for testing
+- [x] **Verification**: Confirmed function matches exact specification provided by user
+
 ## [COMPLETED] Auto-detect and fix missing slugs to prevent eSIM delivery failures (2025-01-05)
 - [x] **Auto-Detection Script**: Created `auto_fix_missing_slugs.js` to scan for packages with missing slugs in `my_packages` table
 - [x] **Roamify Integration**: Added functionality to fetch correct slugs from Roamify API and match them to existing packages
