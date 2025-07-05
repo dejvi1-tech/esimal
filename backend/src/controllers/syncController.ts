@@ -44,6 +44,77 @@ function parseValidityToDays(day: number): number {
   return day || 30; // Default to 30 days if not specified
 }
 
+// Helper function to generate Greece-style slugs
+function generateGreeceStyleSlug(countryCode: string, days: number, dataAmount: number): string {
+  // Country code to full name mapping (Greece format)
+  const countryMapping: { [key: string]: string } = {
+    'GR': 'greece',
+    'AL': 'albania', 
+    'DE': 'germany',
+    'IT': 'italy',
+    'FR': 'france',
+    'ES': 'spain',
+    'PT': 'portugal',
+    'NL': 'netherlands',
+    'BE': 'belgium',
+    'AT': 'austria',
+    'CH': 'switzerland',
+    'US': 'united-states',
+    'CA': 'canada',
+    'UK': 'united-kingdom',
+    'GB': 'united-kingdom',
+    'IE': 'ireland',
+    'NO': 'norway',
+    'SE': 'sweden',
+    'DK': 'denmark',
+    'FI': 'finland',
+    'IS': 'iceland',
+    'PL': 'poland',
+    'CZ': 'czech-republic',
+    'HU': 'hungary',
+    'RO': 'romania',
+    'BG': 'bulgaria',
+    'HR': 'croatia',
+    'SI': 'slovenia',
+    'SK': 'slovakia',
+    'LT': 'lithuania',
+    'LV': 'latvia',
+    'EE': 'estonia',
+    'TR': 'turkey',
+    'AE': 'united-arab-emirates',
+    'SA': 'saudi-arabia',
+    'EG': 'egypt',
+    'MA': 'morocco',
+    'ZA': 'south-africa',
+    'KE': 'kenya',
+    'NG': 'nigeria',
+    'JP': 'japan',
+    'KR': 'south-korea',
+    'CN': 'china',
+    'IN': 'india',
+    'TH': 'thailand',
+    'VN': 'vietnam',
+    'ID': 'indonesia',
+    'MY': 'malaysia',
+    'SG': 'singapore',
+    'PH': 'philippines',
+    'AU': 'australia',
+    'NZ': 'new-zealand',
+    'BR': 'brazil',
+    'AR': 'argentina',
+    'CL': 'chile',
+    'CO': 'colombia',
+    'MX': 'mexico',
+    'EU': 'europe'
+  };
+
+  const countryName = countryMapping[countryCode.toUpperCase()] || countryCode.toLowerCase();
+  const dataAmountInt = Math.floor(dataAmount);
+  
+  // Generate Greece-style slug: esim-country-30days-1gb-all
+  return `esim-${countryName}-${days}days-${dataAmountInt}gb-all`;
+}
+
 /**
  * Sync all packages from Roamify API to Supabase packages table
  */
@@ -333,6 +404,10 @@ export const copyToMyPackages = async (
       const days = pkg.days || 30;
       const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${dataAmountInt}gb-all`;
 
+      // ✅ CRITICAL FIX: Generate Greece-style slug automatically
+      const autoSlug = generateGreeceStyleSlug(pkg.country_code || 'XX', days, dataAmountGB);
+      console.log('✅ Auto-generated Greece-style slug for package:', pkg.name, '→', autoSlug);
+
       return {
         id: uuidv4(), // Generate new UUID for my_packages
         name: pkg.name,
@@ -349,6 +424,7 @@ export const copyToMyPackages = async (
         show_on_frontend: true,
         homepage_order: 0,
         location_slug: pkg.country_code?.toLowerCase(),
+        slug: autoSlug, // ✅ ADD THE SLUG FIELD FOR WEBHOOK
         // PRESERVE OR AUTO-GENERATE FEATURES
         features: pkg.features ? {
           ...pkg.features // Preserve existing features if they exist
@@ -385,9 +461,10 @@ export const copyToMyPackages = async (
       throw insertError;
     }
 
+    console.log('✅ Successfully copied packages with auto-generated slugs');
     res.status(200).json({
       status: 'success',
-      message: `Successfully copied ${myPackagesToInsert.length} packages to my_packages`,
+      message: `Successfully copied ${myPackagesToInsert.length} packages to my_packages with auto-generated slugs`,
       copiedCount: myPackagesToInsert.length
     });
 

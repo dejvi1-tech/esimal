@@ -40,4 +40,23 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 UPDATE my_packages 
 SET slug = generate_package_slug(country_code, days, data_amount)
 WHERE slug IS NULL 
-  AND country_code IS NOT NULL; 
+  AND country_code IS NOT NULL;
+
+-- Add slug column to my_packages table for webhook compatibility
+-- This is needed for the Roamify eSIM delivery webhook to work properly
+
+-- Create index for slug lookups (webhook performance)
+CREATE INDEX IF NOT EXISTS idx_my_packages_slug ON my_packages(slug);
+
+-- Create composite index for slug + visible packages (webhook optimization)
+CREATE INDEX IF NOT EXISTS idx_my_packages_slug_visible ON my_packages(slug, visible) WHERE visible = true;
+
+-- Add comment for documentation
+COMMENT ON COLUMN my_packages.slug IS 'Greece-style slug for Roamify eSIM delivery (e.g., esim-greece-30days-1gb-all)';
+
+-- Sample data to show the expected format
+-- Example slugs: 
+-- esim-greece-30days-1gb-all
+-- esim-albania-30days-3gb-all
+-- esim-germany-15days-5gb-all
+-- esim-united-states-30days-20gb-all 
