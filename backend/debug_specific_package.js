@@ -21,11 +21,11 @@ async function debugSpecificPackage() {
     
     console.log(`🔍 Looking for package with ID: ${problematicPackageId}`);
     
-    // Search in my_packages table
+    // Search in my_packages table - using proper JSON query syntax
     const { data: myPackages, error: myPackagesError } = await supabase
       .from('my_packages')
       .select('*')
-      .or(`id.eq.${problematicPackageId},features->packageId.eq.${problematicPackageId}`);
+      .or(`id.eq.${problematicPackageId},features->>'packageId'.eq.${problematicPackageId}`);
     
     if (myPackagesError) {
       console.error('❌ Error searching my_packages:', myPackagesError);
@@ -49,7 +49,7 @@ async function debugSpecificPackage() {
     const { data: packages, error: packagesError } = await supabase
       .from('packages')
       .select('*')
-      .or(`id.eq.${problematicPackageId},features->packageId.eq.${problematicPackageId}`);
+      .or(`id.eq.${problematicPackageId},features->>'packageId'.eq.${problematicPackageId}`);
     
     if (packagesError) {
       console.error('❌ Error searching packages:', packagesError);
@@ -131,6 +131,29 @@ async function debugSpecificPackage() {
       } else {
         console.log('✅ No packages with UUID package IDs found');
       }
+    }
+    
+    // Let's also check what packages exist for Sweden
+    console.log('\n🔍 Checking all Sweden packages...');
+    const { data: allSwedenPackages, error: swedenAllError } = await supabase
+      .from('my_packages')
+      .select('*')
+      .eq('country_name', 'Sweden');
+    
+    if (swedenAllError) {
+      console.error('❌ Error searching all Sweden packages:', swedenAllError);
+    } else if (allSwedenPackages && allSwedenPackages.length > 0) {
+      console.log(`✅ Found ${allSwedenPackages.length} Sweden packages:`);
+      allSwedenPackages.forEach((pkg, index) => {
+        console.log(`\n${index + 1}. Sweden Package:`);
+        console.log(`   ID: ${pkg.id}`);
+        console.log(`   Name: ${pkg.name}`);
+        console.log(`   Data: ${pkg.data_amount}GB, Days: ${pkg.days}`);
+        console.log(`   Features.packageId: ${pkg.features?.packageId || 'NULL'}`);
+        console.log(`   Reseller ID: ${pkg.reseller_id || 'NULL'}`);
+      });
+    } else {
+      console.log('⚠️  No Sweden packages found at all');
     }
     
   } catch (error) {
