@@ -13,7 +13,10 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ### Roamify API
 ```
 ROAMIFY_API_KEY=your-roamify-api-key-here
+ROAMIFY_API_URL=https://api.getroamify.com
 ```
+
+**Note:** For development, you can use `https://api-dev.getroamify.com` as the `ROAMIFY_API_URL`.
 
 ## Optional Variables
 
