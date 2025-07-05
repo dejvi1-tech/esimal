@@ -631,8 +631,8 @@ async function deliverEsim(order, paymentIntent, metadata) {
             .eq('id', orderId);
         logger_1.logger.info(`💾 Order updated with Roamify details`, {
             orderId,
-            roamifyOrderId: roamifyOrder.orderId,
-            roamifyEsimId: roamifyOrder.esimId,
+            roamifyOrderId: roamifySuccess && roamifyOrder ? roamifyOrder.orderId : null,
+            roamifyEsimId: roamifySuccess && roamifyOrder ? roamifyOrder.esimId : null,
             roamifySuccess,
         });
         // Create user_orders entry
