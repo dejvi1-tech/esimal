@@ -603,60 +603,20 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       logger.info(`✅ Package found in my_packages table: ${packageId}`);
     }
 
-    // --- STRICT LOGIC FOR ROAMIFY PACKAGE ID ---
-    let realRoamifyPackageId: string | null = null;
-
-    // Check if the package has slug field (preferred for Roamify V2)
-    if (packageData && packageData.slug) {
-      realRoamifyPackageId = packageData.slug;
-      logger.info(`📦 Using slug for Roamify V2 API: ${realRoamifyPackageId}`);
-    }
-    // Check if the package has features with packageId (fallback)
-    else if (packageData && packageData.features && packageData.features.packageId) {
-      realRoamifyPackageId = packageData.features.packageId;
-      logger.info(`📦 Using packageId from features: ${realRoamifyPackageId}`);
-    }
-    // Check if the package has reseller_id (legacy fallback)
-    else if (packageData && packageData.reseller_id) {
-      realRoamifyPackageId = packageData.reseller_id;
-      logger.info(`📦 Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
-    }
-    // If still no Roamify package ID found, try to find it in packages table by reseller_id
-    else if (packageData && !packageData.features && !packageData.reseller_id) {
-      logger.warn(`⚠️ No reseller_id or features.packageId found for package: ${packageData.id}. This package may not be properly configured for Roamify delivery.`);
-      
-      // Try to find a related package in packages table that might have the Roamify ID
-      const { data: relatedPackages, error: relatedError } = await supabase
-        .from('packages')
-        .select('features, reseller_id')
-        .or(`name.eq.${packageData.name},country_name.eq.${packageData.country_name}`)
-        .limit(1);
-      
-      if (!relatedError && relatedPackages && relatedPackages.length > 0) {
-        const relatedPackage = relatedPackages[0];
-        if (relatedPackage.features && relatedPackage.features.packageId) {
-          realRoamifyPackageId = relatedPackage.features.packageId;
-          logger.info(`📦 Found Roamify packageId from related package: ${realRoamifyPackageId}`);
-        } else if (relatedPackage.reseller_id) {
-          realRoamifyPackageId = relatedPackage.reseller_id;
-          logger.info(`📦 Found reseller_id from related package: ${realRoamifyPackageId}`);
-        }
-      }
-    }
-
-    if (!realRoamifyPackageId) {
-      logger.error(`❌ No Roamify packageId found for package: ${packageId}. Package data:`, {
+    // --- EXACT ROAMIFY SLUG LOGIC ---
+    if (!packageData.slug) {
+      logger.error(`❌ No slug found for package: ${packageId}. Package data:`, {
         packageId: packageData.id,
         name: packageData.name,
-        hasFeatures: !!packageData.features,
-        hasResellerId: !!packageData.reseller_id,
+        hasSlug: !!packageData.slug,
         orderId,
       });
-      throw new Error(`No Roamify packageId found for package: ${packageId}. Package may not be properly configured for eSIM delivery.`);
+      throw new Error(`No Roamify slug found for package: ${packageId}. Package may not be properly configured for eSIM delivery.`);
     }
-    // --- END STRICT LOGIC ---
 
-    const roamifyPackageId = realRoamifyPackageId;
+    const roamifyPackageId = packageData.slug;
+    logger.info(`📦 Using exact Roamify slug: ${roamifyPackageId}`);
+    // --- END EXACT ROAMIFY SLUG LOGIC ---
     
     logger.info(`🔧 Creating eSIM order with Roamify API`, {
       orderId,
@@ -676,9 +636,7 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     try {
       roamifyOrder = await RoamifyService.createEsimOrderV2({
         packageId: roamifyPackageId,
-        quantity: quantity,
-        countryName: packageData.country_name,
-        region: packageData.region
+        quantity: quantity
       });
       roamifySuccess = true;
       
@@ -687,20 +645,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         packageId,
         roamifyOrderId: roamifyOrder.orderId,
         esimId: roamifyOrder.esimId,
-        fallbackUsed: roamifyOrder.fallbackUsed || false,
-        originalPackageId: roamifyOrder.originalPackageId,
-        fallbackPackageId: roamifyOrder.fallbackPackageId,
         paymentIntentId: paymentIntent.id,
       });
-
-      // Log warning if fallback was used
-      if (roamifyOrder.fallbackUsed) {
-        logger.warn(`⚠️ Fallback package used for order ${orderId}`, {
-          originalPackageId: roamifyOrder.originalPackageId,
-          fallbackPackageId: roamifyOrder.fallbackPackageId,
-          reason: 'Original package ID caused 500 error with Roamify API'
-        });
-      }
     } catch (v2Error) {
       logger.error(`❌ Roamify order creation failed:`, v2Error);
       throw new Error(`Roamify order creation failed: ${v2Error}`);
@@ -716,12 +662,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         updated_at: new Date().toISOString(),
         // Store additional metadata about the order
         metadata: {
-          original_package_id: roamifyOrder.originalPackageId || packageId,
-          actual_package_id: roamifyOrder.fallbackPackageId || roamifyOrder.originalPackageId || packageId,
-          fallback_used: roamifyOrder.fallbackUsed || false,
-          fallback_package_id: roamifyOrder.fallbackPackageId,
-          roamify_success: roamifySuccess,
-          roamify_error_handled: roamifyOrder.fallbackUsed ? 'package_500_error_fallback_used' : null
+          roamify_package_id: roamifyPackageId,
+          roamify_success: roamifySuccess
         }
       })
       .eq('id', orderId);
@@ -1245,44 +1187,23 @@ async function handleCheckoutSessionCompleted(session: any) {
     let realQRData: any;
 
     try {
-      // --- NEW LOGIC: Use slug field for Roamify V2 API ---
-      let realRoamifyPackageId: string | undefined;
-      
-      // First, try to use the slug field (preferred for Roamify V2)
-      if (packageData.slug) {
-        realRoamifyPackageId = packageData.slug;
-        logger.info(`📦 Using slug for Roamify V2 API: ${realRoamifyPackageId}`);
+      // --- EXACT ROAMIFY SLUG LOGIC ---
+      if (!packageData.slug) {
+        logger.error(`❌ No slug found for package: ${packageId}. Package data:`, {
+          packageId: packageData.id,
+          name: packageData.name,
+          hasSlug: !!packageData.slug,
+        });
+        throw new Error(`No Roamify slug found for package: ${packageId}. Package may not be properly configured for eSIM delivery.`);
       }
-      // Fallback to features.packageId if slug is not available
-      else if (packageData.features && packageData.features.packageId) {
-        realRoamifyPackageId = packageData.features.packageId;
-        logger.info(`📦 Using packageId from features: ${realRoamifyPackageId}`);
-      }
-      // Legacy fallback to packages table lookup
-      else if (packageData.reseller_id) {
-        const { data: foundPackage, error: foundError } = await supabase
-          .from('packages')
-          .select('features')
-          .eq('reseller_id', packageData.reseller_id)
-          .single();
-        if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
-          realRoamifyPackageId = foundPackage.features.packageId;
-          logger.info(`📦 Found Roamify packageId from packages table: ${realRoamifyPackageId}`);
-        }
-      }
-      
-      // FALLBACK: If no real Roamify packageId found, use a known working packageId
-      if (!realRoamifyPackageId) {
-        logger.warn(`Could not find real Roamify packageId. Using fallback.`);
-        // Use a real working Roamify packageId as fallback
-        realRoamifyPackageId = 'esim-europe-30days-3gb-all';
-        logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);
-      }
-      // --- END NEW LOGIC ---
 
-      logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
+      const roamifyPackageId = packageData.slug;
+      logger.info(`📦 Using exact Roamify slug: ${roamifyPackageId}`);
+      // --- END EXACT ROAMIFY SLUG LOGIC ---
+
+      logger.info(`Creating Roamify order for package: ${packageData.name} (Roamify slug: ${roamifyPackageId})`);
       
-      const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId!, 1);
+      const roamifyOrder = await RoamifyService.createEsimOrder(roamifyPackageId, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       

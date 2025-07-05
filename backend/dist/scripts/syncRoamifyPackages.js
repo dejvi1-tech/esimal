@@ -81,20 +81,25 @@ async function fetchAllRoamifyPackages() {
         console.log('=== RAW RESPONSE ===');
         console.log(JSON.stringify(json, null, 2));
         console.log('=== END RAW RESPONSE ===');
-        if (!json.data || !Array.isArray(json.data.countries)) {
-            throw new Error('Invalid response structure from Roamify API');
+        console.log('Object.keys(json):', Object.keys(json));
+        if (json.data && typeof json.data === 'object') {
+            console.log('Object.keys(json.data):', Object.keys(json.data));
+        }
+        if (!json.data || !Array.isArray(json.data.packages)) {
+            throw new Error('Invalid response structure from Roamify API: expected data.packages array');
         }
         const allPackages = [];
-        for (const country of json.data.countries) {
+        for (const country of json.data.packages) {
             if (!Array.isArray(country.packages))
                 continue;
             for (const pkg of country.packages) {
-                // Only include packages with required fields
                 if (!pkg.packageId || !pkg.price)
                     continue;
                 allPackages.push({
                     id: pkg.packageId,
+                    slug: pkg.packageId, // Use packageId as the canonical slug
                     country: country.countryName,
+                    countryCode: country.countryCode,
                     region: country.region,
                     description: pkg.package,
                     data: (pkg.dataAmount !== undefined && pkg.dataUnit) ? `${pkg.dataAmount} ${pkg.dataUnit}` : undefined,
@@ -163,6 +168,11 @@ function mapRoamifyToMyPackage(pkg) {
         console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing or invalid days field (got: ${days})`);
         return null;
     }
+    // Use Roamify's exact slug field - no fallback generation
+    if (!pkg.slug) {
+        console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing slug field from Roamify API`);
+        return null;
+    }
     return {
         id: (0, uuid_1.v4)(), // Generate a new UUID for each package
         name: pkg.package,
@@ -171,7 +181,8 @@ function mapRoamifyToMyPackage(pkg) {
         days: days, // Use Roamify's days field
         base_price: basePrice,
         sale_price: salePrice,
-        profit: profit
+        profit: profit,
+        slug: pkg.slug // Store exactly what Roamify returns
     };
 }
 async function syncPackagesToDatabase(packages) {

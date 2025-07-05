@@ -128,22 +128,26 @@ async function fetchAllRoamifyPackages(): Promise<any[]> {
     console.log(JSON.stringify(json, null, 2));
     console.log('=== END RAW RESPONSE ===');
 
-    if (!json.data || !Array.isArray(json.data.countries)) {
-      throw new Error('Invalid response structure from Roamify API');
+    console.log('Object.keys(json):', Object.keys(json));
+    if (json.data && typeof json.data === 'object') {
+      console.log('Object.keys(json.data):', Object.keys(json.data));
+    }
+
+    if (!json.data || !Array.isArray(json.data.packages)) {
+      throw new Error('Invalid response structure from Roamify API: expected data.packages array');
     }
 
     const allPackages: any[] = [];
 
-    for (const country of json.data.countries) {
+    for (const country of json.data.packages) {
       if (!Array.isArray(country.packages)) continue;
-
       for (const pkg of country.packages) {
-        // Only include packages with required fields
         if (!pkg.packageId || !pkg.price) continue;
         allPackages.push({
           id: pkg.packageId,
-          slug: pkg.slug, // Map Roamify's slug field
+          slug: pkg.packageId, // Use packageId as the canonical slug
           country: country.countryName,
+          countryCode: country.countryCode,
           region: country.region,
           description: pkg.package,
           data: (pkg.dataAmount !== undefined && pkg.dataUnit) ? `${pkg.dataAmount} ${pkg.dataUnit}` : undefined,
@@ -220,8 +224,11 @@ function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage | null
     return null;
   }
 
-  // Use Roamify's slug field, or generate one if missing
-  const slug = pkg.slug || `esim-${pkg.countryCode.toLowerCase()}-${days}days-${Math.floor(dataAmountGB)}gb-all`;
+  // Use Roamify's exact slug field - no fallback generation
+  if (!pkg.slug) {
+    console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing slug field from Roamify API`);
+    return null;
+  }
 
   return {
     id: uuidv4(), // Generate a new UUID for each package
@@ -232,7 +239,7 @@ function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage | null
     base_price: basePrice,
     sale_price: salePrice,
     profit: profit,
-    slug: slug // Add slug field for Roamify V2 API
+    slug: pkg.slug // Store exactly what Roamify returns
   };
 }
 
