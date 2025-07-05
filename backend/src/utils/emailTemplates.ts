@@ -234,9 +234,9 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           <title>eSIM juaj është gati! - Konfirmimi i porosisë</title>
           <style>
             body { 
-              background: #4B0082; 
-              color: #fff; 
-              font-family: 'Orbitron', 'Exo', Arial, sans-serif; 
+              background: #f5f5f5; 
+              color: #333; 
+              font-family: Arial, sans-serif; 
               margin: 0; 
               padding: 0; 
               line-height: 1.6;
@@ -244,18 +244,11 @@ export const emailTemplates: Record<string, EmailTemplate> = {
             .container { 
               max-width: 600px; 
               margin: 0 auto; 
-              background: rgba(255,255,255,0.08); 
-              border-radius: 18px; 
-              box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
+              background: #ffffff; 
+              border-radius: 8px; 
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
               padding: 0;
               overflow: hidden;
-            }
-            .banner { 
-              width: 100%; 
-              max-width: 600px; 
-              display: block; 
-              margin: 0 auto; 
-              border-radius: 18px 18px 0 0;
             }
             .content { 
               padding: 32px 24px; 
@@ -265,6 +258,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               font-weight: bold; 
               margin-bottom: 16px; 
               text-align: center;
+              color: #333;
             }
             .secondary-message {
               font-size: 18px;
@@ -273,7 +267,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               padding: 24px 0;
             }
             .accent { 
-              color: #fbbf24; 
+              color: #007cba; 
               font-weight: bold; 
             }
             .greeting {
@@ -284,22 +278,24 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               padding: 24px 0;
               font-size: 18px;
               text-align: center;
-              background: rgba(251,191,36,0.08);
-              border-radius: 10px;
+              background: #f8f9fa;
+              border-radius: 8px;
               margin: 24px 0;
+              border: 1px solid #dee2e6;
             }
             .qr-code {
               text-align: center;
               margin: 24px 0;
               padding: 24px;
-              background: rgba(255,255,255,0.1);
-              border-radius: 12px;
+              background: #ffffff;
+              border-radius: 8px;
+              border: 2px solid #dee2e6;
             }
             .qr-code img {
               max-width: 300px;
               height: auto;
-              border: 2px solid #fbbf24;
-              border-radius: 12px;
+              border: 1px solid #ccc;
+              border-radius: 8px;
               background: #fff;
               padding: 8px;
             }
@@ -310,38 +306,41 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               font-weight: bold;
             }
             .instructions {
-              background: rgba(251,191,36,0.1);
-              border-radius: 10px;
+              background: #f8f9fa;
+              border-radius: 8px;
               padding: 24px;
               margin: 24px 0;
+              border: 1px solid #dee2e6;
             }
             .instructions h3 {
-              color: #fbbf24;
+              color: #333;
               font-size: 20px;
               margin-bottom: 16px;
               text-align: center;
+            }
+            .instructions h4 {
+              color: #007cba;
+              font-size: 18px;
+              margin-bottom: 12px;
             }
             .instructions p {
               font-size: 16px;
               margin-bottom: 12px;
             }
             .instructions strong {
-              color: #fbbf24;
+              color: #333;
             }
           </style>
         </head>
         <body>
           <div class="container">
-            <!-- Full-width Banner -->
-            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly banner" class="banner" />
-            
             <div class="content">
               <!-- Bold thank you message -->
-              <h1 class="main-title">Faleminderit për porosinë tuaj!</h1>
+              <h1 class="main-title">Detajet e eSIM-it tuaj</h1>
               
               <!-- Secondary message about eSIM data -->
               <div class="secondary-message">
-                Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
+                Më poshtë gjeni <span class="accent">të dhënat e eSIM-it</span> dhe kodin QR për aktivizim.
               </div>
               
               <!-- Personalized greeting -->
@@ -351,8 +350,8 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               
               <!-- eSIM info section -->
               <div class="esim-info">
-                Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me 
-                <a href="https://esimfly.al" style="color: #fbbf24; font-weight: bold; text-decoration: underline;">esimfly.al</a>
+                Më poshtë gjeni barkodin për të aktivizuar kartën tuaj eSIM me 
+                <a href="https://esimfly.al" style="color: #007cba; font-weight: bold; text-decoration: underline;">esimfly.al</a>
               </div>
               
               <!-- QR Code Section -->
@@ -370,24 +369,24 @@ export const emailTemplates: Record<string, EmailTemplate> = {
                 <h3>👇 Si ta instaloni eSIM-in tuaj 👇</h3>
                 
                 <div style="margin-bottom: 20px;">
-                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">📱 iPhone</h4>
-                  <div style="background: rgba(75,0,130,0.1); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">✅ Opsioni më i thjeshtë (iOS 17.4 e sipër):</strong></p>
+                  <h4>📱 iPhone</h4>
+                  <div style="background: #e9ecef; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                    <p style="margin-bottom: 8px;"><strong>✅ Opsioni më i thjeshtë (iOS 17.4 e sipër):</strong></p>
                     <p style="margin-bottom: 12px;">Mbajeni shtypur foton e barkodit për 2 sekonda, derisa të shfaqet opsioni:<br/>
                     <strong>"Add eSIM" / "Shto eSIM"</strong></p>
                   </div>
                   
-                  <div style="background: rgba(251,191,36,0.1); padding: 16px; border-radius: 8px;">
-                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">🔁 Nëse nuk ju del ky opsion:</strong></p>
+                  <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <p style="margin-bottom: 8px;"><strong>🔁 Nëse nuk ju del ky opsion:</strong></p>
                     <p style="margin-bottom: 8px;">Skanojeni kodin QR me kamerën ose ndiqni këto hapa manualisht:</p>
                     <p style="font-weight: bold;">Settings → Mobile Service / Cellular → Add eSIM</p>
                   </div>
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">🤖 Android</h4>
-                  <div style="background: rgba(75,0,130,0.1); padding: 16px; border-radius: 8px;">
-                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">📷 Skanojeni kodin QR me kamerën tuaj</strong></p>
+                  <h4>🤖 Android</h4>
+                  <div style="background: #e9ecef; padding: 16px; border-radius: 8px;">
+                    <p style="margin-bottom: 8px;"><strong>📷 Skanojeni kodin QR me kamerën tuaj</strong></p>
                     <p style="margin-bottom: 8px;"><strong>OSE</strong></p>
                     <p style="margin-bottom: 8px;">Shkoni tek:</p>
                     <p style="font-weight: bold;">Settings → Connections → SIM Manager → Add eSIM</p>
@@ -395,8 +394,8 @@ export const emailTemplates: Record<string, EmailTemplate> = {
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">🚀 Aktivizimi dhe përdorimi</h4>
-                  <div style="background: rgba(251,191,36,0.1); padding: 16px; border-radius: 8px;">
+                  <h4>🚀 Aktivizimi dhe përdorimi</h4>
+                  <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; border: 1px solid #dee2e6;">
                     <p style="margin-bottom: 8px;">Ju mund ta instaloni paketën menjëherë.</p>
                     <p style="margin-bottom: 12px;"><strong>Vlefshmëria fillon nga momenti kur eSIM-i përdoret për herë të parë.</strong></p>
                     <p style="margin-bottom: 8px;">Kur të mbërrini në destinacionin tuaj:</p>
@@ -406,31 +405,25 @@ export const emailTemplates: Record<string, EmailTemplate> = {
                 </div>
                 
                 <div style="margin-bottom: 20px;">
-                  <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; border-left: 4px solid #fbbf24;">
-                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">💡 Këshillë:</strong></p>
+                  <div style="background: #e3f2fd; padding: 16px; border-radius: 8px; border-left: 4px solid #007cba;">
+                    <p style="margin-bottom: 8px;"><strong>💡 Këshillë:</strong></p>
                     <p style="margin-bottom: 8px;">Mbajeni këtë email ose ruajeni kodin që të mos humbisni aksesin në eSIM-in tuaj.</p>
                   </div>
                 </div>
                 
-                <div style="text-align: center; background: rgba(75,0,130,0.2); padding: 16px; border-radius: 8px;">
-                  <p style="margin-bottom: 0;"><strong style="color: #fbbf24;">💬 Nëse keni ndonjë pyetje, jemi gjithmonë këtu për t'ju ndihmuar!</strong></p>
+                <div style="text-align: center; background: #f8f9fa; padding: 16px; border-radius: 8px; border: 1px solid #dee2e6;">
+                  <p style="margin-bottom: 0;"><strong>💬 Nëse keni ndonjë pyetje, jemi gjithmonë këtu për t'ju ndihmuar!</strong></p>
                 </div>
               </div>
             </div>
           </div>
           
-          <!-- Bottom bar with blue background and white text -->
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #183A5A; margin-top: 20px;">
-            <tr>
-              <td align="center" style="color: white; font-size: 16px; padding: 20px; font-family: 'Orbitron', 'Exo', Arial, sans-serif;">
-                Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
-                <br/>
-                <span style="font-size: 14px; color: #e5e7eb;">
-                  &copy; ${new Date().getFullYear()} esimfly.al
-                </span>
-              </td>
-            </tr>
-          </table>
+          <!-- Simple footer -->
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+            Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
         </body>
         </html>
       `;
@@ -637,39 +630,19 @@ export const emailTemplates: Record<string, EmailTemplate> = {
 
   // NEW: Thank You Email Template (sent immediately after payment)
   thankYou: {
-    subject: 'Thank you for your eSIM purchase!',
+    subject: 'Faleminderit për porosinë tuaj! Ju do të merrni një email tjetër me të dhënat e eSim brenda pak minutash. ',
     html: (data: EmailTemplateData) => baseTemplate(`
       <h2>🎉 Thank you for your purchase!</h2>
-      <p>Hi ${data.name || 'there'},</p>
-      <p>We're excited to confirm that your payment has been successfully processed and we're preparing your eSIM.</p>
+      <p>Pershendetje ${data.name },</p>
       
-      <div class="order-details">
-        <h3>📋 Order Summary:</h3>
-        <ul>
-          <li><strong>Order ID:</strong> ${data.orderId}</li>
-          <li><strong>Package:</strong> ${data.packageName}</li>
-          <li><strong>Data Amount:</strong> ${data.dataAmount}</li>
-          <li><strong>Validity:</strong> ${data.days} days</li>
-          <li><strong>Amount Paid:</strong> $${data.amount}</li>
-        </ul>
-      </div>
 
-      <div class="activation-steps">
-        <h3>⏱️ What happens next?</h3>
-        <p><strong>You'll receive a second email with your QR code and instructions within 5 minutes.</strong></p>
-        <p>This email will contain everything you need to activate your eSIM, including:</p>
-        <ul>
-          <li>Your unique QR code for installation</li>
-          <li>Step-by-step activation instructions</li>
-          <li>Your eSIM activation code</li>
-        </ul>
-      </div>
 
-      <p>If you don't receive the activation email within 5 minutes, please check your spam folder or contact our support team.</p>
+
+      <p>Në rast se emaili nuk mbërrin brenda 5 minutash, ju lutemi të na kontaktoni për mbështetje. ! </p>
       
-      <p>Thank you for choosing esimfly!</p>
+
       
-      ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
+      
     `),
   },
 
@@ -763,24 +736,12 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           <!-- Full-width Banner -->
           <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly banner" class="banner" />
           
-          <div class="content">
-            <!-- Bold thank you message -->
-            <h1 class="main-title">Faleminderit për porosinë tuaj!</h1>
-            
-            <!-- Secondary message about receiving email with eSIM info -->
-            <div class="secondary-message">
-              Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
-            </div>
-            
+        
             <!-- Personalized greeting with name -->
             <div class="greeting">
               Përshëndetje${data.firstName ? ' ' + data.firstName : ''},
             </div>
             
-            <!-- Details about QR code in a second email -->
-            <div class="esim-info">
-              Në vijim ju do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
-            </div>
             
             <!-- English Section -->
             <div class="lang">
