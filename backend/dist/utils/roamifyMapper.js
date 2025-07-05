@@ -8,7 +8,7 @@ exports.validateMyPackageData = validateMyPackageData;
 exports.parseValidityToDays = parseValidityToDays;
 /**
  * Maps a Roamify package to the correct database fields for my_packages table
- * This function handles the field name mapping: days -> days (not validity_days)
+ * This function handles the field name mapping: days -> days
  */
 function mapRoamifyToSupabase(roamifyPkg, salePrice) {
     // Extract name
@@ -35,7 +35,7 @@ function mapRoamifyToSupabase(roamifyPkg, salePrice) {
         }
     }
     // Extract days - THIS IS THE KEY MAPPING: Roamify's 'days' maps to Supabase's 'days'
-    const days = roamifyPkg.days || roamifyPkg.day || roamifyPkg.validity_days || 0;
+    const days = roamifyPkg.days || roamifyPkg.day || 0;
     // Extract pricing
     const base_price = roamifyPkg.price || roamifyPkg.base_price || 0;
     const sale_price_final = salePrice !== undefined ? salePrice : base_price;

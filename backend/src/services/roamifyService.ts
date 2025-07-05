@@ -263,7 +263,7 @@ export class RoamifyService {
   /**
    * Create eSIM order with Roamify
    */
-  static async createEsimOrder(packageId: string, quantity: number = 1): Promise<{
+  static async createEsimOrder(packageId: string, quantity: number = 1, days?: number): Promise<{
     orderId: string;
     esimId: string;
     items: any[];
@@ -271,15 +271,12 @@ export class RoamifyService {
     return this.retryApiCall(async () => {
       logger.info(`Creating eSIM order with Roamify for package: ${packageId}`);
 
-      const url = `${this.baseUrl}/api/orders`;
+      const url = `${this.baseUrl}/api/esim/order`;
       
       const payload = {
-        items: [
-          {
-            packageId: packageId,
-            quantity: quantity
-          }
-        ]
+        packageId: packageId,
+        quantity: quantity,
+        ...(days && { days: days })
       };
       
       const headers = {
@@ -320,12 +317,14 @@ export class RoamifyService {
     packageId,
     quantity = 1,
     countryName,
-    region
+    region,
+    days
   }: {
     packageId: string;
     quantity?: number;
     countryName?: string;
     region?: string;
+    days?: number;
   }): Promise<any> {
     // Basic validation
     if (!packageId || typeof packageId !== 'string' || packageId.trim() === '') {
@@ -334,18 +333,15 @@ export class RoamifyService {
     }
 
     return this.retryApiCall(async () => {
-      const url = `${this.baseUrl}/api/orders`;
+      const url = `${this.baseUrl}/api/esim/order`;
       let actualPackageId = packageId;
       let fallbackUsed = false;
       
       // First, try with the original package ID
       const payload = {
-        items: [
-          {
-            packageId: actualPackageId,
-            quantity: quantity
-          }
-        ]
+        packageId: actualPackageId,
+        quantity: quantity,
+        ...(days && { days: days })
       };
       
       const headers = {
@@ -392,14 +388,11 @@ export class RoamifyService {
             actualPackageId = fallbackPackageId;
             fallbackUsed = true;
             
-            // Fixed: Use correct payload structure with items array
+            // Fixed: Use correct payload structure
             const fallbackPayload = {
-              items: [
-                {
-                  packageId: actualPackageId,
-                  quantity: quantity
-                }
-              ]
+              packageId: actualPackageId,
+              quantity: quantity,
+              ...(days && { days: days })
             };
             
             logger.info(`[ROAMIFY V2 DEBUG] Retrying with fallback package: ${actualPackageId}`);

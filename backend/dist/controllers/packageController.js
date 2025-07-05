@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.savePackage = exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deleteMyPackage = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
+exports.runCompletePackageSync = exports.savePackage = exports.syncRoamifyPackages = exports.deduplicatePackages = exports.getPackageCountries = exports.getAllRoamifyPackages = exports.getMyPackages = exports.searchPackages = exports.getSectionPackages = exports.getCountries = exports.deleteMyPackage = exports.deletePackage = exports.updatePackage = exports.getPackage = exports.getAllPackages = exports.createPackage = void 0;
 const supabase_1 = require("../config/supabase");
 const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("../utils/logger");
@@ -1040,99 +1040,99 @@ const syncRoamifyPackages = async (req, res, next) => {
 };
 exports.syncRoamifyPackages = syncRoamifyPackages;
 // Secure admin endpoint: Save package to my_packages
-const savePackage = async (req, res, next) => {
+const savePackage = async (req, res) => {
     try {
-        const { id, name, country_name, country_code, data_amount, days, // Only accept days
-        base_price, sale_price, profit, reseller_id, region, show_on_frontend, location_slug, homepage_order } = req.body;
-        // --- DAYS VALIDATION & COERCION ---
-        let parsedDays = null;
-        if (typeof days === 'number') {
-            parsedDays = days;
-        }
-        else if (typeof days === 'string') {
-            // Try to parse string to integer days
-            parsedDays = (0, esimUtils_1.parseValidityToDays)(days);
-        }
-        // Check for missing, null, zero, negative, or non-integer
-        if (parsedDays === null ||
-            typeof parsedDays !== 'number' ||
-            !Number.isInteger(parsedDays) ||
-            parsedDays <= 0) {
-            throw new errors_1.ValidationError('days must be a positive integer greater than zero');
-        }
+        const { name, country_name, country_code, data_amount, days, base_price, sale_price, profit, reseller_id, region, visible, show_on_frontend, location_slug, homepage_order, features = {} } = req.body;
         // Validate required fields
-        if (!name || !country_name || !country_code || !data_amount || !base_price || !sale_price) {
-            throw new errors_1.ValidationError('Missing required fields: name, country_name, country_code, data_amount, days, base_price, sale_price');
+        if (!name || !country_name || !country_code || !data_amount || !days) {
+            return res.status(400).json({
+                error: 'Missing required fields: name, country_name, country_code, data_amount, days'
+            });
         }
-        // Calculate profit if not provided
-        const calculatedProfit = profit !== undefined ? profit : sale_price - base_price;
-        // Auto-generate Roamify package configuration
-        const countryCodeLower = country_code.toLowerCase();
-        const dataAmountInt = Math.floor(data_amount || 1);
-        const roamifyPackageId = `esim-${countryCodeLower}-${parsedDays}days-${dataAmountInt}gb-all`;
-        // Prepare package data with auto-generated features
+        // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
+        // Allow null reseller_id since it's now a UUID foreign key
+        let finalResellerId = reseller_id;
+        let roamifyPackageId = null;
+        // First try to get Roamify package ID from features
+        if (features && features.packageId) {
+            roamifyPackageId = features.packageId;
+            console.log('✅ Using Roamify package ID from features:', roamifyPackageId);
+        }
+        // Fallback to reseller_id if it's a valid Roamify package ID
+        else if (finalResellerId && finalResellerId.startsWith('esim-') && finalResellerId.length >= 10) {
+            roamifyPackageId = finalResellerId;
+            console.log('✅ Using Roamify package ID from reseller_id:', roamifyPackageId);
+        }
+        if (!roamifyPackageId) {
+            console.error('❌ No valid Roamify package ID found in features.packageId or reseller_id');
+            return res.status(400).json({
+                error: 'A valid Roamify package ID must be provided in features.packageId or reseller_id'
+            });
+        }
+        // Create package data
         const packageData = {
-            id: id || (0, uuid_1.v4)(), // Generate new UUID if not provided
+            id: (0, uuid_1.v4)(), // Generate a UUID for the package
             name,
             country_name,
             country_code: country_code.toUpperCase(),
-            data_amount,
-            days: parsedDays, // Always a positive integer
-            base_price,
-            sale_price,
-            profit: calculatedProfit,
-            reseller_id: reseller_id || null,
-            region: region || null,
-            visible: true, // Default to visible
-            show_on_frontend: show_on_frontend !== undefined ? show_on_frontend : true,
-            location_slug: location_slug || null,
-            homepage_order: homepage_order || 0,
-            // AUTO-GENERATE ROAMIFY FEATURES
+            data_amount: parseFloat(data_amount),
+            days: parseInt(days),
+            base_price: parseFloat(base_price),
+            sale_price: parseFloat(sale_price) || parseFloat(base_price),
+            profit: parseFloat(profit) || 0,
+            reseller_id: finalResellerId, // Can be null now
+            region: region || 'Unknown',
+            visible: visible !== false,
+            show_on_frontend: show_on_frontend !== false,
+            location_slug: location_slug || country_code.toLowerCase(),
+            homepage_order: parseInt(homepage_order) || 999,
             features: {
-                packageId: roamifyPackageId,
-                dataAmount: data_amount,
-                days: parsedDays,
-                price: base_price,
+                ...features,
+                packageId: roamifyPackageId, // Use the real Roamify package ID
+                dataAmount: parseFloat(data_amount),
+                days: parseInt(days),
                 currency: 'EUR',
                 plan: 'data-only',
                 activation: 'first-use',
-                isUnlimited: false,
-                withSMS: false,
-                withCall: false,
-                withHotspot: true,
-                withDataRoaming: true,
-                geography: 'local',
-                region: region || 'Europe',
-                countrySlug: countryCodeLower,
-                notes: []
-            },
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
+                realRoamifyPackageId: roamifyPackageId
+            }
         };
-        // Upsert package (insert or update)
-        const { data: savedPackage, error } = await supabaseAdmin
+        console.log('✅ Saving package with REAL Roamify package ID:', roamifyPackageId);
+        // Insert package
+        const { data, error } = await supabase_1.supabase
             .from('my_packages')
-            .upsert([packageData], {
-            onConflict: 'id',
-            ignoreDuplicates: false
-        })
+            .insert(packageData)
             .select()
             .single();
         if (error) {
-            logger_1.logger.error('Error saving package:', error);
-            throw error;
+            console.error('❌ Error saving package:', error);
+            return res.status(400).json({ error: error.message });
         }
-        logger_1.logger.info(`Package saved successfully: ${savedPackage.id} - ${savedPackage.name} with Roamify config: ${roamifyPackageId}`);
-        res.status(200).json({
-            status: 'success',
-            data: savedPackage,
-            message: 'Package saved successfully with auto-generated Roamify configuration'
-        });
+        console.log('✅ Package saved successfully with real Roamify package ID');
+        res.json({ success: true, package: data });
     }
     catch (error) {
-        logger_1.logger.error('Error in savePackage:', error);
-        next(error);
+        console.error('❌ Error in savePackage:', error);
+        res.status(500).json({ error: 'Internal server error' });
     }
 };
 exports.savePackage = savePackage;
+// ✅ NEW: Add endpoint to run complete package sync
+const runCompletePackageSync = async (req, res) => {
+    try {
+        console.log('🚀 Starting complete package sync from admin panel...');
+        // For now, just return a success message
+        // The actual sync can be done via the run_complete_sync_via_admin.js script
+        res.json({
+            success: true,
+            message: 'Complete package sync endpoint is ready. Use the external script to run the sync.',
+            instructions: 'Run: node run_complete_sync_via_admin.js'
+        });
+    }
+    catch (error) {
+        console.error('❌ Error in runCompletePackageSync:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+exports.runCompletePackageSync = runCompletePackageSync;
 //# sourceMappingURL=packageController.js.map

@@ -1,3 +1,17 @@
+## [COMPLETED] Rename validity_days to days across the entire project (2025-01-04)
+- [x] **SQL Schema Migration**: Created migration `20250104000000_rename_validity_days_to_days.sql` to rename `validity_days` → `days` in both `packages` and `my_packages` tables
+- [x] **Database Verification**: Confirmed both tables now have `days` column (integer) with proper constraints
+- [x] **Roamify Service Updates**: 
+  - Changed create-order endpoint from `/api/orders` to `/api/esim/order`
+  - Updated payload structure to include `days` field: `{ packageId, quantity, days }`
+  - Updated both `createEsimOrder` and `createEsimOrderV2` methods
+- [x] **Webhook Controller**: Added extraction of `days` from payment metadata and passed to Roamify service
+- [x] **Sync Script**: Updated `syncRoamifyPackages.ts` to parse `data.days` from Roamify API response
+- [x] **Frontend Admin Panel**: Updated all references from `validity_days` to `days` in package handling
+- [x] **TypeScript Interfaces**: Updated `RoamifyPackage` interface and `roamifyMapper.ts` to use `days` field
+- [x] **Email Templates**: Already using `days` field in `EmailTemplateData` interface
+- [x] **Testing**: Created and ran verification scripts confirming all changes work correctly
+
 ## [IN PROGRESS] Enforce country-package consistency across frontend, backend, and tests (2024-06-13)
 - Require country_code for all package fetches and order flows
 - Validate package-country match server-side

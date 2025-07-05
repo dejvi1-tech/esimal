@@ -503,6 +503,9 @@ async function deliverEsim(order, paymentIntent, metadata) {
     const firstName = metadata.name || metadata.firstName || order.name || order.firstName || '';
     const lastName = metadata.surname || metadata.lastName || order.surname || order.lastName || '';
     const quantity = 1;
+    // Extract package days from metadata or package data
+    const packageDays = metadata.packageDays || metadata.validityDays || metadata.days;
+    const days = packageDays ? parseInt(packageDays, 10) : undefined;
     logger_1.logger.info(`🚀 Starting eSIM delivery process`, {
         orderId,
         packageId,
@@ -607,7 +610,8 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 packageId: roamifyPackageId,
                 quantity: quantity,
                 countryName: packageData.country_name,
-                region: packageData.region
+                region: packageData.region,
+                days: days || packageData.days
             });
             roamifySuccess = true;
             logger_1.logger.info(`✅ Roamify order created successfully`, {

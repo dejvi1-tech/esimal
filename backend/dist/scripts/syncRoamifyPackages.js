@@ -98,7 +98,7 @@ async function fetchAllRoamifyPackages() {
                     region: country.region,
                     description: pkg.package,
                     data: (pkg.dataAmount !== undefined && pkg.dataUnit) ? `${pkg.dataAmount} ${pkg.dataUnit}` : undefined,
-                    validity: pkg.day ? `${pkg.day} days` : undefined,
+                    days: pkg.day || pkg.days || undefined,
                     price: pkg.price,
                     withDataRoaming: pkg.withDataRoaming,
                     // Add any other fields needed for frontend here
@@ -158,8 +158,9 @@ function mapRoamifyToMyPackage(pkg) {
     const salePrice = pkg.price; // You can adjust this based on your pricing strategy
     const profit = salePrice - basePrice;
     // Validate days
-    if (!pkg.day || typeof pkg.day !== 'number' || pkg.day <= 0) {
-        console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing or invalid day field (got: ${pkg.day})`);
+    const days = pkg.day || pkg.days;
+    if (!days || typeof days !== 'number' || days <= 0) {
+        console.warn(`[SKIP] Package ${pkg.packageId} skipped: missing or invalid days field (got: ${days})`);
         return null;
     }
     return {
@@ -167,7 +168,7 @@ function mapRoamifyToMyPackage(pkg) {
         name: pkg.package,
         country_name: pkg.countryName,
         data_amount: dataAmountGB,
-        days: pkg.day, // Use Roamify's 'day' field
+        days: days, // Use Roamify's days field
         base_price: basePrice,
         sale_price: salePrice,
         profit: profit

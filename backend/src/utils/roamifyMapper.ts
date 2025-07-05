@@ -18,7 +18,6 @@ export interface RoamifyPackage {
   days?: number;
   day?: number;
   validity?: string;
-  validity_days?: number;
   price?: number;
   base_price?: number;
   region?: string;
@@ -48,7 +47,7 @@ export interface MyPackageData {
 
 /**
  * Maps a Roamify package to the correct database fields for my_packages table
- * This function handles the field name mapping: days -> days (not validity_days)
+ * This function handles the field name mapping: days -> days
  */
 export function mapRoamifyToSupabase(roamifyPkg: RoamifyPackage, salePrice?: number): Partial<MyPackageData> {
   // Extract name
@@ -75,7 +74,7 @@ export function mapRoamifyToSupabase(roamifyPkg: RoamifyPackage, salePrice?: num
   }
   
   // Extract days - THIS IS THE KEY MAPPING: Roamify's 'days' maps to Supabase's 'days'
-  const days = roamifyPkg.days || roamifyPkg.day || roamifyPkg.validity_days || 0;
+  const days = roamifyPkg.days || roamifyPkg.day || 0;
   
   // Extract pricing
   const base_price = roamifyPkg.price || roamifyPkg.base_price || 0;

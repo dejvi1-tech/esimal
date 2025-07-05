@@ -498,7 +498,7 @@ const AdminPanel: React.FC = () => {
         country_name: pkg.country_name || pkg.country || '',
         country_code: pkg.country_code || '',
         data_amount: pkg.data_amount || 0,
-        days: pkg.days || pkg.validity_days || 0,
+        days: pkg.days || 0,
         base_price: pkg.base_price || pkg.price || 0,
         sale_price: pkg.base_price || pkg.price || 0,
         profit: 0
@@ -560,7 +560,7 @@ const AdminPanel: React.FC = () => {
         }
       }
       // ✅ FIXED: Correctly map Roamify's 'days' field to database 'days' field
-      const days = pkg.days || pkg.day || pkg.validity_days || 0;
+              const days = pkg.days || pkg.day || 0;
       const base_price = pkg.price || pkg.base_price || 0;
       const salePriceStr = roamifySalePrices[pkg.id || pkg.packageId || ''] ?? base_price.toString();
       const sale_price = salePriceStr === '' ? base_price : parseFloat(salePriceStr);
@@ -677,7 +677,7 @@ const AdminPanel: React.FC = () => {
         country_name: pkg.country || pkg.country_name || '',
         country_code: pkg.country_code || '',
         data_amount,
-        days: pkg.days || pkg.day || pkg.validity_days || 0,
+        days: pkg.days || pkg.day || 0,
         base_price: base_price,
         sale_price: sale_price,
         profit: sale_price - base_price,
@@ -689,7 +689,7 @@ const AdminPanel: React.FC = () => {
         features: {
           packageId: pkg.id || pkg.packageId || '', // Store the real Roamify package ID here
           dataAmount: data_amount,
-          days: pkg.days || pkg.day || pkg.validity_days || 0,
+          days: pkg.days || pkg.day || 0,
           price: base_price,
           currency: 'EUR',
           plan: 'data-only',
