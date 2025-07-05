@@ -225,17 +225,215 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       // Show the real eSIM ID instead of PENDING
       const esimId = data.iccid || data.esimCode || 'PENDING';
       
-      return baseTemplate(`
-        <p>Përshëndetje ${greetingName},</p>
-        <p>Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me <a href="https://esimfly.al" style="color: #b59f3b; font-weight: bold; text-decoration: underline;">esimfly.al</a></p>
-        <div class="qr-code">
-          <img src="${qrCodeDataUrl}" alt="eSIM QR Code" width="300" height="300" style="display: block; max-width: 300px; height: auto; border: 1px solid #ddd; border-radius: 8px; margin: 0 auto;" />
-        </div>
-        <p><strong>Nr. eSim:</strong> ${esimId}</p>
-        <h3 style="color: #b59f3b;">👇 Si ta instaloni 👇</h3>
-        <p><strong>Iphone:</strong> Mbajeni shtypur foton e barkodit dy sekonda, deri sa t'ju dal opsioni <b>"Add eSIM"</b> (funksionon me iOS 17.4 e sipër).</p>
-        <p>Nëse nuk ju dal &gt; <b>skanoni kodin QR</b> me kameran e celularit ose duke shkuar tek Settings &gt; Mobile Service (ose cellular) &gt; Add eSIM.</p>
-      `);
+      return `
+        <!DOCTYPE html>
+        <html lang="sq">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>eSIM juaj është gati! - Konfirmimi i porosisë</title>
+          <style>
+            body { 
+              background: #4B0082; 
+              color: #fff; 
+              font-family: 'Orbitron', 'Exo', Arial, sans-serif; 
+              margin: 0; 
+              padding: 0; 
+              line-height: 1.6;
+            }
+            .container { 
+              max-width: 600px; 
+              margin: 0 auto; 
+              background: rgba(255,255,255,0.08); 
+              border-radius: 18px; 
+              box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
+              padding: 0;
+              overflow: hidden;
+            }
+            .banner { 
+              width: 100%; 
+              max-width: 600px; 
+              display: block; 
+              margin: 0 auto; 
+              border-radius: 18px 18px 0 0;
+            }
+            .content { 
+              padding: 32px 24px; 
+            }
+            .main-title { 
+              font-size: 24px; 
+              font-weight: bold; 
+              margin-bottom: 16px; 
+              text-align: center;
+            }
+            .secondary-message {
+              font-size: 18px;
+              margin-bottom: 24px;
+              text-align: center;
+              padding: 24px 0;
+            }
+            .accent { 
+              color: #fbbf24; 
+              font-weight: bold; 
+            }
+            .greeting {
+              font-size: 18px;
+              margin-bottom: 16px;
+            }
+            .esim-info {
+              padding: 24px 0;
+              font-size: 18px;
+              text-align: center;
+              background: rgba(251,191,36,0.08);
+              border-radius: 10px;
+              margin: 24px 0;
+            }
+            .qr-code {
+              text-align: center;
+              margin: 24px 0;
+              padding: 24px;
+              background: rgba(255,255,255,0.1);
+              border-radius: 12px;
+            }
+            .qr-code img {
+              max-width: 300px;
+              height: auto;
+              border: 2px solid #fbbf24;
+              border-radius: 12px;
+              background: #fff;
+              padding: 8px;
+            }
+            .esim-details {
+              font-size: 18px;
+              margin: 24px 0;
+              text-align: center;
+              font-weight: bold;
+            }
+            .instructions {
+              background: rgba(251,191,36,0.1);
+              border-radius: 10px;
+              padding: 24px;
+              margin: 24px 0;
+            }
+            .instructions h3 {
+              color: #fbbf24;
+              font-size: 20px;
+              margin-bottom: 16px;
+              text-align: center;
+            }
+            .instructions p {
+              font-size: 16px;
+              margin-bottom: 12px;
+            }
+            .instructions strong {
+              color: #fbbf24;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <!-- Full-width Banner -->
+            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly banner" class="banner" />
+            
+            <div class="content">
+              <!-- Bold thank you message -->
+              <h1 class="main-title">Faleminderit për porosinë tuaj!</h1>
+              
+              <!-- Secondary message about eSIM data -->
+              <div class="secondary-message">
+                Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
+              </div>
+              
+              <!-- Personalized greeting -->
+              <div class="greeting">
+                Përshëndetje ${greetingName},
+              </div>
+              
+              <!-- eSIM info section -->
+              <div class="esim-info">
+                Bashkangjitur mund të gjeni barkodin për të aktivizuar kartën tuaj eSIM me 
+                <a href="https://esimfly.al" style="color: #fbbf24; font-weight: bold; text-decoration: underline;">esimfly.al</a>
+              </div>
+              
+              <!-- QR Code Section -->
+              <div class="qr-code">
+                <img src="${qrCodeDataUrl}" alt="eSIM QR Code" width="300" height="300" />
+              </div>
+              
+              <!-- eSIM Details -->
+              <div class="esim-details">
+                <span class="accent">Nr. eSim:</span> ${esimId}
+              </div>
+              
+              <!-- Comprehensive Installation Instructions -->
+              <div class="instructions">
+                <h3>👇 Si ta instaloni eSIM-in tuaj 👇</h3>
+                
+                <div style="margin-bottom: 20px;">
+                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">📱 iPhone</h4>
+                  <div style="background: rgba(75,0,130,0.1); padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">✅ Opsioni më i thjeshtë (iOS 17.4 e sipër):</strong></p>
+                    <p style="margin-bottom: 12px;">Mbajeni shtypur foton e barkodit për 2 sekonda, derisa të shfaqet opsioni:<br/>
+                    <strong>"Add eSIM" / "Shto eSIM"</strong></p>
+                  </div>
+                  
+                  <div style="background: rgba(251,191,36,0.1); padding: 16px; border-radius: 8px;">
+                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">🔁 Nëse nuk ju del ky opsion:</strong></p>
+                    <p style="margin-bottom: 8px;">Skanojeni kodin QR me kamerën ose ndiqni këto hapa manualisht:</p>
+                    <p style="font-weight: bold;">Settings → Mobile Service / Cellular → Add eSIM</p>
+                  </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">🤖 Android</h4>
+                  <div style="background: rgba(75,0,130,0.1); padding: 16px; border-radius: 8px;">
+                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">📷 Skanojeni kodin QR me kamerën tuaj</strong></p>
+                    <p style="margin-bottom: 8px;"><strong>OSE</strong></p>
+                    <p style="margin-bottom: 8px;">Shkoni tek:</p>
+                    <p style="font-weight: bold;">Settings → Connections → SIM Manager → Add eSIM</p>
+                  </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <h4 style="color: #fbbf24; font-size: 18px; margin-bottom: 12px;">🚀 Aktivizimi dhe përdorimi</h4>
+                  <div style="background: rgba(251,191,36,0.1); padding: 16px; border-radius: 8px;">
+                    <p style="margin-bottom: 8px;">Ju mund ta instaloni paketën menjëherë.</p>
+                    <p style="margin-bottom: 12px;"><strong>Vlefshmëria fillon nga momenti kur eSIM-i përdoret për herë të parë.</strong></p>
+                    <p style="margin-bottom: 8px;">Kur të mbërrini në destinacionin tuaj:</p>
+                    <p style="margin-bottom: 4px;">• Ndizni eSIM-in që instaluat</p>
+                    <p>• Aktivizoni Data Roaming për të pasur internet</p>
+                  </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                  <div style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px; border-left: 4px solid #fbbf24;">
+                    <p style="margin-bottom: 8px;"><strong style="color: #fbbf24;">💡 Këshillë:</strong></p>
+                    <p style="margin-bottom: 8px;">Mbajeni këtë email ose ruajeni kodin që të mos humbisni aksesin në eSIM-in tuaj.</p>
+                  </div>
+                </div>
+                
+                <div style="text-align: center; background: rgba(75,0,130,0.2); padding: 16px; border-radius: 8px;">
+                  <p style="margin-bottom: 0;"><strong style="color: #fbbf24;">💬 Nëse keni ndonjë pyetje, jemi gjithmonë këtu për t'ju ndihmuar!</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bottom bar with blue background and white text -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #183A5A; margin-top: 20px;">
+            <tr>
+              <td align="center" style="color: white; font-size: 16px; padding: 20px; font-family: 'Orbitron', 'Exo', Arial, sans-serif;">
+                Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
+                <br/>
+                <span style="font-size: 14px; color: #e5e7eb;">
+                  &copy; ${new Date().getFullYear()} esimfly.al
+                </span>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
     },
   },
 
