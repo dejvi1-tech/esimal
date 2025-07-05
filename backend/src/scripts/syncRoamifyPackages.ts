@@ -19,6 +19,7 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 interface RoamifyPackage {
   packageId: string;
+  slug: string; // Add slug field for Roamify V2 API
   package: string;
   plan: string;
   activation: string;
@@ -84,6 +85,7 @@ interface MyPackage {
   base_price: number;
   sale_price: number;
   profit: number;
+  slug: string; // Add slug field for Roamify V2 API
 }
 
 interface RoamifyPackageWithCountry extends RoamifyPackage {
@@ -140,6 +142,7 @@ async function fetchAllRoamifyPackages(): Promise<any[]> {
         if (!pkg.packageId || !pkg.price) continue;
         allPackages.push({
           id: pkg.packageId,
+          slug: pkg.slug, // Map Roamify's slug field
           country: country.countryName,
           region: country.region,
           description: pkg.package,
@@ -217,6 +220,9 @@ function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage | null
     return null;
   }
 
+  // Use Roamify's slug field, or generate one if missing
+  const slug = pkg.slug || `esim-${pkg.countryCode.toLowerCase()}-${days}days-${Math.floor(dataAmountGB)}gb-all`;
+
   return {
     id: uuidv4(), // Generate a new UUID for each package
     name: pkg.package,
@@ -225,7 +231,8 @@ function mapRoamifyToMyPackage(pkg: RoamifyPackageWithCountry): MyPackage | null
     days: days, // Use Roamify's days field
     base_price: basePrice,
     sale_price: salePrice,
-    profit: profit
+    profit: profit,
+    slug: slug // Add slug field for Roamify V2 API
   };
 }
 

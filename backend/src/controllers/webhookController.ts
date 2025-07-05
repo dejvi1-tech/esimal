@@ -606,12 +606,17 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     // --- STRICT LOGIC FOR ROAMIFY PACKAGE ID ---
     let realRoamifyPackageId: string | null = null;
 
-    // Check if the package has features with packageId
-    if (packageData && packageData.features && packageData.features.packageId) {
+    // Check if the package has slug field (preferred for Roamify V2)
+    if (packageData && packageData.slug) {
+      realRoamifyPackageId = packageData.slug;
+      logger.info(`📦 Using slug for Roamify V2 API: ${realRoamifyPackageId}`);
+    }
+    // Check if the package has features with packageId (fallback)
+    else if (packageData && packageData.features && packageData.features.packageId) {
       realRoamifyPackageId = packageData.features.packageId;
       logger.info(`📦 Using packageId from features: ${realRoamifyPackageId}`);
     }
-    // Check if the package has reseller_id (fallback method)
+    // Check if the package has reseller_id (legacy fallback)
     else if (packageData && packageData.reseller_id) {
       realRoamifyPackageId = packageData.reseller_id;
       logger.info(`📦 Using reseller_id as Roamify packageId: ${realRoamifyPackageId}`);
@@ -1240,9 +1245,21 @@ async function handleCheckoutSessionCompleted(session: any) {
     let realQRData: any;
 
     try {
-      // --- NEW LOGIC: Fetch real Roamify packageId from packages table ---
+      // --- NEW LOGIC: Use slug field for Roamify V2 API ---
       let realRoamifyPackageId: string | undefined;
-      if (packageData.reseller_id) {
+      
+      // First, try to use the slug field (preferred for Roamify V2)
+      if (packageData.slug) {
+        realRoamifyPackageId = packageData.slug;
+        logger.info(`📦 Using slug for Roamify V2 API: ${realRoamifyPackageId}`);
+      }
+      // Fallback to features.packageId if slug is not available
+      else if (packageData.features && packageData.features.packageId) {
+        realRoamifyPackageId = packageData.features.packageId;
+        logger.info(`📦 Using packageId from features: ${realRoamifyPackageId}`);
+      }
+      // Legacy fallback to packages table lookup
+      else if (packageData.reseller_id) {
         const { data: foundPackage, error: foundError } = await supabase
           .from('packages')
           .select('features')
@@ -1250,12 +1267,13 @@ async function handleCheckoutSessionCompleted(session: any) {
           .single();
         if (!foundError && foundPackage && foundPackage.features && foundPackage.features.packageId) {
           realRoamifyPackageId = foundPackage.features.packageId;
+          logger.info(`📦 Found Roamify packageId from packages table: ${realRoamifyPackageId}`);
         }
       }
       
       // FALLBACK: If no real Roamify packageId found, use a known working packageId
       if (!realRoamifyPackageId) {
-        logger.warn(`Could not find real Roamify packageId in packages table for reseller_id: ${packageData.reseller_id}. Using fallback.`);
+        logger.warn(`Could not find real Roamify packageId. Using fallback.`);
         // Use a real working Roamify packageId as fallback
         realRoamifyPackageId = 'esim-europe-30days-3gb-all';
         logger.info(`Using fallback Roamify packageId: ${realRoamifyPackageId}`);

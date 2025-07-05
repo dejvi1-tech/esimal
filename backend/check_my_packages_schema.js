@@ -1,7 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('Missing Supabase environment variables');
@@ -11,55 +12,54 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkMyPackagesSchema() {
-  console.log('Checking my_packages table schema...\n');
+  console.log('🔍 Checking my_packages table schema...\n');
 
   try {
-    // Get a sample record to see the structure
-    const { data: samplePackage, error: sampleError } = await supabase
+    // Get a sample record to see all columns
+    const { data: sample, error: sampleError } = await supabase
       .from('my_packages')
       .select('*')
       .limit(1);
 
     if (sampleError) {
-      console.error('Error fetching sample package:', sampleError);
+      console.error('❌ Error fetching sample record:', sampleError);
       return;
     }
 
-    if (samplePackage && samplePackage.length > 0) {
-      const package = samplePackage[0];
-      console.log('Sample package structure:');
-      console.log(JSON.stringify(package, null, 2));
-      
-      console.log('\nAvailable columns:');
-      Object.keys(package).forEach(key => {
-        console.log(`- ${key}: ${typeof package[key]} (${package[key]})`);
-      });
-    } else {
-      console.log('No packages found in my_packages table');
+    if (!sample || sample.length === 0) {
+      console.log('⚠️  No records found in my_packages table');
+      return;
     }
 
-    // Check if there are any packages with reseller_id that might be real Roamify IDs
-    console.log('\n=== PACKAGES WITH RESELLER_ID ===');
-    const { data: packagesWithResellerId, error: resellerError } = await supabase
-      .from('my_packages')
-      .select('*')
-      .not('reseller_id', 'is', null);
+    const columns = Object.keys(sample[0]);
+    console.log('📋 Current columns in my_packages table:');
+    columns.forEach((col, index) => {
+      console.log(`  ${index + 1}. ${col}`);
+    });
 
-    if (resellerError) {
-      console.error('Error fetching packages with reseller_id:', resellerError);
-    } else {
-      console.log(`Found ${packagesWithResellerId.length} packages with reseller_id:`);
-      packagesWithResellerId.slice(0, 10).forEach((pkg, index) => {
-        console.log(`${index + 1}. ${pkg.name}`);
-        console.log(`   ID: ${pkg.id}`);
-        console.log(`   Reseller ID: ${pkg.reseller_id}`);
-        console.log('   ---');
-      });
+    // Check specifically for slug column
+    const hasSlug = columns.includes('slug');
+    console.log(`\n🔍 Slug column exists: ${hasSlug ? '✅ YES' : '❌ NO'}`);
+
+    // Check for features column and its structure
+    const hasFeatures = columns.includes('features');
+    console.log(`🔍 Features column exists: ${hasFeatures ? '✅ YES' : '❌ NO'}`);
+
+    if (hasFeatures && sample[0].features) {
+      console.log('\n📦 Sample features structure:');
+      console.log(JSON.stringify(sample[0].features, null, 2));
     }
+
+    // Check for packageId in features
+    if (hasFeatures && sample[0].features && sample[0].features.packageId) {
+      console.log(`\n🎯 Package ID from features: ${sample[0].features.packageId}`);
+    }
+
+    console.log('\n✅ Schema check completed!');
 
   } catch (error) {
-    console.error('Error checking schema:', error);
+    console.error('❌ Unexpected error:', error);
   }
 }
 
-checkMyPackagesSchema().catch(console.error); 
+checkMyPackagesSchema(); 

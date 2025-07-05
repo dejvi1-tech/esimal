@@ -194,12 +194,17 @@ async function getPackageData(packageId: string): Promise<any | null> {
  * Extract Roamify package ID from package data
  */
 function extractRoamifyPackageId(packageData: any): string | null {
-  // Check features.packageId first
+  // Check slug field first (preferred for Roamify V2)
+  if (packageData.slug) {
+    return packageData.slug;
+  }
+  
+  // Check features.packageId (fallback)
   if (packageData.features && packageData.features.packageId) {
     return packageData.features.packageId;
   }
   
-  // Check reseller_id
+  // Check reseller_id (legacy fallback)
   if (packageData.reseller_id) {
     return packageData.reseller_id;
   }

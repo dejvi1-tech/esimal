@@ -114,13 +114,27 @@ export class RoamifyService {
   private static maxRetries = 3;
   private static retryDelay = 2000; // 2 seconds
 
-  // Known working fallback package IDs for different regions
+  // Known working fallback package IDs for different regions (slug-style)
   private static fallbackPackages = {
     'europe': 'esim-europe-30days-3gb-all',
     'usa': 'esim-united-states-30days-3gb-all',
     'global': 'esim-global-30days-3gb-all',
     'asia': 'esim-asia-30days-3gb-all',
     'default': 'esim-europe-30days-3gb-all'
+  };
+
+  // Country-specific fallback slugs for Roamify V2
+  private static countryFallbacks: Record<string, string> = {
+    'GR': 'esim-greece-30days-3gb-all',
+    'IT': 'esim-italy-30days-3gb-all',
+    'DE': 'esim-germany-30days-3gb-all',
+    'FR': 'esim-france-30days-3gb-all',
+    'ES': 'esim-spain-30days-3gb-all',
+    'GB': 'esim-united-kingdom-30days-3gb-all',
+    'US': 'esim-united-states-30days-3gb-all',
+    'CA': 'esim-canada-30days-3gb-all',
+    'JP': 'esim-japan-30days-3gb-all',
+    'AU': 'esim-australia-30days-3gb-all'
   };
 
   /**
@@ -172,6 +186,18 @@ export class RoamifyService {
     }
 
     return this.fallbackPackages.default;
+  }
+
+  /**
+   * Get a country-specific fallback slug for Roamify V2 API
+   */
+  static getCountryFallbackSlug(countryCode?: string): string {
+    if (!countryCode) {
+      return this.fallbackPackages.default;
+    }
+
+    const upperCountryCode = countryCode.toUpperCase();
+    return this.countryFallbacks[upperCountryCode] || this.fallbackPackages.default;
   }
 
   /**
@@ -422,8 +448,8 @@ export class RoamifyService {
         if (error.response?.status === 500) {
           logger.warn(`[ROAMIFY V2 DEBUG] 500 error detected for package ${packageId}, trying fallback`);
           
-          // Try with fallback package
-          const fallbackPackageId = this.getFallbackPackageId(countryName, region);
+          // Try with country-specific fallback package
+          const fallbackPackageId = this.getCountryFallbackSlug(countryName?.toUpperCase());
           
           if (fallbackPackageId !== packageId) {
             actualPackageId = fallbackPackageId;

@@ -64,5 +64,17 @@
 - [x] **Testing**: Created and ran `test_esim_id_extraction.js` to verify extraction logic works correctly
 - [x] **Fallback Support**: Updated fallback logic in `createEsimOrderV2` to also extract eSIM ID from V2 response structure
 
+## [COMPLETED] Integrate Roamify V2 eSIM-order API with slug-based package IDs (2025-01-05)
+- [x] **Database Schema**: Added `slug` column to `my_packages` table with proper indexing and constraints
+- [x] **Migration**: Created migration `20250105000000_add_slug_to_my_packages.sql` to ensure slug column exists
+- [x] **Package Sync**: Updated `syncRoamifyPackages.ts` to map Roamify's `data[].slug` field into `my_packages.slug`
+- [x] **Payload Construction**: Updated all Roamify service methods to use slug-based package IDs instead of UUIDs
+- [x] **Webhook Controller**: Updated `deliverEsim` and `handleCheckoutSessionCompleted` to prioritize slug field over features.packageId
+- [x] **Package Validation**: Updated middleware to check slug field first for Roamify package ID extraction
+- [x] **Fallback Logic**: Implemented country-specific fallback slugs (e.g., "esim-greece-30days-3gb-all") with proper fallback chain
+- [x] **Data Migration**: Created and ran scripts to convert existing UUID slugs to proper slug-style format
+- [x] **Testing**: Created comprehensive test scripts verifying end-to-end integration with Roamify V2 API
+- [x] **Verification**: Confirmed payload structure matches Roamify V2 requirements: `{ items: [{ packageId: "esim-greece-30days-3gb-all", quantity: 1 }] }`
+
 ## Discovered During Work
 // No new todos discovered during this task 
