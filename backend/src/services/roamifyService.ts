@@ -437,6 +437,27 @@ export class RoamifyService {
   }
 
   /**
+   * Create eSIM order using the official V2 endpoint and payload shape
+   */
+  static async createOrderV2(packageId: string): Promise<any> {
+    // Use the official V2 endpoint and payload shape per Roamify API docs
+    const url = `${this.baseUrl}/api/esim/order`;
+    const body = JSON.stringify({
+      packageId: packageId,
+      quantity: 1
+    });
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.apiKey}`
+    };
+
+    const response = await axios.post(url, body, { headers });
+
+    return response.data;
+  }
+
+  /**
    * Check if Roamify API is healthy
    */
   static async checkApiHealth(): Promise<boolean> {
