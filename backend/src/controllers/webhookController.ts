@@ -713,8 +713,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     if (safeUserId === GUEST_USER_ID) {
       logger.info(`👤 Creating user_orders entry for guest user: ${GUEST_USER_ID}`);
       
-      // Check if guest user exists (should exist due to migration)
-      const { data: guestUser, error: guestUserError } = await supabase
+      // Check if guest user exists (should exist due to migration) - USE ADMIN CLIENT
+      const { data: guestUser, error: guestUserError } = await supabaseAdmin
         .from('users')
         .select('id, email, role')
         .eq('id', GUEST_USER_ID)
@@ -726,14 +726,12 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         // The migration should have created this user, but as a fallback, try to create it
         // with the service role client
         try {
-          const { data: newGuestUser, error: createError } = await supabase
+          const { data: newGuestUser, error: createError } = await supabaseAdmin
             .from('users')
             .insert({
               id: GUEST_USER_ID,
               email: 'guest@esimal.com',
               password: 'disabled-account',
-              firstName: 'Guest',
-              lastName: 'User',
               role: 'user'
             })
             .select()
@@ -793,7 +791,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       updated_at: new Date().toISOString(),
     };
 
-    const { data: userOrder, error: userOrderError } = await supabase
+    // USE ADMIN CLIENT to bypass RLS policies
+    const { data: userOrder, error: userOrderError } = await supabaseAdmin
       .from('user_orders')
       .insert(userOrderData)
       .select()
