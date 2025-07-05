@@ -648,17 +648,18 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         esimId: roamifyOrder.esimId,
         paymentIntentId: paymentIntent.id,
       });
-    } catch (v2Error) {
+    } catch (v2Error: unknown) {
       roamifyError = v2Error;
       logger.error(`❌ Roamify order creation failed:`, v2Error);
       
       // Log detailed error information for debugging
-      if (v2Error.response) {
+      if (v2Error && typeof v2Error === 'object' && 'response' in v2Error) {
+        const axiosError = v2Error as any;
         logger.error(`Roamify API Error Details:`, {
-          status: v2Error.response.status,
-          statusText: v2Error.response.statusText,
-          data: v2Error.response.data,
-          headers: v2Error.response.headers,
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          headers: axiosError.response?.headers,
           packageId: roamifyPackageId,
           orderId,
           paymentIntentId: paymentIntent.id,
@@ -677,9 +678,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         roamify_package_id: roamifyPackageId,
         roamify_success: roamifySuccess,
         roamify_error: roamifyError ? {
-          message: roamifyError.message,
-          status: roamifyError.response?.status,
-          data: roamifyError.response?.data
+          message: roamifyError instanceof Error ? roamifyError.message : String(roamifyError),
+          status: roamifyError && typeof roamifyError === 'object' && 'response' in roamifyError ? (roamifyError as any).response?.status : undefined,
+          data: roamifyError && typeof roamifyError === 'object' && 'response' in roamifyError ? (roamifyError as any).response?.data : undefined
         } : null
       }
     };
@@ -836,7 +837,7 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       logger.error(`❌ Cannot proceed with eSIM delivery - Roamify order creation failed`, {
         orderId,
         roamifySuccess,
-        roamifyError: roamifyError?.message,
+        roamifyError: roamifyError instanceof Error ? roamifyError.message : String(roamifyError),
         packageId,
         paymentIntentId: paymentIntent.id,
       });
@@ -857,7 +858,7 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
           metadata: {
             ...order.metadata,
             roamify_failed: true,
-            roamify_error: roamifyError?.message,
+            roamify_error: roamifyError instanceof Error ? roamifyError.message : String(roamifyError),
             requires_manual_intervention: true,
             thank_you_email_sent: true,
             delay_notification_sent: true
