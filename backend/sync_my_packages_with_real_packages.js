@@ -52,20 +52,27 @@ async function syncMyPackagesWithRealPackages() {
     }
 
     // Step 4: Transform real packages to my_packages format
-    const myPackagesToInsert = packagesToSync.map(pkg => ({
-      id: pkg.id, // Use the same UUID
-      name: pkg.name || 'Unknown Package',
-      data_amount: pkg.data_amount || 1,
-      validity_days: pkg.validity_days || 30,
-      sale_price: pkg.sale_price || 5.99,
-      country_name: pkg.country_name || 'Unknown',
-      country_code: pkg.country_code || 'XX',
-      region: pkg.region || 'Unknown',
-      reseller_id: pkg.roamify_package_id, // Map roamify_package_id to reseller_id
-      location_slug: pkg.roamify_package_id, // Use roamify_package_id as location_slug too
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
+    const myPackagesToInsert = packagesToSync.map(pkg => {
+      // Generate slug for Roamify V2 API
+      const slug = pkg.features?.packageId || 
+                   `esim-${(pkg.country_code || 'global').toLowerCase()}-${pkg.validity_days || 30}days-${Math.floor(pkg.data_amount || 1)}gb-all`;
+      
+      return {
+        id: pkg.id, // Use the same UUID
+        name: pkg.name || 'Unknown Package',
+        data_amount: pkg.data_amount || 1,
+        validity_days: pkg.validity_days || 30,
+        sale_price: pkg.sale_price || 5.99,
+        country_name: pkg.country_name || 'Unknown',
+        country_code: pkg.country_code || 'XX',
+        region: pkg.region || 'Unknown',
+        reseller_id: pkg.roamify_package_id, // Map roamify_package_id to reseller_id
+        location_slug: pkg.roamify_package_id, // Use roamify_package_id as location_slug too
+        slug: slug, // Add slug for Roamify V2 API
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    });
 
     // Step 5: Insert packages into my_packages table
     const { data: insertedPackages, error: insertError } = await supabase
