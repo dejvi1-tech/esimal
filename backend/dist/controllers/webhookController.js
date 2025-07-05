@@ -610,8 +610,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 packageId: roamifyPackageId,
                 quantity: quantity,
                 countryName: packageData.country_name,
-                region: packageData.region,
-                days: days || packageData.days
+                region: packageData.region
             });
             roamifySuccess = true;
             logger_1.logger.info(`✅ Roamify order created successfully`, {

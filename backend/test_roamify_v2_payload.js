@@ -48,8 +48,7 @@ async function testV2PayloadFormat() {
       items: [
         {
           packageId: testPackageId,
-          quantity: 1,
-          days: 30
+          quantity: 1
         }
       ]
     };
@@ -57,8 +56,7 @@ async function testV2PayloadFormat() {
     // OLD FORMAT: top-level fields (for comparison)
     const oldPayload = {
       packageId: testPackageId,
-      quantity: 1,
-      days: 30
+      quantity: 1
     };
 
     const headers = {
@@ -130,8 +128,7 @@ async function testSpecificPackageV2() {
     items: [
       {
         packageId: testPackageId,
-        quantity: 1,
-        days: 30
+        quantity: 1
       }
     ]
   };

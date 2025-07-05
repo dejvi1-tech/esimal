@@ -87,7 +87,6 @@ type EsimApplyResponse = {
 export interface RoamifyOrderItem {
   packageId: string;
   quantity: number;
-  days: number;
 }
 
 export interface RoamifyEsimOrderRequest {
@@ -274,7 +273,7 @@ export class RoamifyService {
   /**
    * Create eSIM order with Roamify
    */
-  static async createEsimOrder(packageId: string, quantity: number = 1, days?: number): Promise<{
+  static async createEsimOrder(packageId: string, quantity: number = 1): Promise<{
     orderId: string;
     esimId: string;
     items: any[];
@@ -288,8 +287,7 @@ export class RoamifyService {
         items: [
           {
             packageId: packageId,
-            quantity: quantity,
-            days: days || 30 // Default to 30 days if not specified
+            quantity: quantity
           }
         ]
       };
@@ -332,14 +330,12 @@ export class RoamifyService {
     packageId,
     quantity = 1,
     countryName,
-    region,
-    days
+    region
   }: {
     packageId: string;
     quantity?: number;
     countryName?: string;
     region?: string;
-    days?: number;
   }): Promise<any> {
     // Basic validation
     if (!packageId || typeof packageId !== 'string' || packageId.trim() === '') {
@@ -357,8 +353,7 @@ export class RoamifyService {
         items: [
           {
             packageId: actualPackageId,
-            quantity: quantity,
-            days: days || 30 // Default to 30 days if not specified
+            quantity: quantity
           }
         ]
       };
@@ -412,8 +407,7 @@ export class RoamifyService {
               items: [
                 {
                   packageId: actualPackageId,
-                  quantity: quantity,
-                  days: days || 30 // Default to 30 days if not specified
+                  quantity: quantity
                 }
               ]
             };
@@ -462,8 +456,7 @@ export class RoamifyService {
       items: [
         {
           packageId: packageId,
-          quantity: 1,
-          days: 30 // Default to 30 days
+          quantity: 1
         }
       ]
     };

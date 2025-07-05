@@ -135,7 +135,7 @@ class RoamifyService {
     /**
      * Create eSIM order with Roamify
      */
-    static async createEsimOrder(packageId, quantity = 1, days) {
+    static async createEsimOrder(packageId, quantity = 1) {
         return this.retryApiCall(async () => {
             logger_1.logger.info(`Creating eSIM order with Roamify for package: ${packageId}`);
             const url = `${this.baseUrl}/api/esim/order`;
@@ -143,8 +143,7 @@ class RoamifyService {
                 items: [
                     {
                         packageId: packageId,
-                        quantity: quantity,
-                        days: days || 30 // Default to 30 days if not specified
+                        quantity: quantity
                     }
                 ]
             };
@@ -175,7 +174,7 @@ class RoamifyService {
     /**
      * Create eSIM order with Roamify (new API)
      */
-    static async createEsimOrderV2({ packageId, quantity = 1, countryName, region, days }) {
+    static async createEsimOrderV2({ packageId, quantity = 1, countryName, region }) {
         // Basic validation
         if (!packageId || typeof packageId !== 'string' || packageId.trim() === '') {
             logger_1.logger.error(`[ROAMIFY V2] Invalid package ID provided: ${packageId}`);
@@ -190,8 +189,7 @@ class RoamifyService {
                 items: [
                     {
                         packageId: actualPackageId,
-                        quantity: quantity,
-                        days: days || 30 // Default to 30 days if not specified
+                        quantity: quantity
                     }
                 ]
             };
@@ -235,8 +233,7 @@ class RoamifyService {
                             items: [
                                 {
                                     packageId: actualPackageId,
-                                    quantity: quantity,
-                                    days: days || 30 // Default to 30 days if not specified
+                                    quantity: quantity
                                 }
                             ]
                         };
@@ -277,8 +274,7 @@ class RoamifyService {
             items: [
                 {
                     packageId: packageId,
-                    quantity: 1,
-                    days: 30 // Default to 30 days
+                    quantity: 1
                 }
             ]
         };

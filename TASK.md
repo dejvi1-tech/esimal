@@ -49,5 +49,12 @@
 - [x] **Testing**: Created `test_roamify_v2_payload.js` to verify new format works and old format fails as expected
 - [x] **Backward Compatibility**: All existing method signatures remain unchanged, only internal payload structure updated
 
+## [COMPLETED] Drop days field from Roamify V2 order payload (2024-07-11)
+- [x] Removed days property from RoamifyOrderItem and RoamifyEsimOrderRequest interfaces in roamifyService.ts
+- [x] Updated createEsimOrder, createEsimOrderV2, and createOrderV2 to no longer send days in the payload
+- [x] Updated webhook controller and all usages to remove days from order creation
+- [x] Updated test_roamify_v2_payload.js and added test_payload_structure.js to verify correct payload
+- [x] Verified build and payload structure; all code, types, and tests now match Roamify V2 API requirements
+
 ## Discovered During Work
 // No new todos discovered during this task 
