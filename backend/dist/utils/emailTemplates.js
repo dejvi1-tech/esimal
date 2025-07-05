@@ -574,40 +574,99 @@ exports.emailTemplates = {
     },
     // NEW: Thank You Email Template (sent immediately after payment)
     thankYou: {
-        subject: 'Thank you for your eSIM purchase!',
-        html: (data) => baseTemplate(`
-      <h2>🎉 Thank you for your purchase!</h2>
-      <p>Hi ${data.name || 'there'},</p>
-      <p>We're excited to confirm that your payment has been successfully processed and we're preparing your eSIM.</p>
-      
-      <div class="order-details">
-        <h3>📋 Order Summary:</h3>
-        <ul>
-          <li><strong>Order ID:</strong> ${data.orderId}</li>
-          <li><strong>Package:</strong> ${data.packageName}</li>
-          <li><strong>Data Amount:</strong> ${data.dataAmount}</li>
-          <li><strong>Validity:</strong> ${data.days} days</li>
-          <li><strong>Amount Paid:</strong> $${data.amount}</li>
-        </ul>
-      </div>
-
-      <div class="activation-steps">
-        <h3>⏱️ What happens next?</h3>
-        <p><strong>You'll receive a second email with your QR code and instructions within 5 minutes.</strong></p>
-        <p>This email will contain everything you need to activate your eSIM, including:</p>
-        <ul>
-          <li>Your unique QR code for installation</li>
-          <li>Step-by-step activation instructions</li>
-          <li>Your eSIM activation code</li>
-        </ul>
-      </div>
-
-      <p>If you don't receive the activation email within 5 minutes, please check your spam folder or contact our support team.</p>
-      
-      <p>Thank you for choosing esimfly!</p>
-      
-      ${data.dashboardUrl ? `<a href="${data.dashboardUrl}" class="button">View Order Status</a>` : ''}
-    `),
+        subject: 'Faleminderit për porosinë tuaj! ',
+        html: (data) => `
+      <!DOCTYPE html>
+      <html lang="sq">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Faleminderit për porosinë tuaj!</title>
+        <style>
+          body { 
+            background: #f5f5f5; 
+            color: #333; 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            line-height: 1.6;
+          }
+          .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+            padding: 0;
+            overflow: hidden;
+          }
+          .content { 
+            padding: 32px 24px; 
+          }
+          .main-title { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 16px; 
+            text-align: center;
+            color: #333;
+          }
+          .secondary-message {
+            font-size: 18px;
+            margin-bottom: 24px;
+            text-align: center;
+            padding: 24px 0;
+          }
+          .accent { 
+            color: #007cba; 
+            font-weight: bold; 
+          }
+          .greeting {
+            font-size: 18px;
+            margin-bottom: 16px;
+          }
+          .info-section {
+            padding: 24px 0;
+            font-size: 18px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 24px 0;
+            border: 1px solid #dee2e6;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="content">
+            <!-- Main thank you message -->
+            <h1 class="main-title">🎉 Faleminderit për porosinë tuaj!</h1>
+            
+            <!-- Secondary message about receiving eSIM details -->
+            <div class="secondary-message">
+              Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
+            </div>
+            
+            <!-- Personalized greeting -->
+            <div class="greeting">
+              Përshëndetje ${data.name || 'there'},
+            </div>
+            
+            <!-- Information section -->
+            <div class="info-section">
+              Në rast se emaili nuk mbërrin brenda 5 minutash, ju lutemi të na kontaktoni për mbështetje.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Simple footer -->
+        <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+          Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
+          <br/>
+          &copy; ${new Date().getFullYear()} esimfly.al
+        </div>
+      </body>
+      </html>
+    `,
     },
     // --- BEGIN: Branded Bilingual Order Confirmation Email ---
     orderConfirmationBranded: {
