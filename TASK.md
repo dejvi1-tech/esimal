@@ -111,4 +111,14 @@
 - [x] **Complete Solution**: Created `complete_slug_fix_solution.js` that combines all functionality
 - [x] **Verification**: Added comprehensive verification and reporting of slug coverage
 - [x] **Error Prevention**: Ensured webhook will no longer fail with "No slug found" errors
-- [x] **Payload Validation**: Confirmed correct Roamify V2 API payload format: `{ items: [ { packageId: "esim-greece-30days-1gb-all", quantity: 1 } ] }` 
+- [x] **Payload Validation**: Confirmed correct Roamify V2 API payload format: `{ items: [ { packageId: "esim-greece-30days-1gb-all", quantity: 1 } ] }`
+
+## [COMPLETED] Fix Roamify 500 error and null reference bug in webhook controller (2025-07-05)
+- [x] **Root Cause Analysis**: Identified that Greece package slug `esim-gr-30days-1gb-all` was causing Roamify API 500 errors
+- [x] **API Testing**: Created `debug_roamify_500_error.js` to test Roamify API and confirm correct package ID format
+- [x] **Database Fix**: Updated Greece package slug from `esim-gr-30days-1gb-all` to `esim-greece-30days-1gb-all` in `my_packages` table
+- [x] **Null Reference Bug Fix**: Fixed critical bug in `webhookController.ts` where `roamifyOrder.orderId` was accessed without null checks
+- [x] **Error Handling Enhancement**: Improved error handling in `deliverEsim` function to prevent crashes when Roamify API fails
+- [x] **Verification Testing**: Created `test_fixed_greece_package.js` to verify the fix works correctly
+- [x] **API Compatibility**: Confirmed Roamify API accepts `esim-greece-30days-1gb-all` but rejects `esim-gr-30days-1gb-all`
+- [x] **Production Safety**: All changes are backward compatible and include proper error handling 

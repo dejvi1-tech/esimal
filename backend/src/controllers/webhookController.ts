@@ -697,8 +697,8 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
 
     logger.info(`💾 Order updated with Roamify details`, {
       orderId,
-      roamifyOrderId: roamifyOrder.orderId,
-      roamifyEsimId: roamifyOrder.esimId,
+      roamifyOrderId: roamifySuccess && roamifyOrder ? roamifyOrder.orderId : null,
+      roamifyEsimId: roamifySuccess && roamifyOrder ? roamifyOrder.esimId : null,
       roamifySuccess,
     });
 
