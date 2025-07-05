@@ -483,54 +483,137 @@ export const emailTemplates: Record<string, EmailTemplate> = {
       <html lang="sq">
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Konfirmim Porosie / Order Confirmation</title>
         <style>
-          body { background: #4B0082; color: #fff; font-family: 'Orbitron', 'Exo', Arial, sans-serif; margin: 0; padding: 0; }
-          .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.08); border-radius: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); padding: 32px 24px; }
-          .header { text-align: center; margin-bottom: 24px; }
-          .logo { max-width: 180px; margin-bottom: 12px; }
-          .title { font-size: 1.7em; font-weight: bold; margin-bottom: 8px; }
-          .accent { color: #fbbf24; font-weight: bold; }
-          .section { margin: 24px 0; }
-          .footer { text-align: center; font-size: 12px; color: #e5e7eb; margin-top: 32px; }
-          .lang { font-size: 0.95em; margin-bottom: 18px; }
+          body { 
+            background: #4B0082; 
+            color: #fff; 
+            font-family: 'Orbitron', 'Exo', Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            line-height: 1.6;
+          }
+          .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.08); 
+            border-radius: 18px; 
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1); 
+            padding: 0;
+            overflow: hidden;
+          }
+          .banner { 
+            width: 100%; 
+            max-width: 600px; 
+            display: block; 
+            margin: 0 auto; 
+            border-radius: 18px 18px 0 0;
+          }
+          .content { 
+            padding: 32px 24px; 
+          }
+          .header { 
+            text-align: center; 
+            margin-bottom: 32px; 
+          }
+          .logo { 
+            max-width: 180px; 
+            margin-bottom: 12px; 
+          }
+          .main-title { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 16px; 
+            text-align: center;
+          }
+          .secondary-message {
+            font-size: 18px;
+            margin-bottom: 24px;
+            text-align: center;
+            padding: 24px 0;
+          }
+          .accent { 
+            color: #fbbf24; 
+            font-weight: bold; 
+          }
+          .section { 
+            margin: 24px 0; 
+            font-size: 18px;
+          }
+          .lang { 
+            font-size: 16px; 
+            margin-bottom: 18px; 
+            font-weight: bold;
+          }
+          .greeting {
+            font-size: 18px;
+            margin-bottom: 16px;
+          }
+          .esim-info {
+            padding: 24px 0;
+            font-size: 18px;
+            text-align: center;
+            background: rgba(251,191,36,0.08);
+            border-radius: 10px;
+            margin: 24px 0;
+          }
         </style>
       </head>
       <body>
         <div class="container">
-          <div class="header">
-            <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly logo" class="logo" />
-          </div>
-          <div class="lang">
-            <b>ALBANIAN</b>
-          </div>
-          <div class="title">Faleminderit për porosinë tuaj!</div>
-          <div class="section">
-            Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.<br/>
-            <br/>
-            Përshëndetje${data.firstName ? ' ' + data.firstName : ''},<br/>
-            Në vijim do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
-          </div>
-          <div class="lang">
-            <b>ENGLISH</b>
-          </div>
-          <div class="title">Thank you for your order!</div>
-          <div class="section">
-            You will receive another email with <span class="accent">your eSIM details</span> in a few minutes.<br/>
-            <br/>
-            Hello${data.firstName ? ' ' + data.firstName : ''},<br/>
-            Shortly, you will receive a separate email with the QR code to activate your eSIM card.
-          </div>
-          <div class="footer">
-            Nëse keni pyetje, na kontaktoni duke kthyer përgjigje këtij emaili.<br/>
-            If you have questions, just reply to this email.<br/>
-            <br/>
-            Nëse nuk doni të merrni email-e prej nesh, <a href="#" style="color:#fbbf24;">çregjistrohuni këtu</a>.<br/>
-            If you wish to unsubscribe, <a href="#" style="color:#fbbf24;">unsubscribe here</a>.<br/>
-            <br/>
-            &copy; ${new Date().getFullYear()} esimfly.al
+          <!-- Full-width Banner -->
+          <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly banner" class="banner" />
+          
+          <div class="content">
+            <!-- Bold thank you message -->
+            <h1 class="main-title">Faleminderit për porosinë tuaj!</h1>
+            
+            <!-- Secondary message about receiving email with eSIM info -->
+            <div class="secondary-message">
+              Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
+            </div>
+            
+            <!-- Personalized greeting with name -->
+            <div class="greeting">
+              Përshëndetje${data.firstName ? ' ' + data.firstName : ''},
+            </div>
+            
+            <!-- Details about QR code in a second email -->
+            <div class="esim-info">
+              Në vijim ju do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
+            </div>
+            
+            <!-- English Section -->
+            <div class="lang">
+              ENGLISH
+            </div>
+            <h1 class="main-title">Thank you for your order!</h1>
+            <div class="secondary-message">
+              You will receive another email with <span class="accent">your eSIM details</span> in a few minutes.
+            </div>
+            <div class="greeting">
+              Hello${data.firstName ? ' ' + data.firstName : ''},
+            </div>
+            <div class="esim-info">
+              Shortly, you will receive a separate email with the QR code to activate your eSIM card.
+            </div>
           </div>
         </div>
+        
+        <!-- Bottom bar with blue background and white text -->
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #183A5A; margin-top: 20px;">
+          <tr>
+            <td align="center" style="color: white; font-size: 16px; padding: 20px; font-family: 'Orbitron', 'Exo', Arial, sans-serif;">
+              Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
+              If you have questions, just reply to this email.<br/>
+              <br/>
+              <span style="font-size: 14px; color: #e5e7eb;">
+                &copy; ${new Date().getFullYear()} esimfly.al
+              </span>
+            </td>
+          </tr>
+        </table>
       </body>
       </html>
     `
