@@ -632,6 +632,7 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     // Create a more robust eSIM order with customer information
     let roamifyOrder;
     let roamifySuccess = false;
+    let roamifyError = null;
     
     try {
       roamifyOrder = await RoamifyService.createEsimOrderV2({
@@ -648,24 +649,49 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
         paymentIntentId: paymentIntent.id,
       });
     } catch (v2Error) {
+      roamifyError = v2Error;
       logger.error(`❌ Roamify order creation failed:`, v2Error);
-      throw new Error(`Roamify order creation failed: ${v2Error}`);
+      
+      // Log detailed error information for debugging
+      if (v2Error.response) {
+        logger.error(`Roamify API Error Details:`, {
+          status: v2Error.response.status,
+          statusText: v2Error.response.statusText,
+          data: v2Error.response.data,
+          headers: v2Error.response.headers,
+          packageId: roamifyPackageId,
+          orderId,
+          paymentIntentId: paymentIntent.id,
+        });
+      }
+      
+      // Don't throw immediately - update order with error status and continue
+      logger.warn(`⚠️ Continuing with order processing despite Roamify failure`);
     }
 
     // Update order with Roamify order details
+    const orderUpdateData: any = {
+      status: roamifySuccess ? 'completed' : 'pending_esim',
+      updated_at: new Date().toISOString(),
+      metadata: {
+        roamify_package_id: roamifyPackageId,
+        roamify_success: roamifySuccess,
+        roamify_error: roamifyError ? {
+          message: roamifyError.message,
+          status: roamifyError.response?.status,
+          data: roamifyError.response?.data
+        } : null
+      }
+    };
+
+    if (roamifySuccess && roamifyOrder) {
+      orderUpdateData.roamify_order_id = roamifyOrder.orderId;
+      orderUpdateData.roamify_esim_id = roamifyOrder.esimId;
+    }
+
     await supabase
       .from('orders')
-      .update({
-        roamify_order_id: roamifyOrder.orderId,
-        roamify_esim_id: roamifyOrder.esimId,
-        status: roamifySuccess ? 'completed' : 'pending_esim',
-        updated_at: new Date().toISOString(),
-        // Store additional metadata about the order
-        metadata: {
-          roamify_package_id: roamifyPackageId,
-          roamify_success: roamifySuccess
-        }
-      })
+      .update(orderUpdateData)
       .eq('id', orderId);
 
     logger.info(`💾 Order updated with Roamify details`, {
@@ -758,9 +784,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     const userOrderData = {
       user_id: safeUserId,
       package_id: packageId,
-      roamify_order_id: roamifyOrder.orderId,
+      roamify_order_id: roamifySuccess && roamifyOrder ? roamifyOrder.orderId : null,
       qr_code_url: '', // Will be populated later if needed
-      iccid: roamifyOrder.esimId, // Use esimId as iccid
+      iccid: roamifySuccess && roamifyOrder ? roamifyOrder.esimId : null, // Use esimId as iccid
       status: status,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -806,6 +832,44 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
     }
 
     // CRITICAL: Update order with eSIM data and generate QR code
+    if (!roamifySuccess || !roamifyOrder) {
+      logger.error(`❌ Cannot proceed with eSIM delivery - Roamify order creation failed`, {
+        orderId,
+        roamifySuccess,
+        roamifyError: roamifyError?.message,
+        packageId,
+        paymentIntentId: paymentIntent.id,
+      });
+      
+      // Send thank you email but inform customer about delay
+      logger.info(`📧 Sending thank you email with delay notification`);
+      await sendThankYouEmail(order, paymentIntent, {
+        ...metadata,
+        roamifyError: true,
+        delayNotification: true
+      });
+      
+      // Mark order for manual intervention
+      await supabase
+        .from('orders')
+        .update({
+          status: 'pending_esim',
+          metadata: {
+            ...order.metadata,
+            roamify_failed: true,
+            roamify_error: roamifyError?.message,
+            requires_manual_intervention: true,
+            thank_you_email_sent: true,
+            delay_notification_sent: true
+          },
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+      
+      logger.error(`❌ Order ${orderId} marked for manual intervention due to Roamify failure`);
+      return; // Exit early
+    }
+    
     const esimId = roamifyOrder.esimId;
     logger.info(`🔍 Checking eSIM ID for QR code generation`, {
       orderId,
