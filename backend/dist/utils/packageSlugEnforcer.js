@@ -21,23 +21,23 @@ class PackageSlugEnforcer {
     /**
      * Enforce slug format for a single package
      */
-    async enforcePackageSlug(package) {
+    async enforcePackageSlug(pkg) {
         const result = {
             success: false,
-            originalSlug: package.slug,
+            originalSlug: pkg.slug,
             newSlug: undefined,
             fixed: false,
             errors: []
         };
         try {
             // Generate correct slug
-            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(package);
+            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(pkg);
             if (!correctSlug) {
                 result.errors.push('Could not generate standard slug - missing required data');
                 return result;
             }
             // Check if current slug is correct
-            if (package.slug === correctSlug) {
+            if (pkg.slug === correctSlug) {
                 result.success = true;
                 result.newSlug = correctSlug;
                 return result;
@@ -67,9 +67,9 @@ class PackageSlugEnforcer {
             errors: 0,
             results: []
         };
-        for (const package of packages) {
-            const result = await this.enforcePackageSlug(package);
-            results.results.push({ package, result });
+        for (const pkg of packages) {
+            const result = await this.enforcePackageSlug(pkg);
+            results.results.push({ pkg, result });
             if (result.fixed)
                 results.fixed++;
             if (result.errors.length > 0)
@@ -80,32 +80,32 @@ class PackageSlugEnforcer {
     /**
      * Database trigger function to enforce slugs on INSERT
      */
-    async enforceOnInsert(package) {
+    async enforceOnInsert(pkg) {
         if (!this.config.validateOnCreate)
-            return package;
-        const enforcement = await this.enforcePackageSlug(package);
+            return pkg;
+        const enforcement = await this.enforcePackageSlug(pkg);
         if (enforcement.fixed && enforcement.newSlug) {
-            package.slug = enforcement.newSlug;
+            pkg.slug = enforcement.newSlug;
             if (this.config.logViolations) {
-                console.log(`🔧 Auto-fixed slug for new package: ${package.name} -> ${enforcement.newSlug}`);
+                console.log(`🔧 Auto-fixed slug for new package: ${pkg.name} -> ${enforcement.newSlug}`);
             }
         }
-        return package;
+        return pkg;
     }
     /**
      * Database trigger function to enforce slugs on UPDATE
      */
-    async enforceOnUpdate(package) {
+    async enforceOnUpdate(pkg) {
         if (!this.config.validateOnUpdate)
-            return package;
-        const enforcement = await this.enforcePackageSlug(package);
+            return pkg;
+        const enforcement = await this.enforcePackageSlug(pkg);
         if (enforcement.fixed && enforcement.newSlug) {
-            package.slug = enforcement.newSlug;
+            pkg.slug = enforcement.newSlug;
             if (this.config.logViolations) {
-                console.log(`🔧 Auto-fixed slug for updated package: ${package.name} -> ${enforcement.newSlug}`);
+                console.log(`🔧 Auto-fixed slug for updated package: ${pkg.name} -> ${enforcement.newSlug}`);
             }
         }
-        return package;
+        return pkg;
     }
     /**
      * Scan and fix all packages in database
@@ -152,23 +152,23 @@ class PackageSlugEnforcer {
     async updateDatabaseWithFixes(myPackages, packages) {
         console.log('💾 Updating database with fixed slugs...');
         // Update my_packages table
-        for (const package of myPackages) {
-            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(package);
-            if (correctSlug && package.slug !== correctSlug) {
+        for (const pkg of myPackages) {
+            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(pkg);
+            if (correctSlug && pkg.slug !== correctSlug) {
                 await this.supabase
                     .from('my_packages')
                     .update({ slug: correctSlug })
-                    .eq('id', package.id);
+                    .eq('id', pkg.id);
             }
         }
         // Update packages table
-        for (const package of packages) {
-            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(package);
-            if (correctSlug && package.slug !== correctSlug) {
+        for (const pkg of packages) {
+            const correctSlug = (0, packageSlugValidator_1.generateStandardSlug)(pkg);
+            if (correctSlug && pkg.slug !== correctSlug) {
                 await this.supabase
                     .from('packages')
                     .update({ slug: correctSlug })
-                    .eq('id', package.id);
+                    .eq('id', pkg.id);
             }
         }
         console.log('✅ Database updated successfully');
@@ -194,13 +194,13 @@ class PackageSlugEnforcer {
             throw new Error(`Error fetching packages: ${error.message}`);
         const valid = [];
         const invalid = [];
-        for (const package of allPackages) {
-            const validation = (0, packageSlugValidator_1.validatePackageSlug)(package);
+        for (const pkg of allPackages) {
+            const validation = (0, packageSlugValidator_1.validatePackageSlug)(pkg);
             if (validation.isValid) {
-                valid.push(package);
+                valid.push(pkg);
             }
             else {
-                invalid.push({ package, validation });
+                invalid.push({ pkg, validation });
             }
         }
         return {

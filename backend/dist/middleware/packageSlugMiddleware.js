@@ -67,8 +67,8 @@ class PackageSlugMiddleware {
                 if (Array.isArray(packages)) {
                     // Process multiple packages
                     const enforcedPackages = [];
-                    for (const package of packages) {
-                        const enforcedPackage = await this.enforcer.enforceOnInsert(package);
+                    for (const pkg of packages) {
+                        const enforcedPackage = await this.enforcer.enforceOnInsert(pkg);
                         enforcedPackages.push(enforcedPackage);
                     }
                     req.body.packages = enforcedPackages;

@@ -15,7 +15,7 @@ export interface PackageData {
 export interface SlugValidationResult {
   isValid: boolean;
   currentSlug?: string;
-  suggestedSlug?: string;
+  suggestedSlug?: string | null;
   errors: string[];
   warnings: string[];
 }
@@ -24,16 +24,16 @@ export interface SlugValidationResult {
  * Generate a standardized slug for a package
  * Format: esim-{country}-{days}days-{data}gb-all
  */
-export function generateStandardSlug(package: PackageData): string | null {
+export function generateStandardSlug(pkg: PackageData): string | null {
   try {
     // Normalize country name
-    const country = package.country_name?.toLowerCase().replace(/\s+/g, '-');
+    const country = pkg.country_name?.toLowerCase().replace(/\s+/g, '-');
     
     // Get days (default to 30 if not specified)
-    const days = package.days || 30;
+    const days = pkg.days || 30;
     
     // Normalize data amount
-    const dataAmount = package.data_amount?.toString().replace(/\s+/g, '').toLowerCase();
+    const dataAmount = pkg.data_amount?.toString().replace(/\s+/g, '').toLowerCase();
     
     // Validation
     if (!country) {
@@ -58,7 +58,7 @@ export function generateStandardSlug(package: PackageData): string | null {
 /**
  * Validate if a package slug follows the standard format
  */
-export function validatePackageSlug(package: PackageData): SlugValidationResult {
+export function validatePackageSlug(pkg: PackageData): SlugValidationResult {
   const result: SlugValidationResult = {
     isValid: false,
     errors: [],
@@ -66,16 +66,16 @@ export function validatePackageSlug(package: PackageData): SlugValidationResult 
   };
 
   // Check if slug exists
-  if (!package.slug) {
+  if (!pkg.slug) {
     result.errors.push('Package slug is missing');
-    result.suggestedSlug = generateStandardSlug(package);
+    result.suggestedSlug = generateStandardSlug(pkg);
     return result;
   }
 
-  result.currentSlug = package.slug;
+  result.currentSlug = pkg.slug;
 
   // Check if slug follows standard format
-  const standardSlug = generateStandardSlug(package);
+  const standardSlug = generateStandardSlug(pkg);
   if (!standardSlug) {
     result.errors.push('Could not generate standard slug (missing required data)');
     return result;
@@ -84,30 +84,30 @@ export function validatePackageSlug(package: PackageData): SlugValidationResult 
   result.suggestedSlug = standardSlug;
 
   // Check if current slug matches standard format
-  if (package.slug !== standardSlug) {
+  if (pkg.slug !== standardSlug) {
     result.errors.push(`Slug format is incorrect. Expected: ${standardSlug}`);
     result.warnings.push('Slug should follow the standard format for Roamify API compatibility');
   }
 
   // Additional validation checks
-  if (!package.slug.startsWith('esim-')) {
+  if (!pkg.slug.startsWith('esim-')) {
     result.errors.push('Slug must start with "esim-"');
   }
 
-  if (!package.slug.includes('-days-')) {
+  if (!pkg.slug.includes('-days-')) {
     result.errors.push('Slug must include "-days-" format');
   }
 
-  if (!package.slug.includes('-gb-all')) {
+  if (!pkg.slug.includes('-gb-all')) {
     result.errors.push('Slug must end with "-gb-all"');
   }
 
   // Check for common issues
-  if (package.slug.includes(' ')) {
+  if (pkg.slug.includes(' ')) {
     result.errors.push('Slug contains spaces (should use hyphens)');
   }
 
-  if (package.slug !== package.slug.toLowerCase()) {
+  if (pkg.slug !== pkg.slug.toLowerCase()) {
     result.warnings.push('Slug should be lowercase');
   }
 
@@ -124,7 +124,7 @@ export function validatePackageSlug(package: PackageData): SlugValidationResult 
  */
 export function validatePackages(packages: PackageData[]): {
   valid: PackageData[];
-  invalid: Array<{ package: PackageData; validation: SlugValidationResult }>;
+  invalid: Array<{ pkg: PackageData; validation: SlugValidationResult }>;
   summary: {
     total: number;
     valid: number;
@@ -134,19 +134,19 @@ export function validatePackages(packages: PackageData[]): {
   };
 } {
   const valid: PackageData[] = [];
-  const invalid: Array<{ package: PackageData; validation: SlugValidationResult }> = [];
+  const invalid: Array<{ pkg: PackageData; validation: SlugValidationResult }> = [];
   let missingSlugs = 0;
   let incorrectFormat = 0;
 
-  for (const package of packages) {
-    const validation = validatePackageSlug(package);
+  for (const pkg of packages) {
+    const validation = validatePackageSlug(pkg);
     
     if (validation.isValid) {
-      valid.push(package);
+      valid.push(pkg);
     } else {
-      invalid.push({ package, validation });
+      invalid.push({ pkg, validation });
       
-      if (!package.slug) {
+      if (!pkg.slug) {
         missingSlugs++;
       } else {
         incorrectFormat++;
@@ -171,18 +171,18 @@ export function validatePackages(packages: PackageData[]): {
  * Generate standardized slugs for multiple packages
  */
 export function generateStandardSlugs(packages: PackageData[]): Array<{
-  package: PackageData;
+  pkg: PackageData;
   currentSlug?: string;
   newSlug: string | null;
   needsUpdate: boolean;
 }> {
-  return packages.map(package => {
-    const currentSlug = package.slug;
-    const newSlug = generateStandardSlug(package);
+  return packages.map(pkg => {
+    const currentSlug = pkg.slug;
+    const newSlug = generateStandardSlug(pkg);
     const needsUpdate = !currentSlug || currentSlug !== newSlug;
 
     return {
-      package,
+      pkg,
       currentSlug,
       newSlug,
       needsUpdate
