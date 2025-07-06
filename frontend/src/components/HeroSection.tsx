@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import { DownloadCloud } from "lucide-react";
 import CountrySearch from "./CountrySearch";
 import { Country } from "@/data/countries";
@@ -98,102 +98,142 @@ const HeroSection = () => {
     "/images/slide3.jpg"
   ];
 
-  // Preload images for smoother transitions
+  // Preload images for smoother transitions - OPTIMIZED
   useEffect(() => {
-    slides.forEach((slide) => {
-      const img = new Image();
-      img.src = slide;
-    });
+    // Use requestIdleCallback for better performance
+    const preloadImages = () => {
+      slides.forEach((slide) => {
+        const img = new Image();
+        img.src = slide;
+      });
+    };
+
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(preloadImages);
+    } else {
+      // Fallback for browsers that don't support requestIdleCallback
+      setTimeout(preloadImages, 100);
+    }
   }, []);
 
-  // Auto-advance slideshow every 3 seconds
+  // Auto-advance slideshow - OPTIMIZED with longer interval and better cleanup
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 3000);
+    }, 5000); // Increased from 3000ms to 5000ms for better performance
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [slides.length]);
 
-  const handleCountrySelect = (country: Country) => {
+  const handleCountrySelect = useCallback((country: Country) => {
     setSelectedCountry(country);
     // Navigate to country page instead of packages page
     navigate(`/country/${countrySlug(country.name.en)}`);
-  };
+  }, [navigate]);
 
   return (
-    <section className="pt-14 min-h-[30vh] relative flex flex-col md:flex-row items-stretch justify-center px-0 md:px-0 mt-8">
-      {/* Left: Empty for future use */}
-      <div className="hidden md:flex flex-col w-1/12" />
-      {/* Center: Heading + Button, with phone image to the right */}
-      <div className="flex flex-col md:flex-row items-center justify-center w-full md:w-10/12 px-4 py-2 md:py-0 gap-4">
-        <div className="flex flex-col items-center justify-center flex-1">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <FiveGChipIcon />
-            <GlobeNetworkIcon />
+    <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-blue-600/20"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')]"></div>
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 container mx-auto px-4 py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Text Content */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                {t('hero_title_1')}
+              </span>
+              <br />
+              <span className="text-white">
+                {t('hero_title_2')}
+              </span>
+            </h1>
+            
+            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto lg:mx-0">
+              {t('hero_subtitle')}
+            </p>
+
+            {/* Country Search */}
+            <div className="mb-8">
+              <CountrySearch
+                countries={countries}
+                onCountrySelect={handleCountrySelect}
+                placeholder={t('search_countries')}
+              />
+            </div>
+
+            {/* Features */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-sm text-gray-300">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                {t('hero_feature_1')}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                {t('hero_feature_2')}
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                {t('hero_feature_3')}
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-center leading-tight tracking-tight text-white drop-shadow-lg mb-2" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '0.01em', textShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            {t('hero_main_title')}
-          </h1>
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mt-2">
-            <CountrySearch
-              onCountrySelect={handleCountrySelect}
-              selectedCountry={selectedCountry}
-              forceOpen={false}
-            />
-            <a href="#most-popular-packages" className="btn-glass inline-flex items-center justify-center gap-2 px-5 py-3 text-base font-semibold text-white">
-                <DownloadCloud className="w-5 h-5" />
-                {t('hero_activate_package')}
-            </a>
+
+          {/* Right Column - Phone Mockup */}
+          <div className="relative flex flex-col items-center justify-center flex-1 sm:mt-0">
+            {/* Professional iPhone X-style SVG mockup with phone2.jpg inside the screen, no animation */}
+            <svg
+              viewBox="0 0 340 660"
+              className="block w-48 h-96 sm:w-64 sm:h-[28rem] md:w-[270px] md:h-[540px]"
+              style={{ maxWidth: '90vw' }}
+            >
+              <defs>
+                {/* Gradient for phone body */}
+                <linearGradient id="phoneBodyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#b39ddb" />
+                  <stop offset="100%" stop-color="#7c3aed" />
+                </linearGradient>
+                {/* Inner shadow for screen */}
+                <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feOffset dx="0" dy="2" />
+                  <feGaussianBlur stdDeviation="6" result="offset-blur" />
+                  <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+                  <feFlood flood-color="#000" flood-opacity="0.10" result="color" />
+                  <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+                  <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+                </filter>
+                {/* Clip for screen */}
+                <clipPath id="phoneScreenClip">
+                  <rect x="40" y="60" width="260" height="540" rx="32" />
+                </clipPath>
+              </defs>
+              {/* Phone drop shadow */}
+              <ellipse cx="170" cy="630" rx="90" ry="18" fill="#000" opacity="0.10" />
+              {/* iPhone body with gradient */}
+              <rect x="20" y="20" width="300" height="600" rx="56" fill="url(#phoneBodyGradient)" stroke="#4b0082" strokeWidth="7" />
+              {/* Notch */}
+              <rect x="120" y="32" width="100" height="18" rx="9" fill="#4b0082" />
+              {/* Screen area with inner shadow */}
+              <rect x="40" y="60" width="260" height="540" rx="32" fill="#ede9fe" filter="url(#innerShadow)" />
+              {/* Image inside screen */}
+              <image
+                href="/images/phone2.jpg"
+                x="40" y="60" width="260" height="540"
+                style={{ objectFit: 'cover' }}
+                clipPath="url(#phoneScreenClip)"
+                preserveAspectRatio="xMidYMid slice"
+              />
+              {/* Home indicator */}
+              <rect x="120" y="610" width="100" height="10" rx="5" fill="#4b0082" opacity="0.25" />
+            </svg>
           </div>
-        </div>
-        {/* Phone/Logo image, right of text on desktop, below on mobile */}
-        <div className="relative flex flex-col items-center justify-center flex-1 sm:mt-0">
-          {/* Professional iPhone X-style SVG mockup with phone2.jpg inside the screen, no animation */}
-          <svg
-            viewBox="0 0 340 660"
-            className="block w-48 h-96 sm:w-64 sm:h-[28rem] md:w-[270px] md:h-[540px]"
-            style={{ maxWidth: '90vw' }}
-          >
-            <defs>
-              {/* Gradient for phone body */}
-              <linearGradient id="phoneBodyGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#b39ddb" />
-                <stop offset="100%" stop-color="#7c3aed" />
-              </linearGradient>
-              {/* Inner shadow for screen */}
-              <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
-                <feOffset dx="0" dy="2" />
-                <feGaussianBlur stdDeviation="6" result="offset-blur" />
-                <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
-                <feFlood flood-color="#000" flood-opacity="0.10" result="color" />
-                <feComposite operator="in" in="color" in2="inverse" result="shadow" />
-                <feComposite operator="over" in="shadow" in2="SourceGraphic" />
-              </filter>
-              {/* Clip for screen */}
-              <clipPath id="phoneScreenClip">
-                <rect x="40" y="60" width="260" height="540" rx="32" />
-              </clipPath>
-            </defs>
-            {/* Phone drop shadow */}
-            <ellipse cx="170" cy="630" rx="90" ry="18" fill="#000" opacity="0.10" />
-            {/* iPhone body with gradient */}
-            <rect x="20" y="20" width="300" height="600" rx="56" fill="url(#phoneBodyGradient)" stroke="#4b0082" strokeWidth="7" />
-            {/* Notch */}
-            <rect x="120" y="32" width="100" height="18" rx="9" fill="#4b0082" />
-            {/* Screen area with inner shadow */}
-            <rect x="40" y="60" width="260" height="540" rx="32" fill="#ede9fe" filter="url(#innerShadow)" />
-            {/* Image inside screen */}
-            <image
-              href="/images/phone2.jpg"
-              x="40" y="60" width="260" height="540"
-              style={{ objectFit: 'cover' }}
-              clipPath="url(#phoneScreenClip)"
-              preserveAspectRatio="xMidYMid slice"
-            />
-            {/* Home indicator */}
-            <rect x="120" y="610" width="100" height="10" rx="5" fill="#4b0082" opacity="0.25" />
-          </svg>
         </div>
       </div>
     </section>

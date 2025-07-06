@@ -111,18 +111,10 @@ const HomePage = () => {
           ) : mostPopularPackages.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
-                <div key={pkg.id} className="relative">
-                  <div className="card-glass flex flex-col h-full relative">
-                    {/* Show 'Më e Kërkuara' only for 10GB Europa card */}
-                    {(pkg.country_name === 'Europa' || pkg.country_name === 'Europe') && pkg.data_amount === 10 && (
-                      <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 z-20">
-                        <span className="backdrop-blur-md bg-white/30 border border-white/40 shadow-lg px-7 py-2 rounded-full text-lg font-extrabold text-white tracking-wide drop-shadow-lg" style={{letterSpacing: '0.04em', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)'}}> 
-                          Më e Kërkuara
-                        </span>
-                      </div>
-                    )}
+                <div key={pkg.id}>
+                  <div className="card-glass flex flex-col h-full">
                     <div className="flex-grow">
-                      <div className="flex items-center mb-4 mt-8">
+                      <div className="flex items-center mb-4">
                         <div className="mr-4">
                           {/* EU Flag in Circle */}
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 bg-white flex items-center justify-center">
