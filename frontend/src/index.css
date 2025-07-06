@@ -342,3 +342,14 @@ p, span, div, a, button, input, textarea, select {
 .checkout-page *, .checkout-page {
   color: #111 !important;
 }
+
+/* Allow marquee animation for operator logos even with iOS 26 theme */
+.logo-marquee {
+  animation: marquee 32s linear infinite !important;
+  transform: none !important;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
