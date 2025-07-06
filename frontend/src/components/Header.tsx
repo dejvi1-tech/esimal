@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { scrollToTop } from '@/utils/scrollUtils';
+import { Link, useLocation } from 'react-router-dom';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { language, toggleLanguage, t } = useLanguage();
   const location = useLocation();
-  const { t, language } = useLanguage();
 
-  const handleScrollToTop = (e: React.MouseEvent) => {
-    if (location.pathname === "/") {
-      e.preventDefault();
-      // Use the new scroll utility
-      scrollToTop('smooth');
-    }
-  };
+  const navigationItems = [
+    { name: t('packages'), href: '/packages' },
+    { name: t('check_balance'), href: '/balance' },
+    { name: t('how_it_works'), href: '/how-it-works' },
+    { name: t('about_us'), href: '/about' },
+    { name: t('support'), href: '/support' }
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
@@ -28,7 +28,12 @@ const Header = () => {
             <Link
               to="/"
               className="flex items-center space-x-3 group cursor-pointer"
-              onClick={handleScrollToTop}
+              onClick={e => {
+                if (location.pathname === "/") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: 'auto' });
+                }
+              }}
             >
               <div className="logo-container">
                 <img
@@ -47,51 +52,38 @@ const Header = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link
-                to="/"
-                className="text-white hover:text-blue-300 transition-colors duration-200 font-medium"
-                onClick={handleScrollToTop}
-              >
-                {t('nav_home')}
-              </Link>
-              <Link
-                to="/packages"
-                className="text-white hover:text-blue-300 transition-colors duration-200 font-medium"
-              >
-                {t('nav_packages')}
-              </Link>
-              <Link
-                to="/how-it-works"
-                className="text-white hover:text-blue-300 transition-colors duration-200 font-medium"
-              >
-                {t('nav_how_it_works')}
-              </Link>
-              <Link
-                to="/about"
-                className="text-white hover:text-blue-300 transition-colors duration-200 font-medium"
-              >
-                {t('nav_about')}
-              </Link>
-              <Link
-                to="/support"
-                className="text-white hover:text-blue-300 transition-colors duration-200 font-medium"
-              >
-                {t('nav_support')}
-              </Link>
+            <nav className="hidden md:flex items-center space-x-1">
+              {navigationItems.map((item) => (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`relative px-4 py-2 rounded-lg font-medium glass ${
+                    location.pathname === item.href 
+                      ? 'bg-glass-medium' 
+                      : 'bg-glass'
+                  }`}>
+                  {item.name}
+                  {location.pathname === item.href && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
+                    />
+                  )}
+                </Link>
+              ))}
             </nav>
 
-            {/* Language Toggle */}
+            {/* Desktop CTA */}
             <div className="hidden md:flex items-center space-x-4">
-              <button
-                onClick={() => language === 'en' ? t('switch_to_albanian') : t('switch_to_english')}
-                className="text-white hover:text-blue-300 transition-colors duration-200 text-sm font-medium"
+              <LanguageSwitcher />
+              <Button 
+                className="btn-glass bg-accent text-accent-foreground font-semibold"
+                size="sm"
               >
-                {language === 'en' ? 'SQ' : 'EN'}
-              </button>
+                {t('hero_cta_main')}
+              </Button>
             </div>
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon" className="text-white glass">
@@ -103,9 +95,11 @@ const Header = () => {
                   <Link
                     to="/"
                     className="flex items-center space-x-3 group cursor-pointer"
-                    onClick={(e) => {
-                      setIsOpen(false);
-                      handleScrollToTop(e);
+                    onClick={e => {
+                      if (location.pathname === "/") {
+                        e.preventDefault();
+                        window.scrollTo({ top: 0, behavior: 'auto' });
+                      }
                     }}
                   >
                     <img
@@ -121,71 +115,32 @@ const Header = () => {
                       <span className="text-xs text-gray-200 font-medium">Global eSIM Solutions</span>
                     </div>
                   </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setIsOpen(false)}
-                    className="text-white"
-                  >
-                    <X className="w-6 h-6" />
-                  </Button>
                 </div>
-
-                {/* Mobile Navigation */}
-                <nav className="space-y-4">
-                  <Link
-                    to="/"
-                    className="block text-white hover:text-blue-300 transition-colors duration-200 font-medium py-2"
-                    onClick={() => {
-                      setIsOpen(false);
-                      if (location.pathname === "/") {
-                        scrollToTop('smooth');
-                      }
-                    }}
-                  >
-                    {t('nav_home')}
-                  </Link>
-                  <Link
-                    to="/packages"
-                    className="block text-white hover:text-blue-300 transition-colors duration-200 font-medium py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {t('nav_packages')}
-                  </Link>
-                  <Link
-                    to="/how-it-works"
-                    className="block text-white hover:text-blue-300 transition-colors duration-200 font-medium py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {t('nav_how_it_works')}
-                  </Link>
-                  <Link
-                    to="/about"
-                    className="block text-white hover:text-blue-300 transition-colors duration-200 font-medium py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {t('nav_about')}
-                  </Link>
-                  <Link
-                    to="/support"
-                    className="block text-white hover:text-blue-300 transition-colors duration-200 font-medium py-2"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {t('nav_support')}
-                  </Link>
+                
+                <nav className="space-y-2">
+                  {navigationItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium glass ${
+                        location.pathname === item.href 
+                          ? 'bg-glass-medium' 
+                          : 'bg-glass'
+                      }`}
+                      onClick={() => setIsOpen(false)}>
+                      {item.name}
+                    </Link>
+                  ))}
                 </nav>
-
-                {/* Mobile Language Toggle */}
-                <div className="mt-8 pt-4 border-t border-white/20">
-                  <button
-                    onClick={() => {
-                      language === 'en' ? t('switch_to_albanian') : t('switch_to_english');
-                      setIsOpen(false);
-                    }}
-                    className="text-white hover:text-blue-300 transition-colors duration-200 text-sm font-medium"
+                
+                <div className="mt-8 space-y-4">
+                  <LanguageSwitcher />
+                  <Button 
+                    className="w-full btn-glass bg-accent text-accent-foreground font-semibold"
+                    size="sm"
                   >
-                    {language === 'en' ? 'Switch to Albanian' : 'Switch to English'}
-                  </button>
+                    {t('hero_cta_main')}
+                  </Button>
                 </div>
               </SheetContent>
             </Sheet>

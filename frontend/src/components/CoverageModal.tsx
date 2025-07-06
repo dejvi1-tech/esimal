@@ -1,7 +1,6 @@
 import React from 'react';
 import { X, MapPin, Wifi, Clock, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { preventBodyScroll, restoreBodyScroll } from '@/utils/scrollUtils';
 
 interface CoverageModalProps {
   isOpen: boolean;
@@ -30,14 +29,13 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Use the new scroll utilities
-      preventBodyScroll();
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      // Use the new scroll utilities
-      restoreBodyScroll();
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
 
@@ -112,27 +110,40 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
           </div>
 
           {/* Countries List */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-white mb-4">Covered Countries</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="mb-8">
+            <h3 className="text-xl font-bold mb-4 text-white flex items-center gap-2">
+              <MapPin className="w-5 h-5" />
+              Covered Countries ({coverage.countries.length})
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto">
               {coverage.countries.map((country, index) => (
-                <div key={index} className="flex items-center space-x-2 p-2 glass-light rounded-lg">
-                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  <span className="text-sm text-white">{country}</span>
+                <div
+                  key={index}
+                  className="flex items-center gap-2 p-2 glass-light rounded-lg"
+                >
+                  <div className="w-2 h-2 bg-green-400 rounded-full flex-shrink-0"></div>
+                  <span className="text-sm text-white truncate">{country}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Additional Info */}
-          <div className="mt-8 p-4 glass-light rounded-xl">
-            <h4 className="text-md font-semibold text-white mb-2">Important Notes</h4>
-            <ul className="text-sm text-white/80 space-y-1">
-              <li>• Coverage includes all major European countries</li>
-              <li>• High-speed 4G/LTE network access</li>
-              <li>• No roaming charges within covered countries</li>
-              <li>• 24/7 customer support available</li>
-            </ul>
+          {/* Regions */}
+          <div>
+            <h3 className="text-xl font-bold mb-4 text-white">
+              Covered Regions
+            </h3>
+            <div className="space-y-2">
+              {coverage.regions.map((region, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 glass-light rounded-lg"
+                >
+                  <Globe className="w-5 h-5 text-blue-400" />
+                  <span className="text-white">{region}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

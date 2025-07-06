@@ -30,11 +30,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const hideFooter = hideFooterRoutes.some(route => location.pathname.startsWith(route));
 
   return (
-    <div className="relative min-h-screen flex flex-col bg-[#4B0082] text-white">
+    <div className="relative min-h-screen flex flex-col bg-[#4B0082] text-white overflow-x-hidden">
       <Toaster />
       <Header />
-      <main className="flex-grow pt-20 w-full">
-        <div className="w-full">
+      <main className="flex-grow pt-20">
+        <div className="h-full">
           {children}
         </div>
       </main>
