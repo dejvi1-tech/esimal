@@ -112,8 +112,8 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
                 <div key={pkg.id} className="relative">
-                  {/* Most Popular badge for the 3rd card */}
-                  {index === 2 && (
+                  {/* Most Popular badge for the 15GB Europe Sprint package */}
+                  {pkg.country_code === 'EUS' && pkg.data_amount === 15 && (
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
                       <span className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
                         Most Popular
@@ -172,7 +172,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                            {pkg.country_code === 'EUS' && pkg.data_amount === 1 ? '1GB' : (pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount))}
+                            {pkg.country_code === 'EUS' && pkg.data_amount === 1 ? '1GB' : (pkg.country_code === 'EUS' && pkg.data_amount === 15 ? '10+5GB FALAS (OFERTE)' : (pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount)))}
                           </span>
                         </li>
                         <li className="flex items-center">
