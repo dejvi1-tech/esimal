@@ -5,11 +5,26 @@ import { useLanguage } from '@/contexts/LanguageContext';
 const CheckBalancePage: React.FC = () => {
   const { t } = useLanguage();
   const [esimNumber, setEsimNumber] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [usage, setUsage] = useState<any | null>(null);
 
-  const handleCheckBalance = (e: React.FormEvent) => {
+  const handleCheckBalance = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically make an API call to check the balance
-    alert(`Checking balance for eSIM: ${esimNumber}`);
+    setError(null);
+    setUsage(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/esims/usage/single/${encodeURIComponent(esimNumber)}`);
+      if (!res.ok) throw new Error('Failed to fetch usage');
+      const json = await res.json();
+      if (json.status !== 'success' || !json.data) throw new Error('No usage data found');
+      setUsage(json.data);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -39,17 +54,46 @@ const CheckBalancePage: React.FC = () => {
                   placeholder={t('enter_your_esim_number')}
                   value={esimNumber}
                   onChange={(e) => setEsimNumber(e.target.value)}
+                  disabled={loading}
                 />
                 <button
                   type="submit"
                   className="inline-flex items-center px-8 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                  disabled={loading}
                 >
-                  {t('check_balance')}
+                  {loading ? t('loading') : t('check_balance')}
                 </button>
               </div>
             </div>
           </div>
         </form>
+        {error && (
+          <div className="mt-6 text-red-600 dark:text-red-400 font-semibold">{error}</div>
+        )}
+        {usage && (
+          <div className="mt-8 p-6 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-purple-200 dark:border-purple-700 shadow-md text-left">
+            <div className="mb-2 text-lg font-bold text-purple-700 dark:text-purple-300">eSIM: <span className="font-mono">{usage.iccid}</span></div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-sm text-gray-600 dark:text-gray-300">Status:</span>
+              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${usage.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>{usage.status}</span>
+            </div>
+            <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">Expiry: {usage.expiry ? new Date(usage.expiry).toLocaleDateString() : 'N/A'}</div>
+            <div className="mb-4">
+              <div className="flex justify-between text-xs text-gray-500 mb-1">
+                <span>Used: {usage.dataUsed ?? '?'} GB</span>
+                <span>Limit: {usage.dataLimit ?? '?'} GB</span>
+                <span>Remaining: {usage.dataRemaining ?? '?'} GB</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
+                  style={{ width: usage.dataLimit && usage.dataUsed != null ? `${Math.min(100, (usage.dataUsed / usage.dataLimit) * 100)}%` : '0%' }}
+                ></div>
+              </div>
+            </div>
+            <div className="text-xs text-gray-400 mt-2">Checked: {usage.createdAt ? new Date(usage.createdAt).toLocaleString() : '-'}</div>
+          </div>
+        )}
       </div>
     </div>
   );

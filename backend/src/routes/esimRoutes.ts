@@ -6,7 +6,8 @@ import {
   updateEsimStatus,
   getEsimUsageStats,
   getEsimsByUserId,
-  getAccountBalanceFromRoamify
+  getAccountBalanceFromRoamify,
+  getMyEsimUsages
 } from '../controllers/esimController';
 
 const router = express.Router();
@@ -21,5 +22,8 @@ router.put('/iccid/:iccid/status', updateEsimStatus);
 
 // Get account balance from Roamify
 router.get('/balance-roamify', getAccountBalanceFromRoamify);
+
+// Add route for eSIM usage dashboard
+router.get('/usage', /* requireAuth, */ getMyEsimUsages);
 
 export default router; 

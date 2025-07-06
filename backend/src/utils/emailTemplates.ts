@@ -361,7 +361,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
               
               <!-- eSIM Details -->
               <div class="esim-details">
-                <span class="accent">Nr. eSim:</span> ${esimId}
+                <span class="accent">Nr. eSim:</span> ${data.iccid ? data.iccid : 'PENDING'}
               </div>
               
               <!-- Comprehensive Installation Instructions -->
@@ -897,7 +897,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           <div class="qr">
             <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
           </div>
-          <div class="section"><b>Nr. eSIM:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="section"><b>Nr. eSIM:</b> ${data.iccid ? data.iccid : 'PENDING'}</div>
           <div class="steps">
             <div class="steps-title">Si ta instaloni:</div>
             <ul>
@@ -914,7 +914,7 @@ export const emailTemplates: Record<string, EmailTemplate> = {
           <div class="qr">
             <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
           </div>
-          <div class="section"><b>eSIM Number:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="section"><b>eSIM Number:</b> ${data.iccid ? data.iccid : 'PENDING'}</div>
           <div class="steps">
             <div class="steps-title">How to install:</div>
             <ul>

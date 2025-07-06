@@ -1274,7 +1274,20 @@ async function handleCheckoutSessionCompleted(session: any) {
       // Generate real QR code
       realQRData = await RoamifyService.getQrCodeWithPolling(esimCode);
       
-      logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+      // Step 1.5: Retrieve ICCID using the UUID
+      let iccid: string | null = null;
+      try {
+        logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
+        const iccidData = await RoamifyService.getEsimIccid(esimCode);
+        iccid = iccidData.iccid;
+        logger.info(`ICCID retrieved successfully: ${iccid}`);
+      } catch (iccidError) {
+        logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
+        // Continue without ICCID - it can be retrieved later
+        iccid = null;
+      }
+      
+      logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}, ICCID: ${iccid || 'not retrieved'}`);
     } catch (roamifyError) {
       logger.error('Failed to create Roamify order, using fallback:', roamifyError);
       
@@ -1298,11 +1311,14 @@ async function handleCheckoutSessionCompleted(session: any) {
       name,
       surname,
       esim_code: esimCode,
+      iccid: iccid, // Add ICCID to order data
       qr_code_data: realQRData.lpaCode,
+      qr_code_url: realQRData.qrCodeUrl || '',
       roamify_order_id: roamifyOrderId,
       status: 'paid',
       amount: amount,
       data_amount: packageData.data_amount,
+      data_used: 0, // Initialize data usage to 0
       days: packageData.days,
       stripe_payment_intent_id: session.payment_intent,
       stripe_customer_id: session.customer,
@@ -1362,6 +1378,7 @@ async function handleCheckoutSessionCompleted(session: any) {
             dataAmount: `${packageData.data_amount}GB`,
             days: packageData.days,
             esimCode: esimCode,
+            iccid: iccid, // Add ICCID to email template
             qrCodeData: realQRData.lpaCode,
             qrCodeUrl: realQRData.qrCodeUrl,
             isGuestOrder: true,

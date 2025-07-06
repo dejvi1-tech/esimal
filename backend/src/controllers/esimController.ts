@@ -3,6 +3,7 @@ import { supabase } from '../config/supabase';
 import { AppError } from '../utils/appError';
 import { asyncHandler } from '../utils/asyncHandler';
 import axios from 'axios';
+import { RoamifyService } from '../services/roamifyService';
 
 // At top of file
 const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
@@ -338,4 +339,65 @@ export const getAccountBalanceFromRoamify = asyncHandler(async (
     }
     next(new AppError('Failed to get account balance from Roamify', 500));
   }
+});
+
+// Authenticated endpoint to get all eSIM usages for the logged-in user
+export const getMyEsimUsages = asyncHandler(async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  // Get user ID from auth (assume req.user is set by auth middleware)
+  const userId = req.user?.id;
+  if (!userId) {
+    return next(new AppError('Unauthorized', 401));
+  }
+
+  // Get all orders with ICCID for this user
+  const { data: orders, error } = await supabase
+    .from('orders')
+    .select('id, iccid, data_amount, days, status, expiry_date, created_at')
+    .eq('user_id', userId)
+    .not('iccid', 'is', null)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    return next(new AppError('Error fetching your eSIMs', 500));
+  }
+
+  // For each ICCID, get usage from Roamify
+  const results = await Promise.all(
+    (orders || []).map(async (order) => {
+      if (!order.iccid) return null;
+      try {
+        const usage = await RoamifyService.getEsimUsageDetails(order.iccid);
+        return {
+          iccid: order.iccid,
+          dataUsed: usage.dataUsed,
+          dataLimit: usage.dataLimit,
+          dataRemaining: usage.dataRemaining,
+          status: usage.status,
+          expiry: order.expiry_date,
+          createdAt: order.created_at,
+        };
+      } catch (err) {
+        // If usage lookup fails, return basic info
+        return {
+          iccid: order.iccid,
+          dataUsed: null,
+          dataLimit: order.data_amount,
+          dataRemaining: null,
+          status: order.status || 'unknown',
+          expiry: order.expiry_date,
+          createdAt: order.created_at,
+          error: 'Failed to fetch usage',
+        };
+      }
+    })
+  );
+
+  res.status(200).json({
+    status: 'success',
+    data: results.filter(Boolean),
+  });
 }); 
