@@ -112,7 +112,15 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
                 <div key={pkg.id}>
-                  <div className="card-glass flex flex-col h-full">
+                  {/* Offer label for the first card only */}
+                  {index === 0 && (
+                    <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
+                      <span className="bg-gradient-to-r from-yellow-400 to-pink-500 text-white px-6 py-2 rounded-full text-base font-bold shadow-lg border-2 border-white/30 tracking-wide animate-pulse">
+                        {t('most_wanted_offer')}
+                      </span>
+                    </div>
+                  )}
+                  <div className="card-glass flex flex-col h-full relative">
                     <div className="flex-grow">
                       <div className="flex items-center mb-4">
                         <div className="mr-4">

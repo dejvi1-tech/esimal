@@ -41,7 +41,7 @@ const translations: Translations = {
   select_destination: { al: "Zgjidhni Destinacionin", en: "Select Destination" },
   choose_plan: { al: "Zgjidhni Planin", en: "Choose Plan" },
   most_popular: { al: "Më i Popullarizuar", en: "Most Popular" },
-  buy_now: { al: "BLEJ TANI", en: "BUY NOW" },
+  buy_now: { al: "BLI TANI", en: "BUY NOW" },
 
   // Support
   need_help: { al: "Ju Nevojitet Ndihmë?", en: "Need Help?" },
