@@ -704,7 +704,8 @@ export class RoamifyService {
     return this.retryApiCall(async () => {
       logger.info(`Getting eSIM ICCID for UUID: ${esimUuid}`);
 
-      const url = `${this.baseUrl}/get-esim-12947631e0`;
+      // Try the standard eSIM details endpoint first
+      const url = `${this.baseUrl}/api/esims/${esimUuid}`;
       
       const headers = {
         'Authorization': `Bearer ${this.apiKey}`,
@@ -712,20 +713,17 @@ export class RoamifyService {
         'User-Agent': 'esim-marketplace/1.0.0'
       };
       
-      const params = { id: esimUuid };
-      
       logger.info('[ROAMIFY DEBUG] Getting ICCID - URL:', url);
-      logger.info('[ROAMIFY DEBUG] Getting ICCID - Params:', JSON.stringify(params));
       logger.info('[ROAMIFY DEBUG] Getting ICCID - Headers:', JSON.stringify(headers));
 
-      const response = await axios.get(url, { headers, params });
+      const response = await axios.get(url, { headers });
 
-      if (!response.data || !response.data.iccid) {
+      if (!response.data || !response.data.data || !response.data.data.iccid) {
         throw new Error(`Failed to get ICCID for eSIM UUID: ${esimUuid}`);
       }
 
-      const iccid = response.data.iccid;
-      const status = response.data.status || 'unknown';
+      const iccid = response.data.data.iccid;
+      const status = response.data.data.status || 'unknown';
       
       logger.info(`eSIM ICCID retrieved successfully:`, {
         esimUuid: esimUuid,
@@ -736,7 +734,7 @@ export class RoamifyService {
       return {
         iccid: iccid,
         status: status,
-        esimData: response.data
+        esimData: response.data.data
       };
     }, `Getting ICCID for eSIM UUID ${esimUuid}`);
   }
