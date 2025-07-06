@@ -698,45 +698,27 @@ export class RoamifyService {
 
   /**
    * Get eSIM ICCID using UUID
-   * This method calls the get-esim endpoint to retrieve the actual ICCID
+   * This method uses the existing getEsimDetails method to retrieve the ICCID
    */
   static async getEsimIccid(esimUuid: string): Promise<{ iccid: string; status: string; esimData: any }> {
     return this.retryApiCall(async () => {
       logger.info(`Getting eSIM ICCID for UUID: ${esimUuid}`);
 
-      // Try the standard eSIM details endpoint first
-      const url = `${this.baseUrl}/api/esims/${esimUuid}`;
+      // Use the existing getEsimDetails method which already works
+      const esimData = await this.getEsimDetails(esimUuid);
       
-      const headers = {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'esim-marketplace/1.0.0'
-      };
-      
-      logger.info('[ROAMIFY DEBUG] Getting ICCID - URL:', url);
-      logger.info('[ROAMIFY DEBUG] Getting ICCID - Headers:', JSON.stringify(headers));
-
-      const response = await axios.get(url, { headers });
-
-      if (!response.data || !response.data.data || !response.data.data.iccid) {
-        throw new Error(`Failed to get ICCID for eSIM UUID: ${esimUuid}`);
+      if (!esimData.iccid || !esimData.iccid.startsWith('89')) {
+        throw new Error(`Invalid ICCID received: ${esimData.iccid}`);
       }
 
-      const iccid = response.data.data.iccid;
-      const status = response.data.data.status || 'unknown';
-      
-      logger.info(`eSIM ICCID retrieved successfully:`, {
-        esimUuid: esimUuid,
-        iccid: iccid,
-        status: status
-      });
+      logger.info(`ICCID retrieved successfully: ${esimData.iccid}`);
 
       return {
-        iccid: iccid,
-        status: status,
-        esimData: response.data.data
+        iccid: esimData.iccid,
+        status: esimData.status,
+        esimData: esimData
       };
-    }, `Getting ICCID for eSIM UUID ${esimUuid}`);
+    }, `Getting eSIM ICCID for ${esimUuid}`);
   }
 
   /**
