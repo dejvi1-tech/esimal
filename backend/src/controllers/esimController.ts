@@ -370,7 +370,7 @@ export const getEsimUsageByIccid = asyncHandler(async (
     // Get order details from database first
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, data_amount, days, status, created_at, expiry_date, package_id')
+      .select('id, data_amount, validity_days, status, created_at, expiry_date, package_id')
       .eq('iccid', iccid)
       .single();
 
