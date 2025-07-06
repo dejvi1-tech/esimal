@@ -780,6 +780,9 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       }
     }
 
+    // Initialize ICCID variable at function scope
+    let iccid: string | null = null;
+    
     const userOrderData = {
       user_id: safeUserId,
       package_id: packageId,
@@ -1025,7 +1028,6 @@ async function deliverEsim(order: any, paymentIntent: any, metadata: any) {
       logger.info(`✅ QR code data saved to database`);
       
       // NEW: Retrieve ICCID after QR code generation is successful (eSIM is fully activated)
-      let iccid: string | null = null;
       try {
         logger.info(`🔍 [ICCID DEBUG] Starting ICCID retrieval for eSIM UUID: ${esimId} (after QR code generation)`);
         const iccidData = await RoamifyService.getEsimIccid(esimId);
