@@ -483,32 +483,90 @@ class RoamifyService {
     }
     /**
      * Get eSIM ICCID using UUID
-     * This method uses the existing getEsimDetails method to retrieve the ICCID
+     * This method tries multiple approaches to get the ICCID from the UUID
      */
     static async getEsimIccid(esimUuid) {
         return this.retryApiCall(async () => {
             logger_1.logger.info(`Getting eSIM ICCID for UUID: ${esimUuid}`);
-            // Use the existing getEsimDetails method which already works
-            const esimData = await this.getEsimDetails(esimUuid);
-            if (!esimData.iccid || !esimData.iccid.startsWith('89')) {
-                throw new Error(`Invalid ICCID received: ${esimData.iccid}`);
+            // Try multiple approaches to get ICCID
+            let esimData = null;
+            let iccid = null;
+            // Approach 1: Try the existing getEsimDetails method
+            try {
+                logger_1.logger.info(`[ICCID] Trying getEsimDetails for UUID: ${esimUuid}`);
+                esimData = await this.getEsimDetails(esimUuid);
+                if (esimData.iccid && esimData.iccid.startsWith('89')) {
+                    iccid = esimData.iccid;
+                    logger_1.logger.info(`[ICCID] Success via getEsimDetails: ${iccid}`);
+                }
             }
-            logger_1.logger.info(`ICCID retrieved successfully: ${esimData.iccid}`);
+            catch (error) {
+                logger_1.logger.warn(`[ICCID] getEsimDetails failed: ${error}`);
+            }
+            // Approach 2: Try direct API call to /api/esim with UUID as parameter
+            if (!iccid) {
+                try {
+                    logger_1.logger.info(`[ICCID] Trying direct API call for UUID: ${esimUuid}`);
+                    const response = await axios_1.default.get(`${this.baseUrl}/api/esim`, {
+                        params: { id: esimUuid },
+                        headers: {
+                            'Authorization': `Bearer ${this.apiKey}`,
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'esim-marketplace/1.0.0'
+                        }
+                    });
+                    if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
+                        iccid = response.data.iccid;
+                        esimData = response.data;
+                        logger_1.logger.info(`[ICCID] Success via direct API call: ${iccid}`);
+                    }
+                }
+                catch (error) {
+                    logger_1.logger.warn(`[ICCID] Direct API call failed: ${error}`);
+                }
+            }
+            // Approach 3: Try order details endpoint
+            if (!iccid) {
+                try {
+                    logger_1.logger.info(`[ICCID] Trying order details for UUID: ${esimUuid}`);
+                    const response = await axios_1.default.get(`${this.baseUrl}/api/esim/order`, {
+                        params: { esimId: esimUuid },
+                        headers: {
+                            'Authorization': `Bearer ${this.apiKey}`,
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'esim-marketplace/1.0.0'
+                        }
+                    });
+                    if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
+                        iccid = response.data.iccid;
+                        esimData = response.data;
+                        logger_1.logger.info(`[ICCID] Success via order details: ${iccid}`);
+                    }
+                }
+                catch (error) {
+                    logger_1.logger.warn(`[ICCID] Order details failed: ${error}`);
+                }
+            }
+            if (!iccid) {
+                throw new Error(`Failed to retrieve ICCID for eSIM UUID: ${esimUuid} after trying all approaches`);
+            }
+            logger_1.logger.info(`ICCID retrieved successfully: ${iccid}`);
             return {
-                iccid: esimData.iccid,
-                status: esimData.status,
+                iccid: iccid,
+                status: esimData?.status || 'unknown',
                 esimData: esimData
             };
         }, `Getting eSIM ICCID for ${esimUuid}`);
     }
     /**
      * Get eSIM usage details using ICCID
-     * This method calls the get-esim-usage-details endpoint
+     * This method uses the correct Roamify API endpoint: /api/esim/usage/details
      */
     static async getEsimUsageDetails(iccid) {
         return this.retryApiCall(async () => {
             logger_1.logger.info(`Getting eSIM usage details for ICCID: ${iccid}`);
-            const url = `${this.baseUrl}/get-esim-usage-details`;
+            // Use the correct endpoint from Roamify API docs
+            const url = `${this.baseUrl}/api/esim/usage/details`;
             const headers = {
                 'Authorization': `Bearer ${this.apiKey}`,
                 'Content-Type': 'application/json',
