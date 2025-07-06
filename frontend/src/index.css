@@ -196,6 +196,11 @@ body::after {
   transition: none !important;
 }
 
+/* Safari flexbox fix: Prevent text from being squished in navbar */
+.navbar-glassmorphism-fixed .flex > * {
+  min-width: 0;
+}
+
 .navbar-mobile-glassmorphism {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
