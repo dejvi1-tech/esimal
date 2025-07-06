@@ -26,7 +26,7 @@ const LogoSlider: React.FC<LogoSliderProps> = ({ logos }) => {
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#4B0082] to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#4B0082] to-transparent z-10 pointer-events-none" />
           <div
-            className="logo-marquee flex gap-12 whitespace-nowrap"
+            className="logo-marquee inline-flex min-w-max gap-12 whitespace-nowrap"
           >
             {marqueeLogos.map((logo, index) => (
               <div
