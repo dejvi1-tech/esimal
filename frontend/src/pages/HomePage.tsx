@@ -113,11 +113,11 @@ const HomePage = () => {
               {mostPopularPackages.map((pkg, index) => (
                 <div key={pkg.id} className="relative">
                   <div className="card-glass flex flex-col h-full relative">
-                    {/* Offer label for the first card only, inside the card */}
-                    {index === 0 && (
+                    {/* Show 'Më e Kërkuara' only for 10GB Europa card */}
+                    {(pkg.country_name === 'Europa' || pkg.country_name === 'Europe') && pkg.data_amount === 10 && (
                       <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 z-20">
                         <span className="backdrop-blur-md bg-white/30 border border-white/40 shadow-lg px-7 py-2 rounded-full text-lg font-extrabold text-white tracking-wide drop-shadow-lg" style={{letterSpacing: '0.04em', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)'}}> 
-                          {t('most_wanted_offer')}
+                          Më e Kërkuara
                         </span>
                       </div>
                     )}
