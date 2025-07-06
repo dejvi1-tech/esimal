@@ -25,7 +25,7 @@ const LanguageSwitcher: React.FC = () => {
   return (
     <button
       onClick={toggleLanguage}
-      className="btn-glass flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold h-11"
+      className="backdrop-blur-lg bg-white/10 border border-white/20 flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold h-11 shadow-lg"
       type="button"
     >
       {/* Flag container */}

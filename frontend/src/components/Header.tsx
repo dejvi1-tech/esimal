@@ -22,8 +22,8 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
       <div className="w-full px-4">
-        <div className="navbar-glassmorphism-fixed">
-          <div className="flex items-center justify-between h-[4.5rem] gap-x-10">
+        <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-b-2xl shadow-lg mx-auto max-w-7xl">
+          <div className="flex items-center justify-between h-[4.5rem] gap-x-10 px-6">
             {/* Logo */}
             <Link
               to="/"
@@ -35,7 +35,7 @@ const Header = () => {
                 }
               }}
             >
-              <div className="logo-container">
+              <div className="backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl p-2 shadow-lg">
                 <img
                   src="/images/new-airplane-logo.png"
                   alt="e-SimFly Logo"
@@ -57,10 +57,10 @@ const Header = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`relative px-4 py-2 rounded-lg font-medium glass ${
+                  className={`relative px-4 py-2 rounded-lg font-medium backdrop-blur-lg border border-white/20 ${
                     location.pathname === item.href 
-                      ? 'bg-glass-medium' 
-                      : 'bg-glass'
+                      ? 'bg-white/20' 
+                      : 'bg-white/10'
                   }`}>
                   {item.name}
                   {location.pathname === item.href && (
@@ -76,7 +76,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-4">
               <LanguageSwitcher />
               <Button 
-                className="btn-glass bg-accent text-accent-foreground font-semibold"
+                className="backdrop-blur-lg bg-accent text-accent-foreground font-semibold border border-white/20"
                 size="sm"
               >
                 {t('hero_cta_main')}
@@ -86,11 +86,11 @@ const Header = () => {
             {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-white glass">
+                <Button variant="ghost" size="icon" className="text-white backdrop-blur-lg bg-white/10 border border-white/20">
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 navbar-mobile-glassmorphism">
+              <SheetContent side="right" className="w-80 backdrop-blur-lg bg-white/10 border border-white/20">
                 <div className="flex items-center justify-between mb-8">
                   <Link
                     to="/"
@@ -122,10 +122,10 @@ const Header = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium glass ${
+                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium backdrop-blur-lg border border-white/20 ${
                         location.pathname === item.href 
-                          ? 'bg-glass-medium' 
-                          : 'bg-glass'
+                          ? 'bg-white/20' 
+                          : 'bg-white/10'
                       }`}
                       onClick={() => setIsOpen(false)}>
                       {item.name}
@@ -136,7 +136,7 @@ const Header = () => {
                 <div className="mt-8 space-y-4">
                   <LanguageSwitcher />
                   <Button 
-                    className="w-full btn-glass bg-accent text-accent-foreground font-semibold"
+                    className="w-full backdrop-blur-lg bg-accent text-accent-foreground font-semibold border border-white/20"
                     size="sm"
                   >
                     {t('hero_cta_main')}
