@@ -17,7 +17,7 @@ const PackagesPage: React.FC = () => {
         <title>eSIM Packages - Global Coverage</title>
         <meta name="description" content="Browse our wide selection of eSIM packages for global connectivity. Find the perfect plan for your travel needs." />
       </Helmet>
-      <div className="pt-24 pb-16 min-h-screen bg-gradient-to-br from-purple-500 via-purple-300 to-purple-100">
+      <div className="pt-24 pb-16 min-h-screen bg-gradient-to-br from-[#6C1D8F] via-[#8F2DE2] to-[#B993D6]">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-bold mb-8 text-center text-white drop-shadow-lg">Available Countries</h1>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
@@ -25,7 +25,7 @@ const PackagesPage: React.FC = () => {
               <Link
                 key={country.code}
                 to={`/country/${countrySlug(country.name.en)}`}
-                className="flex flex-col items-center justify-center bg-purple-100/40 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-purple-300/60 transition-transform hover:scale-105 hover:shadow-2xl cursor-pointer"
+                className="flex flex-col items-center justify-center bg-[#8F2DE2]/40 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-[#8F2DE2]/60 transition-transform hover:scale-105 hover:shadow-2xl cursor-pointer"
               >
                 <div className="w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-inner mb-4">
                   <img src={country.flag} alt={country.name[language]} className="w-12 h-12 object-contain rounded-full" />
