@@ -31,12 +31,10 @@ const Footer = () => {
 
   },
   {
-    title: "Ligjore",
+    title: "Ndihme",
     links: [
-    { name: "Kushtet e Shërbimit", href: "#" },
-    { name: "Politika e Privatësisë", href: "#" },
-    { name: "Politika e Cookies", href: "#" },
-    { name: "Politika e Rimbursimit", href: "#" }]
+    { name: "Help Center", href: "https://esimfly.al/support" },
+    ]
 
   }];
 
