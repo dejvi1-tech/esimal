@@ -123,26 +123,6 @@ const Footer = () => {
           )}
         </div>
 
-        {/* Newsletter Signup */}
-        <div className="border-t border-white/20 mt-12 pt-8">
-          <div className="max-w-md">
-            <h3 className="font-semibold mb-4 text-white">Qëndroni të Përditësuar</h3>
-            <p className="text-gray-300 text-sm mb-4">
-              Merrni këshillat më të reja të udhëtimit dhe ofertat eSIM të dërguara në email-in tuaj.
-            </p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="Shkruani email-in tuaj"
-                className="input-glass flex-1 px-4 py-2 rounded-l-lg text-white placeholder-gray-300" />
-
-              <button className="btn-glass px-6 py-2 bg-accent text-accent-foreground rounded-r-lg font-semibold">
-                Regjistrohu
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Bottom Section */}
         <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-300 text-sm mb-4 md:mb-0">
