@@ -13,21 +13,18 @@ const Footer = () => {
 
   },
   {
-    title: "Mbështetja",
+    title: "e-SimFly",
     links: [
-    { name: "Qendra e Ndihmës", href: "#" },
-    { name: "Udhëzuesit e Konfigurimit", href: "#" },
-    { name: "Na Kontaktoni", href: "#" },
-    { name: "Chat i Drejtpërdrejtë", href: "#" }]
+    { name: "Privatësia & Cookies", href: "#" },
+    { name: "Termat & Kushtet", href: "#" },
+    ]
 
   },
   {
     title: "Kompania",
     links: [
-    { name: "Rreth Nesh", href: "#" },
-    { name: "Blogu", href: "#" },
-    { name: "Karriera", href: "#" },
-    { name: "Shtypi", href: "#" }]
+    { name: "Rreth Nesh", href: "https://esimfly.al/about" },
+    ]
 
   },
   {
@@ -78,7 +75,7 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
                 <Mail className="w-4 h-4 mr-3" />
-                <span className="text-sm">support@globalesim.com</span>
+                <span className="text-sm">support@esimfly.al</span>
               </div>
               <div className="flex items-center text-gray-300">
                 <Phone className="w-4 h-4 mr-3" />
@@ -86,7 +83,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center text-gray-300">
                 <MapPin className="w-4 h-4 mr-3" />
-                <span className="text-sm">San Francisco, CA</span>
+                <span className="text-sm">Albania , Tiranë</span>
               </div>
             </div>
           </div>
