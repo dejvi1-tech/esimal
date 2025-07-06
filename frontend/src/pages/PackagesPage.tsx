@@ -25,12 +25,12 @@ const PackagesPage: React.FC = () => {
               <Link
                 key={country.code}
                 to={`/country/${countrySlug(country.name.en)}`}
-                className="flex flex-col items-center justify-center bg-white/70 backdrop-blur-md rounded-2xl shadow-md p-6 transition-transform hover:scale-105 hover:shadow-xl cursor-pointer border border-transparent hover:border-blue-400"
+                className="flex flex-col items-center justify-center bg-white/30 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-purple-200/60 transition-transform hover:scale-105 hover:shadow-2xl cursor-pointer"
               >
                 <div className="w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-inner mb-4">
                   <img src={country.flag} alt={country.name[language]} className="w-12 h-12 object-contain rounded-full" />
                 </div>
-                <span className="text-lg font-semibold text-gray-800 text-center drop-shadow-sm">{country.name[language]}</span>
+                <span className="text-lg font-bold text-black text-center drop-shadow-md">{country.name[language]}</span>
               </Link>
             ))}
           </div>
