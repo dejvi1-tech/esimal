@@ -21,6 +21,8 @@ import IOS26Demo from './components/IOS26Demo';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
+import { initializeScrollFixes } from './utils/scrollUtils';
+import { useEffect } from 'react';
 
 // Helper for legacy /country/:code redirect
 function generateFullCountryPath(code: string | undefined): string {
@@ -30,6 +32,11 @@ function generateFullCountryPath(code: string | undefined): string {
 }
 
 function App() {
+  // Initialize scroll fixes on app mount
+  useEffect(() => {
+    initializeScrollFixes();
+  }, []);
+
   return (
     <>
       <Toaster position="top-right" richColors />
