@@ -708,49 +708,39 @@ export class RoamifyService {
       let esimData = null;
       let iccid = null;
 
-      // Approach 1: Try the existing getEsimDetails method
+      // Approach 1: Try /api/esim with UUID as esimId parameter
       try {
-        logger.info(`🔍 [ICCID SERVICE] Trying getEsimDetails for UUID: ${esimUuid}`);
-        esimData = await this.getEsimDetails(esimUuid);
-        logger.info(`🔍 [ICCID SERVICE] getEsimDetails response:`, esimData);
+        logger.info(`🔍 [ICCID SERVICE] Trying /api/esim with esimId parameter for UUID: ${esimUuid}`);
+        const response = await axios.get(`${this.baseUrl}/api/esim`, {
+          params: { esimId: esimUuid },
+          headers: {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'esim-marketplace/1.0.0'
+          }
+        });
         
-        if (esimData.iccid && esimData.iccid.startsWith('89')) {
-          iccid = esimData.iccid;
-          logger.info(`✅ [ICCID SERVICE] Success via getEsimDetails: ${iccid}`);
+        logger.info(`🔍 [ICCID SERVICE] /api/esim response:`, response.data);
+        
+        if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
+          iccid = response.data.iccid;
+          esimData = response.data;
+          logger.info(`✅ [ICCID SERVICE] Success via /api/esim: ${iccid}`);
+        } else if (response.data && response.data.data && response.data.data.iccid && response.data.data.iccid.startsWith('89')) {
+          iccid = response.data.data.iccid;
+          esimData = response.data.data;
+          logger.info(`✅ [ICCID SERVICE] Success via /api/esim (nested data): ${iccid}`);
         } else {
-          logger.warn(`⚠️ [ICCID SERVICE] getEsimDetails returned invalid ICCID: ${esimData.iccid}`);
+          logger.warn(`⚠️ [ICCID SERVICE] /api/esim returned invalid ICCID: ${response.data?.iccid || response.data?.data?.iccid}`);
         }
       } catch (error) {
-        logger.warn(`❌ [ICCID SERVICE] getEsimDetails failed: ${error}`);
+        logger.warn(`❌ [ICCID SERVICE] /api/esim failed: ${error}`);
       }
 
-      // Approach 2: Try direct API call to /api/esim with UUID as parameter
+      // Approach 2: Try /api/esim/order with UUID as esimId parameter
       if (!iccid) {
         try {
-          logger.info(`[ICCID] Trying direct API call for UUID: ${esimUuid}`);
-          const response = await axios.get(`${this.baseUrl}/api/esim`, {
-            params: { id: esimUuid },
-            headers: {
-              'Authorization': `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json',
-              'User-Agent': 'esim-marketplace/1.0.0'
-            }
-          });
-          
-          if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
-            iccid = response.data.iccid;
-            esimData = response.data;
-            logger.info(`[ICCID] Success via direct API call: ${iccid}`);
-          }
-        } catch (error) {
-          logger.warn(`[ICCID] Direct API call failed: ${error}`);
-        }
-      }
-
-      // Approach 3: Try order details endpoint
-      if (!iccid) {
-        try {
-          logger.info(`[ICCID] Trying order details for UUID: ${esimUuid}`);
+          logger.info(`[ICCID] Trying /api/esim/order with esimId parameter for UUID: ${esimUuid}`);
           const response = await axios.get(`${this.baseUrl}/api/esim/order`, {
             params: { esimId: esimUuid },
             headers: {
@@ -760,13 +750,66 @@ export class RoamifyService {
             }
           });
           
+          logger.info(`[ICCID] /api/esim/order response:`, response.data);
+          
           if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
             iccid = response.data.iccid;
             esimData = response.data;
-            logger.info(`[ICCID] Success via order details: ${iccid}`);
+            logger.info(`[ICCID] Success via /api/esim/order: ${iccid}`);
+          } else if (response.data && response.data.data && response.data.data.iccid && response.data.data.iccid.startsWith('89')) {
+            iccid = response.data.data.iccid;
+            esimData = response.data.data;
+            logger.info(`[ICCID] Success via /api/esim/order (nested data): ${iccid}`);
           }
         } catch (error) {
-          logger.warn(`[ICCID] Order details failed: ${error}`);
+          logger.warn(`[ICCID] /api/esim/order failed: ${error}`);
+        }
+      }
+
+      // Approach 3: Try /api/esim/details with UUID as parameter
+      if (!iccid) {
+        try {
+          logger.info(`[ICCID] Trying /api/esim/details for UUID: ${esimUuid}`);
+          const response = await axios.get(`${this.baseUrl}/api/esim/details`, {
+            params: { esimId: esimUuid },
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+              'User-Agent': 'esim-marketplace/1.0.0'
+            }
+          });
+          
+          logger.info(`[ICCID] /api/esim/details response:`, response.data);
+          
+          if (response.data && response.data.iccid && response.data.iccid.startsWith('89')) {
+            iccid = response.data.iccid;
+            esimData = response.data;
+            logger.info(`[ICCID] Success via /api/esim/details: ${iccid}`);
+          } else if (response.data && response.data.data && response.data.data.iccid && response.data.data.iccid.startsWith('89')) {
+            iccid = response.data.data.iccid;
+            esimData = response.data.data;
+            logger.info(`[ICCID] Success via /api/esim/details (nested data): ${iccid}`);
+          }
+        } catch (error) {
+          logger.warn(`[ICCID] /api/esim/details failed: ${error}`);
+        }
+      }
+
+      // Approach 4: Try the existing getEsimDetails method as fallback
+      if (!iccid) {
+        try {
+          logger.info(`🔍 [ICCID SERVICE] Trying getEsimDetails for UUID: ${esimUuid}`);
+          esimData = await this.getEsimDetails(esimUuid);
+          logger.info(`🔍 [ICCID SERVICE] getEsimDetails response:`, esimData);
+          
+          if (esimData.iccid && esimData.iccid.startsWith('89')) {
+            iccid = esimData.iccid;
+            logger.info(`✅ [ICCID SERVICE] Success via getEsimDetails: ${iccid}`);
+          } else {
+            logger.warn(`⚠️ [ICCID SERVICE] getEsimDetails returned invalid ICCID: ${esimData.iccid}`);
+          }
+        } catch (error) {
+          logger.warn(`❌ [ICCID SERVICE] getEsimDetails failed: ${error}`);
         }
       }
 
