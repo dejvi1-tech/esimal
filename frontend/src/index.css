@@ -40,8 +40,8 @@ body::after {
   display: none !important;
 }
 
-/* Disable ALL transitions and animations globally, EXCEPT for .logo-marquee and its children */
-*:not(.logo-marquee):not(.logo-marquee *) {
+/* Disable ALL transitions and animations globally */
+* {
   transition: none !important;
   animation: none !important;
   transform: none !important;
@@ -341,15 +341,4 @@ p, span, div, a, button, input, textarea, select {
 /* Override: Force black text for all text in the checkout page */
 .checkout-page *, .checkout-page {
   color: #111 !important;
-}
-
-/* Allow marquee animation for operator logos even with iOS 26 theme */
-.logo-marquee {
-  animation: marquee 32s linear infinite !important;
-  transform: none !important;
-}
-
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
 }
