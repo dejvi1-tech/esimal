@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, MapPin, Wifi, Clock, Globe } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface CoverageModalProps {
   isOpen: boolean;
@@ -16,8 +17,9 @@ interface CoverageModalProps {
 
 const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage }) => {
   const { t, language } = useLanguage();
-
-  if (!isOpen) return null;
+  
+  // Use the scroll lock hook for safe scroll management
+  const { forceRestoreScroll } = useScrollLock(isOpen);
 
   // Handle escape key
   React.useEffect(() => {
@@ -29,15 +31,14 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
 
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden';
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
     };
   }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
     <div 

@@ -2,6 +2,7 @@ import React from 'react';
 import { X, MapPin, Wifi, Clock, Globe, Star, Users, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Country } from '@/data/countries';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface CountryInfoModalProps {
   isOpen: boolean;
@@ -11,6 +12,9 @@ interface CountryInfoModalProps {
 
 const CountryInfoModal: React.FC<CountryInfoModalProps> = ({ isOpen, onClose, country }) => {
   const { t, language } = useLanguage();
+  
+  // Use the scroll lock hook for safe scroll management
+  useScrollLock(isOpen);
 
   if (!isOpen || !country) return null;
 

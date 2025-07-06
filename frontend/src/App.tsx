@@ -8,6 +8,8 @@ import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+// Import scroll restoration utilities
+import './utils/scrollRestoration';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('./pages/HomePage'));

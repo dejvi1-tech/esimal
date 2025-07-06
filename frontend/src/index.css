@@ -31,6 +31,24 @@ html, body {
   color: var(--text-color) !important;
   transition: none !important;
   animation: none !important;
+  /* Ensure scroll is always enabled by default */
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+/* Prevent scroll blocking on html and body */
+html.no-scroll, body.no-scroll {
+  overflow: auto !important;
+}
+
+html.scroll-lock, body.scroll-lock {
+  overflow: auto !important;
+}
+
+/* Ensure body can always scroll */
+body {
+  overflow-y: auto !important;
+  overflow-x: auto !important;
 }
 
 body::after {
@@ -68,6 +86,9 @@ body::after {
     font-feature-settings: "rlig" 1, "calt" 1;
     background: var(--fixed-bg) !important;
     color: var(--text-color) !important;
+    /* Ensure scroll is always enabled */
+    overflow-y: auto !important;
+    overflow-x: auto !important;
   }
 }
 
@@ -341,4 +362,16 @@ p, span, div, a, button, input, textarea, select {
 /* Override: Force black text for all text in the checkout page */
 .checkout-page *, .checkout-page {
   color: #111 !important;
+}
+
+/* Emergency scroll restoration - ensure these styles can be overridden */
+html.force-scroll, body.force-scroll {
+  overflow: auto !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+/* Prevent any fixed overlays from blocking scroll permanently */
+.fixed-overlay-blocking {
+  display: none !important;
 }
