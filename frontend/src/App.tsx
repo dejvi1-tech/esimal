@@ -6,6 +6,7 @@ import ProtectedAdminRoute from './components/ProtectedAdminRoute';
 import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
+import PrivacyPage from './pages/PrivacyPage';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -86,6 +87,7 @@ function App() {
                         <Route path="search" element={<SearchPage />} />
                         <Route path="balance" element={<CheckBalancePage />} />
                         <Route path="ios26-demo" element={<IOS26Demo />} />
+                        <Route path="privacy" element={<PrivacyPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>

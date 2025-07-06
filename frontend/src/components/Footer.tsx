@@ -15,7 +15,7 @@ const Footer = () => {
   {
     title: "e-SimFly",
     links: [
-    { name: "Privatësia & Cookies", href: "#" },
+    { name: "Privatësia & Cookies", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
     { name: "Termat & Kushtet", href: "#" },
     ]
 
@@ -97,8 +97,10 @@ const Footer = () => {
               <li key={linkIndex}>
                     <a
                   href={link.href}
-                  className="text-gray-300 text-sm">
-
+                  className="text-gray-300 text-sm"
+                  {...(link.target ? { target: link.target } : {})}
+                  {...(link.rel ? { rel: link.rel } : {})}
+                >
                       {link.name}
                     </a>
                   </li>
