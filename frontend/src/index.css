@@ -40,8 +40,8 @@ body::after {
   display: none !important;
 }
 
-/* Disable ALL transitions and animations globally */
-* {
+/* Disable ALL transitions and animations globally, EXCEPT for .logo-marquee and its children */
+*:not(.logo-marquee):not(.logo-marquee *) {
   transition: none !important;
   animation: none !important;
   transform: none !important;
