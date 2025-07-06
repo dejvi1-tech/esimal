@@ -365,6 +365,8 @@ export const getEsimUsageByIccid = asyncHandler(async (
   }
 
   try {
+    console.log(`[DEBUG] Fetching order details for ICCID: ${iccid}`);
+    
     // Get order details from database first
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -372,13 +374,19 @@ export const getEsimUsageByIccid = asyncHandler(async (
       .eq('iccid', iccid)
       .single();
 
+    console.log(`[DEBUG] Order query result:`, { order, orderError });
+
     if (orderError && orderError.code !== 'PGRST116') {
-      return next(new AppError('Error fetching order details', 500));
+      console.error(`[DEBUG] Database error:`, orderError);
+      return next(new AppError(`Error fetching order details: ${orderError.message}`, 500));
     }
 
     if (!order) {
+      console.log(`[DEBUG] No order found for ICCID: ${iccid}`);
       return next(new AppError('eSIM not found with this ICCID', 404));
     }
+
+    console.log(`[DEBUG] Order found:`, order);
 
     let usage = null;
     let usageError = null;
