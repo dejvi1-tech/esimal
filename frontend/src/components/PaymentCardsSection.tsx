@@ -1,9 +1,10 @@
 import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import LazyImage from './ui/LazyImage';
 
 const cardImages = [
-  { src: 'https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png', alt: 'Visa' },
-  { src: 'https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png', alt: 'Mastercard' },
+  { src: '/images/payment-cards/visa-logo.webp', alt: 'Visa' },
+  { src: '/images/payment-cards/mastercard-logo.webp', alt: 'Mastercard' },
 ];
 
 const PaymentCardsSection: React.FC = () => {
@@ -19,7 +20,12 @@ const PaymentCardsSection: React.FC = () => {
         <div className="flex flex-row gap-2 md:gap-4 items-center">
           {cardImages.map((img, idx) => (
             <div key={idx} className="w-24 h-14 flex items-center justify-center rounded-lg bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/30 shadow-lg p-2">
-              <img src={img.src} alt={img.alt} className="max-h-10 max-w-[60px] object-contain" />
+              <LazyImage
+                src={img.src}
+                alt={img.alt}
+                className="max-h-10 max-w-[60px] object-contain"
+                priority={true}
+              />
             </div>
           ))}
         </div>

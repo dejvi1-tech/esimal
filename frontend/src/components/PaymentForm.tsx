@@ -181,9 +181,9 @@ export const PaymentForm = forwardRef<PaymentFormRef, PaymentFormProps>(({
   return (
     <div className="bg-gray-50 border-2 border-gray-200 shadow-md rounded-xl p-6">
       <div className="flex items-center gap-2 mb-6">
-        <img src="https://img.icons8.com/color/32/000000/visa.png" alt="Visa" className="h-8" />
-        <img src="https://img.icons8.com/color/32/000000/mastercard-logo.png" alt="Mastercard" className="h-8" />
-        <img src="https://img.icons8.com/color/32/000000/amex.png" alt="Amex" className="h-8" />
+        <img src="/images/payment-cards/visa-logo.webp" alt="Visa" className="h-8" />
+        <img src="/images/payment-cards/mastercard-logo.webp" alt="Mastercard" className="h-8" />
+        <img src="/images/payment-cards/amex-logo.webp" alt="Amex" className="h-8" />
         <span className="ml-2 bg-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full border">+1</span>
       </div>
       <div className="space-y-6">

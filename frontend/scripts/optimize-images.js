@@ -24,14 +24,7 @@ if (!fs.existsSync(optimizedDir)) {
   fs.mkdirSync(optimizedDir, { recursive: true });
 }
 
-// Image optimization settings
-const optimizationSettings = {
-  quality: 85,
-  progressive: true,
-  mozjpeg: true,
-};
-
-// Function to optimize images
+// Function to optimize images and create WebP versions
 async function optimizeImage(inputPath, outputPath, options = {}) {
   try {
     const image = sharp.default(inputPath);
@@ -70,6 +63,23 @@ async function optimizeImage(inputPath, outputPath, options = {}) {
     console.log(`   Optimized: ${(optimizedSize / 1024).toFixed(1)}KB`);
     console.log(`   Savings: ${savings}%`);
     
+    // Create WebP version
+    const webpPath = outputPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    await sharp.default(inputPath)
+      .webp({ 
+        quality: options.quality || 85,
+        effort: 6,
+        nearLossless: false
+      })
+      .toFile(webpPath);
+    
+    const webpSize = fs.statSync(webpPath).size;
+    const webpSavings = ((originalSize - webpSize) / originalSize * 100).toFixed(1);
+    
+    console.log(`✅ WebP: ${path.basename(webpPath)}`);
+    console.log(`   WebP Size: ${(webpSize / 1024).toFixed(1)}KB`);
+    console.log(`   WebP Savings: ${webpSavings}%`);
+    
   } catch (error) {
     console.error(`❌ Error optimizing ${inputPath}:`, error.message);
   }
@@ -103,16 +113,30 @@ async function processDirectory(dirPath, outputDir) {
     } else {
       // Check if it's an image file
       const ext = path.extname(file).toLowerCase();
-      if (['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
+      if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
         const outputPath = path.join(outputDir, file);
         
-        // Only optimize if the file is larger than 100KB
-        if (stat.size > 100 * 1024) {
+        // Only optimize if the file is larger than 50KB
+        if (stat.size > 50 * 1024) {
           await optimizeImage(filePath, outputPath);
         } else {
           // Copy smaller files as-is
           fs.copyFileSync(filePath, outputPath);
           console.log(`📁 Copied: ${file} (already small)`);
+          
+          // Still create WebP version for small files
+          const webpPath = outputPath.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+          try {
+            await sharp.default(filePath)
+              .webp({ 
+                quality: 85,
+                effort: 6
+              })
+              .toFile(webpPath);
+            console.log(`✅ WebP: ${path.basename(webpPath)} (small file)`);
+          } catch (error) {
+            console.error(`❌ Error creating WebP for ${file}:`, error.message);
+          }
         }
       }
     }
@@ -121,17 +145,18 @@ async function processDirectory(dirPath, outputDir) {
 
 // Main execution
 async function main() {
-  console.log('🚀 Starting image optimization...\n');
+  console.log('🚀 Starting image optimization with WebP generation...\n');
   
   // Process public directory
   await processDirectory(publicDir, optimizedDir);
   
   console.log('\n✅ Image optimization complete!');
   console.log(`📁 Optimized images saved to: ${optimizedDir}`);
-  console.log('\n💡 To use optimized images:');
+  console.log('\n💡 Next steps:');
   console.log('1. Replace the original images with the optimized ones');
-  console.log('2. Update image references in your code to use the optimized versions');
-  console.log('3. Consider using WebP format for even better compression');
+  console.log('2. Update image references to use WebP with fallbacks');
+  console.log('3. Consider implementing responsive images with srcset');
+  console.log('4. Add picture elements for WebP support');
 }
 
 main().catch(console.error); 

@@ -5,6 +5,7 @@ import { Country } from "@/data/countries";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { countrySlug } from '../lib/utils';
+import LazyImage from './ui/LazyImage';
 
 // Custom 5G chip SVG
 const FiveGChipIcon = () => {
@@ -91,11 +92,11 @@ const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
-  // Slideshow images
+  // Slideshow images with WebP support
   const slides = [
-    "/images/slide1.jpg",
-    "/images/slide2.jpg", 
-    "/images/slide3.jpg"
+    "/images/slide1.webp",
+    "/images/slide2.webp", 
+    "/images/slide3.webp"
   ];
 
   // Preload images for smoother transitions
@@ -185,7 +186,7 @@ const HeroSection = () => {
             <rect x="40" y="60" width="260" height="540" rx="32" fill="#ede9fe" filter="url(#innerShadow)" />
             {/* Image inside screen */}
             <image
-              href="/images/phone2.jpg"
+              href="/images/phone2.webp"
               x="40" y="60" width="260" height="540"
               style={{ objectFit: 'cover' }}
               clipPath="url(#phoneScreenClip)"

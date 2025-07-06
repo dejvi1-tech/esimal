@@ -1,0 +1,1 @@
+import"./router-DECodpxX.js";import{a as r}from"./vendor-DEQ385Nk.js";import"./ui-B6UisXh3.js";var o,t={};var e=function(){if(o)return t;o=1;var e=r();return t.createRoot=e.createRoot,t.hydrateRoot=e.hydrateRoot,t}();export{e as c};

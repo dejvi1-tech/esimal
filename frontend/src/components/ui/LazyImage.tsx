@@ -9,6 +9,8 @@ interface LazyImageProps {
   width?: number;
   height?: number;
   priority?: boolean;
+  sizes?: string;
+  srcSet?: string;
 }
 
 const LazyImage: React.FC<LazyImageProps> = ({
@@ -19,11 +21,29 @@ const LazyImage: React.FC<LazyImageProps> = ({
   width,
   height,
   priority = false,
+  sizes,
+  srcSet,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLImageElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
+
+  // Generate WebP source if available
+  const generateWebPSource = (originalSrc: string) => {
+    const webpSrc = originalSrc.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    return webpSrc;
+  };
+
+  // Generate srcSet for responsive images
+  const generateSrcSet = (originalSrc: string) => {
+    if (srcSet) return srcSet;
+    
+    const baseName = originalSrc.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+    const ext = originalSrc.match(/\.(jpg|jpeg|png|webp)$/i)?.[1] || 'jpg';
+    
+    return `${baseName}-300.${ext} 300w, ${baseName}-600.${ext} 600w, ${baseName}-900.${ext} 900w, ${originalSrc} 1200w`;
+  };
 
   useEffect(() => {
     if (priority) {
@@ -68,6 +88,10 @@ const LazyImage: React.FC<LazyImageProps> = ({
     }
   };
 
+  const webpSrc = generateWebPSource(src);
+  const responsiveSrcSet = generateSrcSet(src);
+  const webpSrcSet = generateSrcSet(webpSrc);
+
   return (
     <div className={cn('relative overflow-hidden', className)}>
       {/* Placeholder */}
@@ -82,23 +106,34 @@ const LazyImage: React.FC<LazyImageProps> = ({
         />
       )}
       
-      {/* Actual image */}
+      {/* Picture element for WebP support with fallback */}
       {isInView && (
-        <img
-          ref={imgRef}
-          src={src}
-          alt={alt}
-          width={width}
-          height={height}
-          className={cn(
-            'transition-opacity duration-300',
-            isLoaded ? 'opacity-100' : 'opacity-0'
-          )}
-          onLoad={handleLoad}
-          onError={handleError}
-          loading={priority ? 'eager' : 'lazy'}
-          decoding="async"
-        />
+        <picture>
+          {/* WebP source */}
+          <source
+            srcSet={webpSrcSet}
+            sizes={sizes || '100vw'}
+            type="image/webp"
+          />
+          {/* Fallback image */}
+          <img
+            ref={imgRef}
+            src={src}
+            alt={alt}
+            width={width}
+            height={height}
+            srcSet={responsiveSrcSet}
+            sizes={sizes || '100vw'}
+            className={cn(
+              'transition-opacity duration-300',
+              isLoaded ? 'opacity-100' : 'opacity-0'
+            )}
+            onLoad={handleLoad}
+            onError={handleError}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+          />
+        </picture>
       )}
     </div>
   );
