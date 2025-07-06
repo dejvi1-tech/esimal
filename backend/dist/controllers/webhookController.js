@@ -1161,8 +1161,14 @@ async function handleCheckoutSessionCompleted(session) {
             try {
                 logger_1.logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
                 const iccidData = await roamifyService_1.RoamifyService.getEsimIccid(esimCode);
-                iccid = iccidData.iccid;
-                logger_1.logger.info(`ICCID retrieved successfully: ${iccid}`);
+                if (iccidData && iccidData.iccid && iccidData.iccid.startsWith("89")) {
+                    iccid = iccidData.iccid;
+                    logger_1.logger.info(`ICCID retrieved successfully: ${iccid}`);
+                }
+                else {
+                    logger_1.logger.error(`ICCID retrieval failed or returned non-ICCID value for eSIM ${esimCode}:`, iccidData);
+                    iccid = null;
+                }
             }
             catch (iccidError) {
                 logger_1.logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
