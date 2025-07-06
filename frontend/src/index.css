@@ -364,3 +364,11 @@ p, span, div, a, button, input, textarea, select {
 .checkout-page *, .checkout-page {
   color: #111 !important;
 }
+
+@media not all and (min-resolution:.001dpcm) { @supports (-webkit-appearance:none) {
+  .navbar-glassmorphism-fixed {
+    background: rgba(40, 0, 80, 0.85) !important; /* fallback color for Safari */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}}
