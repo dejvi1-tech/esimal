@@ -141,7 +141,7 @@ const HeroSection = () => {
               selectedCountry={selectedCountry}
               forceOpen={false}
             />
-            <a href="#most-popular-packages" className="btn-glass inline-flex items-center justify-center gap-2 px-5 py-3 text-base font-semibold text-white">
+            <a href="#most-popular-packages" className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg inline-flex items-center justify-center gap-2 px-5 py-3 text-base font-semibold text-white rounded-xl">
                 <DownloadCloud className="w-5 h-5" />
                 {t('hero_activate_package')}
             </a>
