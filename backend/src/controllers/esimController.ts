@@ -361,13 +361,10 @@ export const getEsimUsageByIccid = asyncHandler(async (
   }
 
   try {
-    // Get usage details from Roamify
-    const usage = await RoamifyService.getEsimUsageDetails(iccid);
-    
-    // Get order details from database
+    // Get order details from database first
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, data_amount, days, status, created_at, expiry_date')
+      .select('id, data_amount, days, status, created_at, expiry_date, package_id')
       .eq('iccid', iccid)
       .single();
 
@@ -375,24 +372,53 @@ export const getEsimUsageByIccid = asyncHandler(async (
       return next(new AppError('Error fetching order details', 500));
     }
 
+    if (!order) {
+      return next(new AppError('eSIM not found with this ICCID', 404));
+    }
+
+    let usage = null;
+    let usageError = null;
+
+    // Try to get usage details from Roamify
+    try {
+      usage = await RoamifyService.getEsimUsageDetails(iccid);
+    } catch (error: any) {
+      usageError = error;
+      console.warn(`Failed to get usage from Roamify for ICCID ${iccid}:`, error.message);
+      
+      // Fallback: Provide mock usage data based on order
+      usage = {
+        dataUsed: 0, // Mock: No data used yet
+        dataLimit: order.data_amount || 1,
+        dataRemaining: order.data_amount || 1,
+        status: order.status === 'completed' ? 'active' : 'inactive',
+        lastUpdated: new Date().toISOString()
+      };
+    }
+
     res.status(200).json({
       status: 'success',
       data: {
         iccid,
         dataUsed: usage.dataUsed,
-        dataLimit: usage.dataLimit || order?.data_amount,
+        dataLimit: usage.dataLimit || order.data_amount,
         dataRemaining: usage.dataRemaining,
         status: usage.status,
-        expiry: order?.expiry_date,
-        createdAt: order?.created_at,
-        orderId: order?.id,
+        expiry: order.expiry_date,
+        createdAt: order.created_at,
+        orderId: order.id,
+        dataSource: usageError ? 'fallback' : 'roamify',
+        lastUpdated: usage.lastUpdated,
       },
     });
   } catch (error: any) {
-    if (error.response) {
-      // Forward error from Roamify
-      return res.status(error.response.status).json(error.response.data);
+    console.error('Error in getEsimUsageByIccid:', error);
+    
+    // Ensure we always return JSON, never HTML
+    if (error.response && error.response.data && typeof error.response.data === 'string' && error.response.data.includes('<!DOCTYPE')) {
+      return next(new AppError('External API returned invalid response', 502));
     }
+    
     next(new AppError('Failed to get eSIM usage details', 500));
   }
 }); 

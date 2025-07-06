@@ -829,7 +829,7 @@ export class RoamifyService {
 
   /**
    * Get eSIM usage details using ICCID
-   * This method uses the correct Roamify API endpoint: /api/esim/usage/details
+   * This method uses multiple approaches to get usage data from Roamify
    */
   static async getEsimUsageDetails(iccid: string): Promise<{
     dataUsed: number;
@@ -841,28 +841,115 @@ export class RoamifyService {
     return this.retryApiCall(async () => {
       logger.info(`Getting eSIM usage details for ICCID: ${iccid}`);
 
-      // Use the correct endpoint from Roamify API docs
-      const url = `${this.baseUrl}/api/esim/usage/details`;
-      
-      const headers = {
-        'Authorization': `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'User-Agent': 'esim-marketplace/1.0.0'
-      };
-      
-      const params = { iccid: iccid };
-      
-      logger.info('[ROAMIFY DEBUG] Getting usage details - URL:', url);
-      logger.info('[ROAMIFY DEBUG] Getting usage details - Params:', JSON.stringify(params));
+      let usageData = null;
+      let lastError = null;
 
-      const response = await axios.get(url, { headers, params });
+      // Approach 1: Try /api/esim/usage/details endpoint
+      try {
+        const url = `${this.baseUrl}/api/esim/usage/details`;
+        const headers = {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'User-Agent': 'esim-marketplace/1.0.0'
+        };
+        const params = { iccid: iccid };
+        
+        logger.info('[ROAMIFY DEBUG] Trying /api/esim/usage/details - URL:', url);
+        logger.info('[ROAMIFY DEBUG] Trying /api/esim/usage/details - Params:', JSON.stringify(params));
 
-      if (!response.data) {
-        throw new Error(`Failed to get usage details for ICCID: ${iccid}`);
+        const response = await axios.get(url, { headers, params });
+
+        if (response.data) {
+          usageData = response.data;
+          logger.info(`✅ Usage details retrieved via /api/esim/usage/details:`, usageData);
+        }
+      } catch (error: any) {
+        lastError = error;
+        logger.warn(`❌ /api/esim/usage/details failed:`, {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message
+        });
       }
 
-      const usageData = response.data;
-      
+      // Approach 2: Try /api/esim/usage endpoint
+      if (!usageData) {
+        try {
+          const url = `${this.baseUrl}/api/esim/usage`;
+          const headers = {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'esim-marketplace/1.0.0'
+          };
+          const params = { iccid: iccid };
+          
+          logger.info('[ROAMIFY DEBUG] Trying /api/esim/usage - URL:', url);
+          logger.info('[ROAMIFY DEBUG] Trying /api/esim/usage - Params:', JSON.stringify(params));
+
+          const response = await axios.get(url, { headers, params });
+
+          if (response.data) {
+            usageData = response.data;
+            logger.info(`✅ Usage details retrieved via /api/esim/usage:`, usageData);
+          }
+        } catch (error: any) {
+          lastError = error;
+          logger.warn(`❌ /api/esim/usage failed:`, {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message
+          });
+        }
+      }
+
+      // Approach 3: Try /api/esim endpoint with iccid parameter
+      if (!usageData) {
+        try {
+          const url = `${this.baseUrl}/api/esim`;
+          const headers = {
+            'Authorization': `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+            'User-Agent': 'esim-marketplace/1.0.0'
+          };
+          const params = { iccid: iccid };
+          
+          logger.info('[ROAMIFY DEBUG] Trying /api/esim with iccid - URL:', url);
+          logger.info('[ROAMIFY DEBUG] Trying /api/esim with iccid - Params:', JSON.stringify(params));
+
+          const response = await axios.get(url, { headers, params });
+
+          if (response.data) {
+            // Extract usage data from eSIM details response
+            const esimData = response.data.data || response.data;
+            if (esimData) {
+              usageData = {
+                dataUsed: esimData.dataUsed || 0,
+                dataLimit: esimData.dataLimit || esimData.data?.dataLimit || 0,
+                dataRemaining: esimData.dataRemaining || (esimData.dataLimit - esimData.dataUsed) || 0,
+                status: esimData.status || 'unknown'
+              };
+              logger.info(`✅ Usage details extracted from /api/esim:`, usageData);
+            }
+          }
+        } catch (error: any) {
+          lastError = error;
+          logger.warn(`❌ /api/esim with iccid failed:`, {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message
+          });
+        }
+      }
+
+      // If all approaches failed, throw the last error
+      if (!usageData) {
+        logger.error(`❌ All usage retrieval approaches failed for ICCID: ${iccid}`);
+        throw lastError || new Error(`Failed to get usage details for ICCID: ${iccid} - no data returned from any endpoint`);
+      }
+
       logger.info(`eSIM usage details retrieved successfully:`, {
         iccid: iccid,
         dataUsed: usageData.dataUsed,
