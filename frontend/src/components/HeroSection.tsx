@@ -152,9 +152,7 @@ const HeroSection = () => {
           {/* Professional iPhone X-style SVG mockup with phone2.jpg inside the screen, no animation */}
           <svg
             viewBox="0 0 340 660"
-            width="270"
-            height="540"
-            className="block"
+            className="block w-48 h-96 sm:w-64 sm:h-[28rem] md:w-[270px] md:h-[540px]"
             style={{ maxWidth: '90vw' }}
           >
             <defs>

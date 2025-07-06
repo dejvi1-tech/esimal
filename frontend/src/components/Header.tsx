@@ -115,9 +115,6 @@ const Header = () => {
                       <span className="text-xs text-gray-200 font-medium">Global eSIM Solutions</span>
                     </div>
                   </Link>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="text-white glass">
-                    <X className="w-6 h-6" />
-                  </Button>
                 </div>
                 
                 <nav className="space-y-2">
