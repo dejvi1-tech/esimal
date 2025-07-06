@@ -194,11 +194,28 @@ body::after {
   margin: 0;
   width: 100%;
   transition: none !important;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* Safari flexbox fix: Prevent text from being squished in navbar */
 .navbar-glassmorphism-fixed .flex > * {
   min-width: 0;
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  -webkit-font-smoothing: antialiased;
+  color: var(--text-color) !important;
+}
+
+/* Force text rendering and color in Safari */
+.navbar-glassmorphism-fixed span,
+.navbar-glassmorphism-fixed a,
+.navbar-glassmorphism-fixed button {
+  color: var(--text-color) !important;
+  background: transparent !important;
+  -webkit-font-smoothing: antialiased;
+  text-shadow: 0 0 1px rgba(0,0,0,0.01);
 }
 
 .navbar-mobile-glassmorphism {
