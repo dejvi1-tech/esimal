@@ -52,8 +52,7 @@ export const getAllEsims = asyncHandler(async (
           country,
           operator
         ),
-        activation_date,
-        expiry_date
+        activation_date
       )
     `)
     .order('created_at', { ascending: false });
@@ -286,8 +285,7 @@ export const getEsimsByUserId = asyncHandler(async (
           country,
           operator
         ),
-        activation_date,
-        expiry_date
+        activation_date
       )
     `)
     .eq('user_id', userId)
@@ -368,7 +366,7 @@ export const getEsimUsageByIccid = asyncHandler(async (
     // Get order details from database first
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .select('id, data_amount, validity_days, status, created_at, expiry_date, package_id')
+      .select('id, data_amount, validity_days, status, created_at, package_id')
       .eq('iccid', iccid)
       .single();
 
@@ -414,7 +412,7 @@ export const getEsimUsageByIccid = asyncHandler(async (
         dataLimit: usage.dataLimit || order.data_amount,
         dataRemaining: usage.dataRemaining,
         status: usage.status,
-        expiry: order.expiry_date,
+        expiry: order.activation_date,
         createdAt: order.created_at,
         orderId: order.id,
         dataSource: usageError ? 'fallback' : 'roamify',
