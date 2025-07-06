@@ -150,7 +150,7 @@ const HomePage = () => {
                           </div>
                         </div>
                         <h3 className="text-2xl font-bold text-white">
-                          {pkg.country_code === 'EUS' ? 'Europe Sprint' : pkg.country_name || t('europe')}
+                          {pkg.country_code === 'EUS' ? 'Europe & United States' : pkg.country_name || t('europe')}
                         </h3>
                       </div>
                       <ul className="space-y-3 text-left">
@@ -172,7 +172,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                            {pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount)}
+                            {pkg.country_code === 'EUS' ? '10+5GB FALAS (OFERTE)' : (pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount))}
                           </span>
                         </li>
                         <li className="flex items-center">
