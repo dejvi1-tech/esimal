@@ -5,7 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const testimonials = [
   {
-    name: 'Anna K.',
+    name: 'Ana K.',
     review: {
       al: 'Super e lehtë për t\'u përdorur dhe funksionoi menjëherë kur u ul. Rekomandoj shumë!',
       en: 'Super easy to use and worked instantly when I landed. Highly recommend!'
@@ -17,7 +17,7 @@ const testimonials = [
     },
   },
   {
-    name: 'John D.',
+    name: 'Gjergj K.',
     review: {
       al: 'Më shpëtoi shumë nga tarifat e roaming. Konfigurimi ishte shumë i lehtë!',
       en: 'Saved me a lot on roaming fees. Setup was a breeze!'
