@@ -646,8 +646,8 @@ async function deliverEsim(order, paymentIntent, metadata) {
         // OPTIMIZED: Ensure guest user exists before creating user_orders entry
         if (safeUserId === GUEST_USER_ID) {
             logger_1.logger.info(`👤 Creating user_orders entry for guest user: ${GUEST_USER_ID}`);
-            // Check if guest user exists (should exist due to migration)
-            const { data: guestUser, error: guestUserError } = await supabase_1.supabase
+            // Check if guest user exists (should exist due to migration) - USE ADMIN CLIENT
+            const { data: guestUser, error: guestUserError } = await supabaseAdmin
                 .from('users')
                 .select('id, email, role')
                 .eq('id', GUEST_USER_ID)
@@ -657,14 +657,12 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 // The migration should have created this user, but as a fallback, try to create it
                 // with the service role client
                 try {
-                    const { data: newGuestUser, error: createError } = await supabase_1.supabase
+                    const { data: newGuestUser, error: createError } = await supabaseAdmin
                         .from('users')
                         .insert({
                         id: GUEST_USER_ID,
                         email: 'guest@esimal.com',
                         password: 'disabled-account',
-                        firstName: 'Guest',
-                        lastName: 'User',
                         role: 'user'
                     })
                         .select()
@@ -720,7 +718,8 @@ async function deliverEsim(order, paymentIntent, metadata) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         };
-        const { data: userOrder, error: userOrderError } = await supabase_1.supabase
+        // USE ADMIN CLIENT to bypass RLS policies
+        const { data: userOrder, error: userOrderError } = await supabaseAdmin
             .from('user_orders')
             .insert(userOrderData)
             .select()
@@ -1138,6 +1137,7 @@ async function handleCheckoutSessionCompleted(session) {
         let esimCode;
         let roamifyOrderId;
         let realQRData;
+        let iccid = null; // Declare iccid here
         try {
             // --- EXACT ROAMIFY SLUG LOGIC ---
             if (!packageData.slug) {
@@ -1157,7 +1157,19 @@ async function handleCheckoutSessionCompleted(session) {
             roamifyOrderId = roamifyOrder.orderId;
             // Generate real QR code
             realQRData = await roamifyService_1.RoamifyService.getQrCodeWithPolling(esimCode);
-            logger_1.logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+            // Step 1.5: Retrieve ICCID using the UUID
+            try {
+                logger_1.logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
+                const iccidData = await roamifyService_1.RoamifyService.getEsimIccid(esimCode);
+                iccid = iccidData.iccid;
+                logger_1.logger.info(`ICCID retrieved successfully: ${iccid}`);
+            }
+            catch (iccidError) {
+                logger_1.logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
+                // Continue without ICCID - it can be retrieved later
+                iccid = null;
+            }
+            logger_1.logger.info(`Real eSIM created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}, ICCID: ${iccid || 'not retrieved'}`);
         }
         catch (roamifyError) {
             logger_1.logger.error('Failed to create Roamify order, using fallback:', roamifyError);
@@ -1180,11 +1192,14 @@ async function handleCheckoutSessionCompleted(session) {
             name,
             surname,
             esim_code: esimCode,
+            iccid: iccid || undefined, // Add ICCID to order data
             qr_code_data: realQRData.lpaCode,
+            qr_code_url: realQRData.qrCodeUrl || '',
             roamify_order_id: roamifyOrderId,
             status: 'paid',
             amount: amount,
             data_amount: packageData.data_amount,
+            data_used: 0, // Initialize data usage to 0
             days: packageData.days,
             stripe_payment_intent_id: session.payment_intent,
             stripe_customer_id: session.customer,
@@ -1239,6 +1254,7 @@ async function handleCheckoutSessionCompleted(session) {
                         dataAmount: `${packageData.data_amount}GB`,
                         days: packageData.days,
                         esimCode: esimCode,
+                        iccid: iccid || undefined, // Add ICCID to email template
                         qrCodeData: realQRData.lpaCode,
                         qrCodeUrl: realQRData.qrCodeUrl,
                         isGuestOrder: true,

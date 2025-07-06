@@ -1249,6 +1249,7 @@ async function handleCheckoutSessionCompleted(session: any) {
     let esimCode: string;
     let roamifyOrderId: string;
     let realQRData: any;
+    let iccid: string | null = null; // Declare iccid here
 
     try {
       // --- EXACT ROAMIFY SLUG LOGIC ---
@@ -1275,7 +1276,6 @@ async function handleCheckoutSessionCompleted(session: any) {
       realQRData = await RoamifyService.getQrCodeWithPolling(esimCode);
       
       // Step 1.5: Retrieve ICCID using the UUID
-      let iccid: string | null = null;
       try {
         logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
         const iccidData = await RoamifyService.getEsimIccid(esimCode);
@@ -1311,7 +1311,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       name,
       surname,
       esim_code: esimCode,
-      iccid: iccid, // Add ICCID to order data
+      iccid: iccid || undefined, // Add ICCID to order data
       qr_code_data: realQRData.lpaCode,
       qr_code_url: realQRData.qrCodeUrl || '',
       roamify_order_id: roamifyOrderId,
@@ -1378,7 +1378,7 @@ async function handleCheckoutSessionCompleted(session: any) {
             dataAmount: `${packageData.data_amount}GB`,
             days: packageData.days,
             esimCode: esimCode,
-            iccid: iccid, // Add ICCID to email template
+            iccid: iccid || undefined, // Add ICCID to email template
             qrCodeData: realQRData.lpaCode,
             qrCodeUrl: realQRData.qrCodeUrl,
             isGuestOrder: true,

@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAccountBalanceFromRoamify = exports.getEsimsByUserId = exports.getEsimUsageStats = exports.updateEsimStatus = exports.getEsimUsageDetails = exports.getEsimByIccid = exports.getAllEsims = void 0;
+exports.getEsimUsageByIccid = exports.getAccountBalanceFromRoamify = exports.getEsimsByUserId = exports.getEsimUsageStats = exports.updateEsimStatus = exports.getEsimUsageDetails = exports.getEsimByIccid = exports.getAllEsims = void 0;
 const supabase_1 = require("../config/supabase");
 const appError_1 = require("../utils/appError");
 const asyncHandler_1 = require("../utils/asyncHandler");
 const axios_1 = __importDefault(require("axios"));
+const roamifyService_1 = require("../services/roamifyService");
 // At top of file
 const ROAMIFY_API_BASE = process.env.ROAMIFY_API_URL || 'https://api.getroamify.com';
 // Mock function to get usage data from eSIM provider
@@ -273,6 +274,52 @@ exports.getAccountBalanceFromRoamify = (0, asyncHandler_1.asyncHandler)(async (r
             return res.status(error.response.status).json(error.response.data);
         }
         next(new appError_1.AppError('Failed to get account balance from Roamify', 500));
+    }
+});
+/**
+ * Get eSIM usage by ICCID for balance check
+ */
+exports.getEsimUsageByIccid = (0, asyncHandler_1.asyncHandler)(async (req, res, next) => {
+    const { iccid } = req.params;
+    if (!iccid) {
+        return next(new appError_1.AppError('ICCID is required', 400));
+    }
+    // Validate ICCID format (19-20 digits)
+    if (!/^\d{19,20}$/.test(iccid)) {
+        return next(new appError_1.AppError('Invalid ICCID format. ICCID must be 19-20 digits.', 400));
+    }
+    try {
+        // Get usage details from Roamify
+        const usage = await roamifyService_1.RoamifyService.getEsimUsageDetails(iccid);
+        // Get order details from database
+        const { data: order, error: orderError } = await supabase_1.supabase
+            .from('orders')
+            .select('id, data_amount, days, status, created_at, expiry_date')
+            .eq('iccid', iccid)
+            .single();
+        if (orderError && orderError.code !== 'PGRST116') {
+            return next(new appError_1.AppError('Error fetching order details', 500));
+        }
+        res.status(200).json({
+            status: 'success',
+            data: {
+                iccid,
+                dataUsed: usage.dataUsed,
+                dataLimit: usage.dataLimit || order?.data_amount,
+                dataRemaining: usage.dataRemaining,
+                status: usage.status,
+                expiry: order?.expiry_date,
+                createdAt: order?.created_at,
+                orderId: order?.id,
+            },
+        });
+    }
+    catch (error) {
+        if (error.response) {
+            // Forward error from Roamify
+            return res.status(error.response.status).json(error.response.data);
+        }
+        next(new appError_1.AppError('Failed to get eSIM usage details', 500));
     }
 });
 //# sourceMappingURL=esimController.js.map

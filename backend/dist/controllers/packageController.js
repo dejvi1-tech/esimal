@@ -1039,6 +1039,74 @@ const syncRoamifyPackages = async (req, res, next) => {
     }
 };
 exports.syncRoamifyPackages = syncRoamifyPackages;
+// Helper function to generate Greece-style slugs
+function generateGreeceStyleSlug(countryCode, days, dataAmount) {
+    // Country code to full name mapping (Greece format)
+    const countryMapping = {
+        'GR': 'greece',
+        'AL': 'albania',
+        'DE': 'germany',
+        'IT': 'italy',
+        'FR': 'france',
+        'ES': 'spain',
+        'PT': 'portugal',
+        'NL': 'netherlands',
+        'BE': 'belgium',
+        'AT': 'austria',
+        'CH': 'switzerland',
+        'US': 'united-states',
+        'CA': 'canada',
+        'UK': 'united-kingdom',
+        'GB': 'united-kingdom',
+        'IE': 'ireland',
+        'NO': 'norway',
+        'SE': 'sweden',
+        'DK': 'denmark',
+        'FI': 'finland',
+        'IS': 'iceland',
+        'PL': 'poland',
+        'CZ': 'czech-republic',
+        'HU': 'hungary',
+        'RO': 'romania',
+        'BG': 'bulgaria',
+        'HR': 'croatia',
+        'SI': 'slovenia',
+        'SK': 'slovakia',
+        'LT': 'lithuania',
+        'LV': 'latvia',
+        'EE': 'estonia',
+        'TR': 'turkey',
+        'AE': 'united-arab-emirates',
+        'SA': 'saudi-arabia',
+        'EG': 'egypt',
+        'MA': 'morocco',
+        'ZA': 'south-africa',
+        'KE': 'kenya',
+        'NG': 'nigeria',
+        'JP': 'japan',
+        'KR': 'south-korea',
+        'CN': 'china',
+        'IN': 'india',
+        'TH': 'thailand',
+        'VN': 'vietnam',
+        'ID': 'indonesia',
+        'MY': 'malaysia',
+        'SG': 'singapore',
+        'PH': 'philippines',
+        'AU': 'australia',
+        'NZ': 'new-zealand',
+        'BR': 'brazil',
+        'AR': 'argentina',
+        'CL': 'chile',
+        'CO': 'colombia',
+        'MX': 'mexico',
+        'EU': 'europe'
+    };
+    const countryName = countryMapping[countryCode.toUpperCase()] || countryCode.toLowerCase();
+    const dataAmountInt = Math.floor(dataAmount);
+    // Generate Greece-style slug: esim-country-30days-1gb-all
+    return `esim-${countryName}-${days}days-${dataAmountInt}gb-all`;
+}
 // Secure admin endpoint: Save package to my_packages
 const savePackage = async (req, res) => {
     try {
@@ -1049,6 +1117,9 @@ const savePackage = async (req, res) => {
                 error: 'Missing required fields: name, country_name, country_code, data_amount, days'
             });
         }
+        // ✅ CRITICAL FIX: Generate Greece-style slug automatically
+        const autoSlug = generateGreeceStyleSlug(country_code, parseInt(days), parseFloat(data_amount));
+        console.log('✅ Auto-generated Greece-style slug:', autoSlug);
         // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
         // Allow null reseller_id since it's now a UUID foreign key
         let finalResellerId = reseller_id;
@@ -1063,11 +1134,10 @@ const savePackage = async (req, res) => {
             roamifyPackageId = finalResellerId;
             console.log('✅ Using Roamify package ID from reseller_id:', roamifyPackageId);
         }
-        if (!roamifyPackageId) {
-            console.error('❌ No valid Roamify package ID found in features.packageId or reseller_id');
-            return res.status(400).json({
-                error: 'A valid Roamify package ID must be provided in features.packageId or reseller_id'
-            });
+        // If no valid Roamify package ID provided, use the auto-generated slug
+        else {
+            roamifyPackageId = autoSlug;
+            console.log('✅ Using auto-generated slug as Roamify package ID:', roamifyPackageId);
         }
         // Create package data
         const packageData = {
@@ -1086,6 +1156,7 @@ const savePackage = async (req, res) => {
             show_on_frontend: show_on_frontend !== false,
             location_slug: location_slug || country_code.toLowerCase(),
             homepage_order: parseInt(homepage_order) || 999,
+            slug: autoSlug, // ✅ ADD THE SLUG FIELD FOR WEBHOOK
             features: {
                 ...features,
                 packageId: roamifyPackageId, // Use the real Roamify package ID
@@ -1097,7 +1168,7 @@ const savePackage = async (req, res) => {
                 realRoamifyPackageId: roamifyPackageId
             }
         };
-        console.log('✅ Saving package with REAL Roamify package ID:', roamifyPackageId);
+        console.log('✅ Saving package with REAL Roamify package ID and slug:', roamifyPackageId);
         // Insert package
         const { data, error } = await supabase_1.supabase
             .from('my_packages')
@@ -1108,7 +1179,7 @@ const savePackage = async (req, res) => {
             console.error('❌ Error saving package:', error);
             return res.status(400).json({ error: error.message });
         }
-        console.log('✅ Package saved successfully with real Roamify package ID');
+        console.log('✅ Package saved successfully with auto-generated slug and real Roamify package ID');
         res.json({ success: true, package: data });
     }
     catch (error) {

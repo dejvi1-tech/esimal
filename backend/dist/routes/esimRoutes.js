@@ -15,5 +15,7 @@ router.get('/iccid/:iccid/usage', esimController_1.getEsimUsageDetails);
 router.put('/iccid/:iccid/status', esimController_1.updateEsimStatus);
 // Get account balance from Roamify
 router.get('/balance-roamify', esimController_1.getAccountBalanceFromRoamify);
+// Public endpoint for balance check
+router.get('/usage/:iccid', esimController_1.getEsimUsageByIccid);
 exports.default = router;
 //# sourceMappingURL=esimRoutes.js.map

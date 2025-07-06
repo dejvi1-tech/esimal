@@ -203,7 +203,6 @@ exports.emailTemplates = {
               padding: 0;
               overflow: hidden;
             }
-
             .content { 
               padding: 32px 24px; 
             }
@@ -315,7 +314,7 @@ exports.emailTemplates = {
               
               <!-- eSIM Details -->
               <div class="esim-details">
-                <span class="accent">Nr. eSim:</span> ${esimId}
+                <span class="accent">Nr. eSim:</span> ${data.iccid ? data.iccid : 'PENDING'}
               </div>
               
               <!-- Comprehensive Installation Instructions -->
@@ -372,12 +371,12 @@ exports.emailTemplates = {
             </div>
           </div>
           
-                     <!-- Simple footer -->
-           <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
-             Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
-             <br/>
-             &copy; ${new Date().getFullYear()} esimfly.al
-           </div>
+          <!-- Simple footer -->
+          <div style="text-align: center; padding: 20px; color: #666; font-size: 14px;">
+            Nëse keni pyetje, na kontaktoni duke i kthyer përgjigje këtij emaili.<br/>
+            <br/>
+            &copy; ${new Date().getFullYear()} esimfly.al
+          </div>
         </body>
         </html>
       `;
@@ -711,7 +710,7 @@ exports.emailTemplates = {
             margin-bottom: 32px; 
           }
           .logo { 
-            max-width: 180px; 
+            max-width: 500px; 
             margin-bottom: 12px; 
           }
           .main-title { 
@@ -758,24 +757,12 @@ exports.emailTemplates = {
           <!-- Full-width Banner -->
           <img src="https://esimfly.al/images/esimfly-logo.png" alt="esimfly banner" class="banner" />
           
-          <div class="content">
-            <!-- Bold thank you message -->
-            <h1 class="main-title">Faleminderit për porosinë tuaj!</h1>
-            
-            <!-- Secondary message about receiving email with eSIM info -->
-            <div class="secondary-message">
-              Ju do të merrni një email tjetër me <span class="accent">të dhënat e eSIM</span> brenda pak minutash.
-            </div>
-            
+        
             <!-- Personalized greeting with name -->
             <div class="greeting">
               Përshëndetje${data.firstName ? ' ' + data.firstName : ''},
             </div>
             
-            <!-- Details about QR code in a second email -->
-            <div class="esim-info">
-              Në vijim ju do të merrni një email tjetër me barkodin për të aktivizuar kartën tuaj eSIM.
-            </div>
             
             <!-- English Section -->
             <div class="lang">
@@ -851,7 +838,7 @@ exports.emailTemplates = {
           <div class="qr">
             <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
           </div>
-          <div class="section"><b>Nr. eSIM:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="section"><b>Nr. eSIM:</b> ${data.iccid ? data.iccid : 'PENDING'}</div>
           <div class="steps">
             <div class="steps-title">Si ta instaloni:</div>
             <ul>
@@ -868,7 +855,7 @@ exports.emailTemplates = {
           <div class="qr">
             <img src="${data.qrCodeUrl || 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ESIM_PLACEHOLDER'}" alt="eSIM QR Code" />
           </div>
-          <div class="section"><b>eSIM Number:</b> ${data.iccid || data.esimCode || 'PENDING'}</div>
+          <div class="section"><b>eSIM Number:</b> ${data.iccid ? data.iccid : 'PENDING'}</div>
           <div class="steps">
             <div class="steps-title">How to install:</div>
             <ul>
