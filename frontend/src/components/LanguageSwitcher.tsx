@@ -1,16 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const LanguageSwitcher: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguage();
-  const [isSafari, setIsSafari] = useState(false);
-
-  // Detect Safari
-  useEffect(() => {
-    const userAgent = navigator.userAgent;
-    const isSafariBrowser = /Safari/.test(userAgent) && !/Chrome/.test(userAgent);
-    setIsSafari(isSafariBrowser);
-  }, []);
 
   const albanianFlag = (
     <svg viewBox="0 0 36 36" className="w-5 h-5 drop-shadow-sm">
@@ -30,36 +22,10 @@ const LanguageSwitcher: React.FC = () => {
     </svg>
   );
 
-  const safariButtonStyle = {
-    background: isSafari ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.08)',
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    borderRadius: '12px',
-    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-    transform: 'translateZ(0)',
-    WebkitTransform: 'translateZ(0)',
-    willChange: 'backdrop-filter',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '10px 16px',
-    fontSize: '14px',
-    fontWeight: '600',
-    height: '44px',
-    cursor: 'pointer',
-    // Safari-specific additional properties
-    ...(isSafari && {
-      isolation: 'isolate',
-      contain: 'layout style paint'
-    })
-  };
-
   return (
     <button
       onClick={toggleLanguage}
-      className="font-semibold"
-      style={safariButtonStyle}
+      className="btn-glass flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold h-11"
       type="button"
     >
       {/* Flag container */}

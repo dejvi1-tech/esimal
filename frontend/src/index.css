@@ -179,10 +179,6 @@ body::after {
   margin: 18px auto 0 auto;
   max-width: 98vw;
   transition: none !important;
-  /* Safari-specific fixes */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
 /* Fixed navbar that stays at the top without scrolling */
@@ -198,31 +194,6 @@ body::after {
   margin: 0;
   width: 100%;
   transition: none !important;
-  /* Safari-specific fixes */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
-  /* Ensure proper stacking context */
-  position: relative;
-  z-index: 50;
-}
-
-/* Safari-specific backdrop-filter fixes */
-@supports (-webkit-backdrop-filter: blur(20px)) {
-  .navbar-glassmorphism-fixed {
-    background: rgba(255, 255, 255, 0.08);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-  }
-}
-
-/* Fallback for browsers without backdrop-filter support */
-@supports not (-webkit-backdrop-filter: blur(20px)) {
-  .navbar-glassmorphism-fixed {
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
 }
 
 .navbar-mobile-glassmorphism {
@@ -236,10 +207,6 @@ body::after {
   margin: 16px auto 0 auto;
   max-width: 98vw;
   transition: none !important;
-  /* Safari-specific fixes */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter;
 }
 
 .logo-container {
@@ -374,142 +341,4 @@ p, span, div, a, button, input, textarea, select {
 /* Override: Force black text for all text in the checkout page */
 .checkout-page *, .checkout-page {
   color: #111 !important;
-}
-
-/* Safari-specific backdrop-filter fixes */
-@supports (-webkit-backdrop-filter: blur(20px)) {
-  .backdrop-blur-lg {
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    /* Force hardware acceleration for Safari */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: backdrop-filter;
-  }
-}
-
-/* Fallback for browsers without backdrop-filter support */
-@supports not (-webkit-backdrop-filter: blur(20px)) {
-  .backdrop-blur-lg {
-    background: rgba(255, 255, 255, 0.15) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-}
-
-/* Ensure proper stacking context for Safari */
-.fixed {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-}
-
-/* Safari-specific z-index fixes */
-.z-50 {
-  z-index: 50;
-  position: relative;
-}
-
-/* Additional Safari fixes for glassmorphism */
-@supports (-webkit-backdrop-filter: blur(20px)) {
-  .bg-white\/10 {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .bg-white\/20 {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-  
-  .border-white\/20 {
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-}
-
-/* Force hardware acceleration for all glass elements */
-.backdrop-blur-lg,
-.bg-white\/10,
-.bg-white\/20 {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: backdrop-filter, transform;
-}
-
-/* Safari-specific navbar fixes */
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  /* Safari-specific styles */
-  .backdrop-blur-lg {
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.08);
-  }
-}
-
-/* Comprehensive fallback for all browsers */
-.backdrop-blur-lg {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-radius: 16px;
-}
-
-/* Safari-specific fixes for backdrop-filter */
-@supports (-webkit-backdrop-filter: blur(20px)) {
-  /* Force Safari to render backdrop-filter properly */
-  [style*="backdrop-filter"], [style*="-webkit-backdrop-filter"] {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: backdrop-filter;
-    /* Ensure proper stacking context */
-    position: relative;
-    z-index: 1;
-  }
-}
-
-/* Additional Safari-specific media query */
-@media screen and (-webkit-min-device-pixel-ratio: 0) and (max-color-index: 0) {
-  /* Safari-specific backdrop-filter fixes */
-  [style*="backdrop-filter"], [style*="-webkit-backdrop-filter"] {
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    border-radius: 16px;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    will-change: backdrop-filter;
-  }
-}
-
-/* Fallback for older Safari versions */
-@supports not (backdrop-filter: blur(20px)) {
-  [style*="backdrop-filter"], [style*="-webkit-backdrop-filter"] {
-    background: rgba(255, 255, 255, 0.15) !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-}
-
-/* Final Safari-specific fix to ensure navbar is visible */
-@media screen and (-webkit-min-device-pixel-ratio: 0) {
-  /* Ensure navbar has proper background on Safari */
-  header {
-    background: rgba(75, 0, 130, 0.95);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  
-  /* Force Safari to render backdrop-filter elements */
-  [style*="backdrop-filter"], [style*="-webkit-backdrop-filter"] {
-    background: rgba(255, 255, 255, 0.12) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-    border-radius: 16px !important;
-    -webkit-transform: translateZ(0) !important;
-    transform: translateZ(0) !important;
-    will-change: backdrop-filter !important;
-    isolation: isolate !important;
-    contain: layout style paint !important;
-  }
 }
