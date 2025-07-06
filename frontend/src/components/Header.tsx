@@ -57,11 +57,11 @@ const Header = () => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`relative px-4 py-2 rounded-lg font-medium backdrop-blur-lg-safari ${
+                  className={`relative px-4 py-2 rounded-lg font-medium glass ${
                     location.pathname === item.href 
-                      ? 'bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)]' 
-                      : 'bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)]'
-                  } border shadow-lg`}>
+                      ? 'bg-glass-medium' 
+                      : 'bg-glass'
+                  }`}>
                   {item.name}
                   {location.pathname === item.href && (
                     <div
@@ -76,7 +76,7 @@ const Header = () => {
             <div className="hidden md:flex items-center space-x-4">
               <LanguageSwitcher />
               <Button 
-                className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg bg-accent text-accent-foreground font-semibold"
+                className="btn-glass bg-accent text-accent-foreground font-semibold"
                 size="sm"
               >
                 {t('hero_cta_main')}
@@ -86,11 +86,11 @@ const Header = () => {
             {/* Mobile Menu */}
             <Sheet open={isOpen} onOpenChange={setIsOpen}>
               <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon" className="text-white backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg">
+                <Button variant="ghost" size="icon" className="text-white glass">
                   <Menu className="w-6 h-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg rounded-2xl">
+              <SheetContent side="right" className="w-80 navbar-mobile-glassmorphism">
                 <div className="flex items-center justify-between mb-8">
                   <Link
                     to="/"
@@ -122,11 +122,11 @@ const Header = () => {
                     <Link
                       key={item.name}
                       to={item.href}
-                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium backdrop-blur-lg-safari ${
+                      className={`block w-full text-left px-4 py-3 rounded-lg font-medium glass ${
                         location.pathname === item.href 
-                          ? 'bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)]' 
-                          : 'bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)]'
-                      } border shadow-lg`}
+                          ? 'bg-glass-medium' 
+                          : 'bg-glass'
+                      }`}
                       onClick={() => setIsOpen(false)}>
                       {item.name}
                     </Link>
@@ -136,7 +136,7 @@ const Header = () => {
                 <div className="mt-8 space-y-4">
                   <LanguageSwitcher />
                   <Button 
-                    className="w-full backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg bg-accent text-accent-foreground font-semibold"
+                    className="w-full btn-glass bg-accent text-accent-foreground font-semibold"
                     size="sm"
                   >
                     {t('hero_cta_main')}

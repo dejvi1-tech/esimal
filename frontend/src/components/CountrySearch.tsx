@@ -61,7 +61,7 @@ const CountrySearch: React.FC<CountrySearchProps> = ({ onCountrySelect, selected
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={language === 'al' ? 'Zgjidh ose kërko një shtet...' : 'Type or search a country...'}
-          className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg w-full pl-12 pr-12 py-4 text-lg rounded-full placeholder-gray-300 placeholder:font-semibold placeholder:text-base text-white"
+          className="input-glass w-full pl-12 pr-12 py-4 text-lg rounded-full placeholder-gray-300 placeholder:font-semibold placeholder:text-base"
           aria-label={language === 'al' ? 'Kërko shtet' : 'Search country'}
         />
         <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -71,7 +71,7 @@ const CountrySearch: React.FC<CountrySearchProps> = ({ onCountrySelect, selected
 
       {/* Dropdown List */}
       {(isOpen || forceOpen) && (
-        <div className="absolute top-full mt-2 z-50 backdrop-blur-lg-safari bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)] border shadow-lg rounded-xl max-w-md w-full mx-auto p-4 sm:p-6 flex flex-col max-h-96 overflow-y-auto">
+        <div className="absolute top-full mt-2 z-50 modal-glass rounded-xl max-w-md w-full mx-auto p-4 sm:p-6 flex flex-col max-h-96 overflow-y-auto">
           {/* Most searched packages (EU and popular) */}
           <div className="mb-2 text-gray-300 font-semibold text-sm">Most searched packages</div>
           <div>
@@ -81,7 +81,7 @@ const CountrySearch: React.FC<CountrySearchProps> = ({ onCountrySelect, selected
                   <button
                     key={country.code}
                     onClick={() => handleCountrySelect(country)}
-                    className="w-full px-4 py-3 text-left focus:outline-none rounded-lg backdrop-blur-lg-safari bg-[rgba(255,255,255,0.12)] border-[rgba(255,255,255,0.15)] border shadow-lg"
+                    className="w-full px-4 py-3 text-left focus:outline-none rounded-lg glass-light"
                   >
                     <div className="flex items-center gap-3">
                       <img
