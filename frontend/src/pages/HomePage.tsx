@@ -111,18 +111,18 @@ const HomePage = () => {
           ) : mostPopularPackages.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
-                <div key={pkg.id}>
-                  {/* Offer label for the first card only */}
-                  {index === 0 && (
-                    <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 z-10">
-                      <span className="bg-gradient-to-r from-yellow-400 to-pink-500 text-white px-6 py-2 rounded-full text-base font-bold shadow-lg border-2 border-white/30 tracking-wide animate-pulse">
-                        {t('most_wanted_offer')}
-                      </span>
-                    </div>
-                  )}
+                <div key={pkg.id} className="relative">
                   <div className="card-glass flex flex-col h-full relative">
+                    {/* Offer label for the first card only, inside the card */}
+                    {index === 0 && (
+                      <div className="absolute -top-7 left-1/2 transform -translate-x-1/2 z-20">
+                        <span className="backdrop-blur-md bg-white/30 border border-white/40 shadow-lg px-7 py-2 rounded-full text-lg font-extrabold text-white tracking-wide drop-shadow-lg" style={{letterSpacing: '0.04em', boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)'}}> 
+                          {t('most_wanted_offer')}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex-grow">
-                      <div className="flex items-center mb-4">
+                      <div className="flex items-center mb-4 mt-8">
                         <div className="mr-4">
                           {/* EU Flag in Circle */}
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 bg-white flex items-center justify-center">
