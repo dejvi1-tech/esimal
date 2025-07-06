@@ -17,18 +17,20 @@ const PackagesPage: React.FC = () => {
         <title>eSIM Packages - Global Coverage</title>
         <meta name="description" content="Browse our wide selection of eSIM packages for global connectivity. Find the perfect plan for your travel needs." />
       </Helmet>
-      <div className="pt-24 pb-16 min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30">
+      <div className="pt-24 pb-16 min-h-screen bg-gradient-to-br from-purple-200 via-white to-purple-100">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-8 text-center text-gray-900">Available Countries</h1>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <h1 className="text-4xl font-bold mb-8 text-center text-white drop-shadow-lg">Available Countries</h1>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
             {uniqueCountries.map(country => (
               <Link
                 key={country.code}
                 to={`/country/${countrySlug(country.name.en)}`}
-                className="flex flex-col items-center p-4 bg-white/80 rounded-xl shadow hover:shadow-lg transition border border-gray-200 hover:border-blue-400"
+                className="flex flex-col items-center justify-center bg-white/70 backdrop-blur-md rounded-2xl shadow-md p-6 transition-transform hover:scale-105 hover:shadow-xl cursor-pointer border border-transparent hover:border-blue-400"
               >
-                <img src={country.flag} alt={country.name[language]} className="w-16 h-12 rounded mb-2 object-cover" />
-                <span className="text-lg font-semibold text-gray-800">{country.name[language]}</span>
+                <div className="w-16 h-16 flex items-center justify-center rounded-full bg-white shadow-inner mb-4">
+                  <img src={country.flag} alt={country.name[language]} className="w-12 h-12 object-contain rounded-full" />
+                </div>
+                <span className="text-lg font-semibold text-gray-800 text-center drop-shadow-sm">{country.name[language]}</span>
               </Link>
             ))}
           </div>
