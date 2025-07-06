@@ -11,17 +11,23 @@ const CheckBalancePage: React.FC = () => {
 
   const handleCheckBalance = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!esimNumber.trim()) return;
+
+    setLoading(true);
     setError(null);
     setUsage(null);
-    setLoading(true);
+
     try {
-      const res = await fetch(`/api/esims/usage/single/${encodeURIComponent(esimNumber)}`);
-      if (!res.ok) throw new Error('Failed to fetch usage');
-      const json = await res.json();
-      if (json.status !== 'success' || !json.data) throw new Error('No usage data found');
-      setUsage(json.data);
+      const response = await fetch(`/api/esims/usage/${esimNumber.trim()}`);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to fetch usage details');
+      }
+
+      setUsage(result.data);
     } catch (err: any) {
-      setError(err.message || 'Unknown error');
+      setError(err.message || 'Failed to check balance');
     } finally {
       setLoading(false);
     }
