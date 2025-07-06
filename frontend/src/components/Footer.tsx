@@ -24,13 +24,17 @@ const Footer = () => {
     title: "Kompania",
     links: [
     { name: "Rreth Nesh", href: "https://esimfly.al/about" },
+    { name: "Help Center", href: "https://esimfly.al/support" },
     ]
 
   },
   {
-    title: "Ndihme",
+    title: "Na Ndiqni",
     links: [
-    { name: "Help Center", href: "https://esimfly.al/support" },
+    { icon: Facebook, href: "#", name: "Facebook" },
+    { icon: Twitter, href: "#", name: "Twitter" },
+    { icon: Instagram, href: "#", name: "Instagram" },
+    { icon: Linkedin, href: "#", name: "LinkedIn" }
     ]
 
   }];
