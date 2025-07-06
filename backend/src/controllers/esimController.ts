@@ -100,12 +100,11 @@ export const getEsimByIccid = asyncHandler(async (
           id,
           name,
           data_amount,
-          days,
+          validity_days,
           country,
           operator
         ),
-        activation_date,
-        expiry_date
+        activation_date
       )
     `)
     .eq('iccid', iccid)
@@ -153,12 +152,11 @@ export const getEsimUsageDetails = asyncHandler(async (
           id,
           name,
           data_amount,
-          days,
+          validity_days,
           country,
           operator
         ),
-        activation_date,
-        expiry_date
+        activation_date
       )
     `)
     .eq('iccid', iccid)
