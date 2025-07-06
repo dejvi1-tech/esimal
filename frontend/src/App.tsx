@@ -7,6 +7,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
 import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -88,6 +89,7 @@ function App() {
                         <Route path="balance" element={<CheckBalancePage />} />
                         <Route path="ios26-demo" element={<IOS26Demo />} />
                         <Route path="privacy" element={<PrivacyPage />} />
+                        <Route path="terms" element={<TermsPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>

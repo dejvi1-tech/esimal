@@ -16,7 +16,7 @@ const Footer = () => {
     title: "e-SimFly",
     links: [
     { name: "Privatësia & Cookies", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
-    { name: "Termat & Kushtet", href: "#" },
+    { name: "Termat & Kushtet", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
     ]
 
   },
