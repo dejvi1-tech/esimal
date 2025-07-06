@@ -351,12 +351,16 @@ export const getEsimUsageByIccid = asyncHandler(async (
 ) => {
   const { iccid } = req.params;
 
+  console.log(`[DEBUG] getEsimUsageByIccid called with ICCID: ${iccid}`);
+
   if (!iccid) {
+    console.log(`[DEBUG] No ICCID provided`);
     return next(new AppError('ICCID is required', 400));
   }
 
   // Validate ICCID format (19-20 digits)
   if (!/^\d{19,20}$/.test(iccid)) {
+    console.log(`[DEBUG] Invalid ICCID format: ${iccid}`);
     return next(new AppError('Invalid ICCID format. ICCID must be 19-20 digits.', 400));
   }
 

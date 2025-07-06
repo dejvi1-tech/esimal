@@ -23,6 +23,11 @@ router.put('/iccid/:iccid/status', updateEsimStatus);
 // Get account balance from Roamify
 router.get('/balance-roamify', getAccountBalanceFromRoamify);
 
+// Test endpoint
+router.get('/test', (req, res) => {
+  res.json({ status: 'success', message: 'eSIM routes working', timestamp: new Date().toISOString() });
+});
+
 // Public endpoint for balance check
 router.get('/usage/:iccid', getEsimUsageByIccid);
 
