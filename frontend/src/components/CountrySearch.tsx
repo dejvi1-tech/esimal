@@ -1,123 +1,138 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { Search, Globe, ChevronDown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, MapPin, Info } from 'lucide-react';
+import { europeanCountries, Country } from '@/data/countries';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Country } from '@/data/countries';
 
 interface CountrySearchProps {
-  countries: Country[];
   onCountrySelect: (country: Country) => void;
-  placeholder?: string;
+  selectedCountry?: Country | null;
+  forceOpen?: boolean;
 }
 
-const CountrySearch: React.FC<CountrySearchProps> = React.memo(({ 
-  countries, 
-  onCountrySelect, 
-  placeholder = "Search countries..." 
-}) => {
-  const { t, language } = useLanguage();
-  const [isOpen, setIsOpen] = useState(false);
+const CountrySearch: React.FC<CountrySearchProps> = ({ onCountrySelect, selectedCountry, forceOpen }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const { language, t } = useLanguage();
 
-  // Memoize filtered countries for better performance
+  const USA_COUNTRY: Country = {
+    code: 'US',
+    name: { al: 'Shtetet e Bashkuara', en: 'United States' },
+    flag: 'https://flagcdn.com/w40/us.png',
+    region: 'North America',
+    packages: europeanCountries[0]?.packages || []
+  };
+
+  const mostPopularCodes = ['IT', 'DE', 'GR', 'ES', 'FR', 'GB'];
+  const mostPopularCountries = europeanCountries.filter(c => mostPopularCodes.includes(c.code));
+  const restCountries = europeanCountries.filter(c => !mostPopularCodes.includes(c.code));
+  const baseList = [USA_COUNTRY, ...mostPopularCountries, ...restCountries];
   const filteredCountries = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return countries.slice(0, 10); // Show first 10 countries when no search
-    }
-    
-    return countries
-      .filter(country => 
-        country.name[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
-        country.name.en.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 10); // Limit results for better performance
-  }, [countries, searchTerm, language]);
+    if (!searchTerm) return baseList;
+    return baseList.filter((country) =>
+      country.name[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.name.en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      country.name.al.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm, language]);
 
-  const handleCountrySelect = useCallback((country: Country) => {
+  const handleCountrySelect = (country: Country) => {
     onCountrySelect(country);
+    setSearchTerm(country.name[language]);
     setIsOpen(false);
-    setSearchTerm('');
-  }, [onCountrySelect]);
+  };
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    if (!isOpen) {
-      setIsOpen(true);
-    }
-  }, [isOpen]);
-
-  const handleToggle = useCallback(() => {
-    setIsOpen(prev => !prev);
-    if (isOpen) {
-      setSearchTerm('');
-    }
-  }, [isOpen]);
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-      setSearchTerm('');
-    }
-  }, []);
+  React.useEffect(() => {
+    if (forceOpen) setIsOpen(true);
+  }, [forceOpen]);
 
   return (
-    <div className="relative w-full max-w-md mx-auto">
-      <div className="relative">
+    <div className="relative w-full max-w-md mx-auto" ref={useClickAway(() => setIsOpen(false))}>
+      {/* Trigger Input */}
+      <div className="relative flex items-center">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <MapPin className="h-5 w-5 text-gray-300" />
+        </div>
         <input
           type="text"
           value={searchTerm}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          className="w-full px-4 py-3 pl-12 pr-10 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-          style={{
-            /* Performance optimizations */
-            willChange: 'auto',
-            transform: 'translateZ(0)',
-            WebkitTransform: 'translateZ(0)'
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            if (!isOpen) setIsOpen(true);
           }}
+          onFocus={() => setIsOpen(true)}
+          placeholder={language === 'al' ? 'Zgjidh ose kërko një shtet...' : 'Type or search a country...'}
+          className="input-glass w-full pl-12 pr-12 py-4 text-lg rounded-full placeholder-gray-300 placeholder:font-semibold placeholder:text-base"
+          aria-label={language === 'al' ? 'Kërko shtet' : 'Search country'}
         />
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-300" />
-        <button
-          onClick={handleToggle}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-300 hover:text-white transition-colors"
-        >
-          <ChevronDown className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
+        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+          <Search className="h-5 w-5 text-gray-300" />
+        </div>
       </div>
 
-      {isOpen && (
-        <div 
-          className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50"
-          style={{
-            /* Performance optimizations */
-            willChange: 'auto',
-            transform: 'translateZ(0)',
-            WebkitTransform: 'translateZ(0)',
-            contain: 'layout style paint'
-          }}
-        >
-          {filteredCountries.length > 0 ? (
-            filteredCountries.map((country) => (
-              <button
-                key={country.code}
-                onClick={() => handleCountrySelect(country)}
-                className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3 text-white"
-              >
-                <span className="text-2xl">{country.flag}</span>
-                <span className="font-medium">{country.name[language]}</span>
-              </button>
-            ))
-          ) : (
-            <div className="px-4 py-3 text-gray-300 text-center">
-              {searchTerm ? 'No countries found' : 'Type to search countries...'}
-            </div>
-          )}
+      {/* Dropdown List */}
+      {(isOpen || forceOpen) && (
+        <div className="absolute top-full mt-2 z-50 modal-glass rounded-xl max-w-md w-full mx-auto p-4 sm:p-6 flex flex-col max-h-96 overflow-y-auto">
+          {/* Most searched packages (EU and popular) */}
+          <div className="mb-2 text-gray-300 font-semibold text-sm">Most searched packages</div>
+          <div>
+            {filteredCountries.length > 0 ? (
+              <div>
+                {filteredCountries.map((country, idx) => (
+                  <button
+                    key={country.code}
+                    onClick={() => handleCountrySelect(country)}
+                    className="w-full px-4 py-3 text-left focus:outline-none rounded-lg glass-light"
+                  >
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={country.flag}
+                        alt={country.name[language]}
+                        className="w-8 h-8 object-cover rounded-full border border-white/20"
+                      />
+                      <span className="font-medium text-white text-lg">
+                        {country.name[language]}
+                      </span>
+                      {(country.code === 'US' || mostPopularCodes.includes(country.code)) && (
+                        <span className="ml-2 bg-accent text-accent-foreground text-xs font-semibold px-2 py-0.5 rounded-full">
+                          Most Popular
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="py-4 px-4 text-center text-gray-300">
+                No countries found
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
   );
-});
+};
 
-CountrySearch.displayName = 'CountrySearch';
+// Simple hook to detect clicks outside of a component
+const useClickAway = (cb: () => void) => {
+  const ref = React.useRef<HTMLDivElement>(null);
+  const refCb = React.useRef(cb);
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      const element = ref.current;
+      if (element && !element.contains(e.target as Node)) {
+        refCb.current();
+      }
+    };
+
+    document.addEventListener('mousedown', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+    };
+  }, []);
+
+  return ref;
+};
 
 export default CountrySearch;

@@ -11,11 +11,11 @@
   --text-secondary: #e5e7eb;
   --text-accent: #fbbf24;
   
-  /* Glassmorphism variables - REDUCED BLUR FOR PERFORMANCE */
+  /* Glassmorphism variables */
   --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  --glass-blur: blur(8px); /* Reduced from 20px to 8px for better performance */
+  --glass-blur: blur(20px);
   --glass-radius: 16px;
   
   /* Additional glass variations */
@@ -31,10 +31,6 @@ html, body {
   color: var(--text-color) !important;
   transition: none !important;
   animation: none !important;
-  /* Add hardware acceleration for smoother scrolling */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: scroll-position;
 }
 
 body::after {
@@ -85,7 +81,7 @@ body::after {
     display: none;
   }
 
-  /* Glass morphism effect - iOS 26 style with PERFORMANCE OPTIMIZATIONS */
+  /* Glass morphism effect - iOS 26 style */
   .glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
@@ -93,12 +89,6 @@ body::after {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--glass-radius);
-    /* Performance optimizations */
-    will-change: transform;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    /* Reduce repaints */
-    contain: layout style paint;
   }
 
   .glass-light {
@@ -108,11 +98,6 @@ body::after {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--glass-radius);
-    /* Performance optimizations */
-    will-change: transform;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    contain: layout style paint;
   }
 
   .glass-medium {
@@ -122,11 +107,6 @@ body::after {
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
     border-radius: var(--glass-radius);
-    /* Performance optimizations */
-    will-change: transform;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    contain: layout style paint;
   }
 
   /* Text gradient utilities */
@@ -187,7 +167,7 @@ body::after {
   font-family: 'Orbitron', 'Exo', 'Raleway Dots', 'Rajdhani', Arial, sans-serif;
 }
 
-/* iOS 26 Liquid Glass Navbar - PERFORMANCE OPTIMIZED */
+/* iOS 26 Liquid Glass Navbar */
 .navbar-glassmorphism {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -199,11 +179,6 @@ body::after {
   margin: 18px auto 0 auto;
   max-width: 98vw;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 /* Fixed navbar that stays at the top without scrolling */
@@ -219,17 +194,6 @@ body::after {
   margin: 0;
   width: 100%;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
-  /* Ensure it stays on top */
-  z-index: 50;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
 }
 
 .navbar-mobile-glassmorphism {
@@ -243,11 +207,6 @@ body::after {
   margin: 16px auto 0 auto;
   max-width: 98vw;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .logo-container {
@@ -259,11 +218,6 @@ body::after {
   border: 1px solid var(--glass-border);
   padding: 8px 16px;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .glass-logo {
@@ -275,11 +229,6 @@ body::after {
   border: 1px solid var(--glass-border);
   padding: 4px 8px;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .glass-logo.no-bg {
@@ -300,11 +249,6 @@ body::after {
   margin: 16px auto;
   max-width: 98vw;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 /* Accessibility fallback for reduced transparency */
@@ -339,11 +283,6 @@ p, span, div, a, button, input, textarea, select {
   color: var(--text-color);
   padding: 12px 24px;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .btn-glass:hover {
@@ -363,11 +302,6 @@ p, span, div, a, button, input, textarea, select {
   color: var(--text-color);
   padding: 12px 16px;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .input-glass::placeholder {
@@ -384,11 +318,6 @@ p, span, div, a, button, input, textarea, select {
   border-radius: var(--glass-radius);
   padding: 24px;
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 /* Glass modal styles */
@@ -400,11 +329,6 @@ p, span, div, a, button, input, textarea, select {
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--glass-radius);
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 .modal-backdrop {
@@ -412,65 +336,9 @@ p, span, div, a, button, input, textarea, select {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   transition: none !important;
-  /* Performance optimizations */
-  will-change: transform;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  contain: layout style paint;
 }
 
 /* Override: Force black text for all text in the checkout page */
 .checkout-page *, .checkout-page {
   color: #111 !important;
-}
-
-/* ADDITIONAL PERFORMANCE OPTIMIZATIONS */
-
-/* Optimize scrolling containers */
-.scroll-container {
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  /* Hardware acceleration */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  will-change: scroll-position;
-}
-
-/* Reduce backdrop-filter on mobile for better performance */
-@media (max-width: 768px) {
-  .glass,
-  .glass-light,
-  .glass-medium,
-  .navbar-glassmorphism,
-  .navbar-mobile-glassmorphism,
-  .logo-container,
-  .glass-logo,
-  .ios-banner,
-  .btn-glass,
-  .input-glass,
-  .card-glass,
-  .modal-glass {
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-  }
-}
-
-/* Disable backdrop-filter on low-end devices */
-@media (prefers-reduced-motion: reduce) {
-  .glass,
-  .glass-light,
-  .glass-medium,
-  .navbar-glassmorphism,
-  .navbar-mobile-glassmorphism,
-  .logo-container,
-  .glass-logo,
-  .ios-banner,
-  .btn-glass,
-  .input-glass,
-  .card-glass,
-  .modal-glass {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.15);
-  }
 }
