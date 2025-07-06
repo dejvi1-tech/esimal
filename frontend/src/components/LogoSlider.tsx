@@ -26,8 +26,7 @@ const LogoSlider: React.FC<LogoSliderProps> = ({ logos }) => {
           <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#4B0082] to-transparent z-10 pointer-events-none" />
           <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#4B0082] to-transparent z-10 pointer-events-none" />
           <div
-            className="flex gap-12 animate-marquee whitespace-nowrap"
-            style={{ animation: 'marquee 32s linear infinite' }}
+            className="logo-marquee flex gap-12 whitespace-nowrap"
           >
             {marqueeLogos.map((logo, index) => (
               <div
@@ -47,12 +46,15 @@ const LogoSlider: React.FC<LogoSliderProps> = ({ logos }) => {
       </div>
       {/* Marquee keyframes */}
       <style>{`
+        .logo-marquee {
+          animation: marquee 32s linear infinite;
+        }
         @keyframes marquee {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         @media (max-width: 640px) {
-          .animate-marquee { gap: 2rem !important; }
+          .logo-marquee { gap: 2rem !important; }
         }
       `}</style>
     </section>
