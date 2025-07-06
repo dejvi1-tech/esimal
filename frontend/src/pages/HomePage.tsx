@@ -124,20 +124,34 @@ const HomePage = () => {
                     <div className="flex-grow">
                       <div className="flex items-center mb-4">
                         <div className="mr-4">
-                          {/* EU Flag in Circle */}
+                          {/* Flag in Circle - Show EU flag for Europe Sprint, otherwise use country-specific flag */}
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30 bg-white flex items-center justify-center">
-                            <img 
-                              src="/images/eu.png" 
-                              alt="EU Flag" 
-                              className="w-full h-full object-cover rounded-full"
-                              onError={(e) => {
-                                console.log('EU flag failed to load, using fallback');
-                                e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 810 540'%3E%3Crect width='810' height='540' fill='%23003399'/%3E%3Cg fill='%23ffcc00'%3E%3Cg transform='translate(405,270)'%3E%3Cpath transform='rotate(0) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(30) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(60) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(90) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(120) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(150) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(180) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(210) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(240) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(270) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(300) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(330) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E";
-                              }}
-                            />
+                            {pkg.country_code === 'EUS' ? (
+                              <img 
+                                src="/images/eu.png" 
+                                alt="EU Flag" 
+                                className="w-full h-full object-cover rounded-full"
+                                onError={(e) => {
+                                  console.log('EU flag failed to load, using fallback');
+                                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 810 540'%3E%3Crect width='810' height='540' fill='%23003399'/%3E%3Cg fill='%23ffcc00'%3E%3Cg transform='translate(405,270)'%3E%3Cpath transform='rotate(0) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(30) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(60) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(90) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(120) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(150) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(180) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(210) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(240) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(270) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(300) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(330) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E";
+                                }}
+                              />
+                            ) : (
+                              <img 
+                                src={`https://flagcdn.com/w40/${pkg.country_code?.toLowerCase() || 'eu'}.png`}
+                                alt={`${pkg.country_name} Flag`}
+                                className="w-full h-full object-cover rounded-full"
+                                onError={(e) => {
+                                  console.log('Flag failed to load, using fallback');
+                                  e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 810 540'%3E%3Crect width='810' height='540' fill='%23003399'/%3E%3Cg fill='%23ffcc00'%3E%3Cg transform='translate(405,270)'%3E%3Cpath transform='rotate(0) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(30) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(60) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(90) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(120) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(150) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(180) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(210) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(240) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(270) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(300) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3Cpath transform='rotate(330) translate(0,-120)' d='M0-20L5.85-6.18L19.1-6.18L9.27,3.82L15.12,17.64L0,7.64L-15.12,17.64L-9.27,3.82L-19.1-6.18L-5.85-6.18z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E";
+                                }}
+                              />
+                            )}
                           </div>
                         </div>
-                        <h3 className="text-2xl font-bold text-white">{t('europe')}</h3>
+                        <h3 className="text-2xl font-bold text-white">
+                          {pkg.country_code === 'EUS' ? 'Europe Sprint' : pkg.country_name || t('europe')}
+                        </h3>
                       </div>
                       <ul className="space-y-3 text-left">
                         <li className="flex items-center">
@@ -213,7 +227,7 @@ const HomePage = () => {
                       <div className="text-5xl font-extrabold text-white mb-4">
                         €{pkg.sale_price}
                       </div>
-                      <Link to={`/checkout?country=EU&package=${pkg.id}`}>
+                      <Link to={`/checkout?country=${pkg.country_code || 'EU'}&package=${pkg.id}`}>
                         <Button className="btn-glass bg-accent text-accent-foreground font-semibold w-full">
                           {t('buy_now')}
                         </Button>
