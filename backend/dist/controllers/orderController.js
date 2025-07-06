@@ -450,12 +450,31 @@ const createMyPackageOrder = async (req, res, next) => {
         let realQRData;
         // Step 1: Create eSIM order with Roamify (with fallback)
         logger_1.logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
+        let iccid = null;
         try {
             // Use the correct Roamify API payload format with items array
             const roamifyOrder = await roamifyService_1.RoamifyService.createEsimOrder(realRoamifyPackageId, 1);
             esimCode = roamifyOrder.esimId;
             roamifyOrderId = roamifyOrder.orderId;
             logger_1.logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+            // Step 1.5: Retrieve ICCID using the UUID
+            try {
+                logger_1.logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
+                const iccidData = await roamifyService_1.RoamifyService.getEsimIccid(esimCode);
+                if (iccidData && iccidData.iccid && iccidData.iccid.startsWith("89")) {
+                    iccid = iccidData.iccid;
+                    logger_1.logger.info(`ICCID retrieved successfully: ${iccid}`);
+                }
+                else {
+                    logger_1.logger.error(`ICCID retrieval failed or returned non-ICCID value for eSIM ${esimCode}:`, iccidData);
+                    iccid = null;
+                }
+            }
+            catch (iccidError) {
+                logger_1.logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
+                // Continue without ICCID - it can be retrieved later
+                iccid = null;
+            }
             // NEW: Poll for eSIM profile
             let profile;
             try {
@@ -501,6 +520,7 @@ const createMyPackageOrder = async (req, res, next) => {
             name,
             surname,
             esim_code: esimCode,
+            iccid: iccid || null, // Add ICCID to order data
             qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
             roamify_order_id: roamifyOrderId,
             status: status,
@@ -532,6 +552,7 @@ const createMyPackageOrder = async (req, res, next) => {
                     dataAmount: `${packageData.data_amount}GB`,
                     days: packageData.days,
                     esimCode: esimCode,
+                    iccid: iccid || undefined, // Add ICCID to email template
                     qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
                     qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
                     isGuestOrder: true,

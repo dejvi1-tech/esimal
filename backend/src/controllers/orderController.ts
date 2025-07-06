@@ -492,12 +492,31 @@ export const createMyPackageOrder = async (
     // Step 1: Create eSIM order with Roamify (with fallback)
     logger.info(`Creating Roamify order for package: ${packageData.name} (real Roamify packageId: ${realRoamifyPackageId})`);
     
+    let iccid: string | null = null;
+    
     try {
       // Use the correct Roamify API payload format with items array
       const roamifyOrder = await RoamifyService.createEsimOrder(realRoamifyPackageId!, 1);
       esimCode = roamifyOrder.esimId;
       roamifyOrderId = roamifyOrder.orderId;
       logger.info(`Roamify order created. Order ID: ${roamifyOrderId}, eSIM ID: ${esimCode}`);
+
+      // Step 1.5: Retrieve ICCID using the UUID
+      try {
+        logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
+        const iccidData = await RoamifyService.getEsimIccid(esimCode);
+        if (iccidData && iccidData.iccid && iccidData.iccid.startsWith("89")) {
+          iccid = iccidData.iccid;
+          logger.info(`ICCID retrieved successfully: ${iccid}`);
+        } else {
+          logger.error(`ICCID retrieval failed or returned non-ICCID value for eSIM ${esimCode}:`, iccidData);
+          iccid = null;
+        }
+      } catch (iccidError) {
+        logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
+        // Continue without ICCID - it can be retrieved later
+        iccid = null;
+      }
 
       // NEW: Poll for eSIM profile
       let profile;
@@ -542,6 +561,7 @@ export const createMyPackageOrder = async (
       name,
       surname,
       esim_code: esimCode,
+      iccid: iccid || null, // Add ICCID to order data
       qr_code_data: realQRData.lpaCode || '', // Store the real LPA code from Roamify
       roamify_order_id: roamifyOrderId,
       status: status,
@@ -577,6 +597,7 @@ export const createMyPackageOrder = async (
           dataAmount: `${packageData.data_amount}GB`,
           days: packageData.days,
           esimCode: esimCode,
+          iccid: iccid || undefined, // Add ICCID to email template
           qrCodeData: realQRData.lpaCode || '', // Use real LPA code from Roamify
           qrCodeUrl: realQRData.qrCodeUrl || '', // Use real QR code URL from Roamify
           isGuestOrder: true,
