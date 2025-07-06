@@ -503,17 +503,19 @@ export const createMyPackageOrder = async (
 
       // Step 1.5: Retrieve ICCID using the UUID
       try {
-        logger.info(`Retrieving ICCID for eSIM UUID: ${esimCode}`);
+        logger.info(`🔍 [ICCID DEBUG] Starting ICCID retrieval for eSIM UUID: ${esimCode}`);
         const iccidData = await RoamifyService.getEsimIccid(esimCode);
+        logger.info(`🔍 [ICCID DEBUG] ICCID data received:`, iccidData);
+        
         if (iccidData && iccidData.iccid && iccidData.iccid.startsWith("89")) {
           iccid = iccidData.iccid;
-          logger.info(`ICCID retrieved successfully: ${iccid}`);
+          logger.info(`✅ [ICCID DEBUG] ICCID retrieved successfully: ${iccid}`);
         } else {
-          logger.error(`ICCID retrieval failed or returned non-ICCID value for eSIM ${esimCode}:`, iccidData);
+          logger.error(`❌ [ICCID DEBUG] ICCID retrieval failed or returned non-ICCID value for eSIM ${esimCode}:`, iccidData);
           iccid = null;
         }
       } catch (iccidError) {
-        logger.error(`Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
+        logger.error(`❌ [ICCID DEBUG] Failed to retrieve ICCID for eSIM ${esimCode}:`, iccidError);
         // Continue without ICCID - it can be retrieved later
         iccid = null;
       }

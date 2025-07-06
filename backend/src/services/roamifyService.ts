@@ -702,7 +702,7 @@ export class RoamifyService {
    */
   static async getEsimIccid(esimUuid: string): Promise<{ iccid: string; status: string; esimData: any }> {
     return this.retryApiCall(async () => {
-      logger.info(`Getting eSIM ICCID for UUID: ${esimUuid}`);
+      logger.info(`🔍 [ICCID SERVICE] Getting eSIM ICCID for UUID: ${esimUuid}`);
 
       // Try multiple approaches to get ICCID
       let esimData = null;
@@ -710,14 +710,18 @@ export class RoamifyService {
 
       // Approach 1: Try the existing getEsimDetails method
       try {
-        logger.info(`[ICCID] Trying getEsimDetails for UUID: ${esimUuid}`);
+        logger.info(`🔍 [ICCID SERVICE] Trying getEsimDetails for UUID: ${esimUuid}`);
         esimData = await this.getEsimDetails(esimUuid);
+        logger.info(`🔍 [ICCID SERVICE] getEsimDetails response:`, esimData);
+        
         if (esimData.iccid && esimData.iccid.startsWith('89')) {
           iccid = esimData.iccid;
-          logger.info(`[ICCID] Success via getEsimDetails: ${iccid}`);
+          logger.info(`✅ [ICCID SERVICE] Success via getEsimDetails: ${iccid}`);
+        } else {
+          logger.warn(`⚠️ [ICCID SERVICE] getEsimDetails returned invalid ICCID: ${esimData.iccid}`);
         }
       } catch (error) {
-        logger.warn(`[ICCID] getEsimDetails failed: ${error}`);
+        logger.warn(`❌ [ICCID SERVICE] getEsimDetails failed: ${error}`);
       }
 
       // Approach 2: Try direct API call to /api/esim with UUID as parameter
