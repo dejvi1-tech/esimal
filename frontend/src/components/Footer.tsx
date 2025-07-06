@@ -1,5 +1,6 @@
-import { Smartphone, Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Smartphone, Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
+import { SiTiktok } from "react-icons/si";
 
 const Footer = () => {
   const footerSections = [
@@ -32,8 +33,8 @@ const Footer = () => {
     title: "Na Ndiqni",
     links: [
     { icon: Facebook, href: "#", name: "Facebook" },
-    { icon: Twitter, href: "#", name: "Twitter" },
     { icon: Instagram, href: "#", name: "Instagram" },
+    { icon: SiTiktok, href: "#", name: "Tiktok" },
     { icon: Linkedin, href: "#", name: "LinkedIn" }
     ]
 
@@ -42,8 +43,8 @@ const Footer = () => {
 
   const socialLinks = [
   { icon: Facebook, href: "#", name: "Facebook" },
-  { icon: Twitter, href: "#", name: "Twitter" },
   { icon: Instagram, href: "#", name: "Instagram" },
+  { icon: SiTiktok, href: "#", name: "Tiktok" },
   { icon: Linkedin, href: "#", name: "LinkedIn" }];
 
 
@@ -99,14 +100,26 @@ const Footer = () => {
               <ul className="space-y-3">
                 {section.links.map((link, linkIndex) =>
               <li key={linkIndex}>
-                    <a
-                  href={link.href}
-                  className="text-gray-300 text-sm"
-                  {...(link.target ? { target: link.target } : {})}
-                  {...(link.rel ? { rel: link.rel } : {})}
-                >
-                      {link.name}
-                    </a>
+                    {section.title === "Na Ndiqni" && link.icon ? (
+                      <a
+                        href={link.href}
+                        className="flex items-center gap-3 text-gray-300 text-base font-medium hover:text-accent transition-none"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <link.icon className="w-5 h-5" />
+                        <span>{link.name}</span>
+                      </a>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-gray-300 text-sm"
+                        {...(link.target ? { target: link.target } : {})}
+                        {...(link.rel ? { rel: link.rel } : {})}
+                      >
+                        {link.name}
+                      </a>
+                    )}
                   </li>
               )}
               </ul>
