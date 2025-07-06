@@ -172,7 +172,7 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <span className="text-white font-medium">
-                            {pkg.country_code === 'EUS' ? '10+5GB FALAS (OFERTE)' : (pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount))}
+                            {pkg.country_code === 'EUS' && pkg.data_amount === 1 ? '1GB' : (pkg.data_amount === 0 ? t('unlimited_data') : formatDataAmount(pkg.data_amount))}
                           </span>
                         </li>
                         <li className="flex items-center">
