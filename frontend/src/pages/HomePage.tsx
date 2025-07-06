@@ -111,7 +111,15 @@ const HomePage = () => {
           ) : mostPopularPackages.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mostPopularPackages.map((pkg, index) => (
-                <div key={pkg.id}>
+                <div key={pkg.id} className="relative">
+                  {/* Most Popular badge for the 3rd card */}
+                  {index === 2 && (
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                      <span className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
                   <div className="card-glass flex flex-col h-full">
                     <div className="flex-grow">
                       <div className="flex items-center mb-4">
