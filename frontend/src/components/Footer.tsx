@@ -1,52 +1,49 @@
-import { Smartphone, Mail, Phone, MapPin, Facebook, Instagram, Linkedin } from "lucide-react";
-import { Link, useLocation } from 'react-router-dom';
-import { SiTiktok } from "react-icons/si";
+import { Smartphone, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Link } from 'react-router-dom';
+import React from 'react';
+
+// Define a type for footer links
+// Either a normal link or a social link with an icon
+
+type FooterLink =
+  | { name: string; href: string; target?: string; rel?: string }
+  | { icon: React.ElementType; href: string; name: string };
 
 const Footer = () => {
-  const footerSections = [
-  {
-    title: "Produkti",
-    links: [
-    { name: "Planet eSIM", href: "#" },
-    { name: "Harta e Mbulimit", href: "#" },
-    { name: "Çmimet", href: "#" },
-    { name: "Përputhshmëria e Pajisjeve", href: "#" }]
-
-  },
-  {
-    title: "e-SimFly",
-    links: [
-    { name: "Privatësia & Cookies", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
-    { name: "Termat & Kushtet", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
-    ]
-
-  },
-  {
-    title: "Kompania",
-    links: [
-    { name: "Rreth Nesh", href: "https://esimfly.al/about" },
-    { name: "Help Center", href: "https://esimfly.al/support" },
-    ]
-
-  },
-  {
-    title: "Na Ndiqni",
-    links: [
-    { icon: Facebook, href: "#", name: "Facebook" },
-    { icon: Instagram, href: "#", name: "Instagram" },
-    { icon: SiTiktok, href: "#", name: "Tiktok" },
-    { icon: Linkedin, href: "#", name: "LinkedIn" }
-    ]
-
-  }];
-
-
-  const socialLinks = [
-  { icon: Facebook, href: "#", name: "Facebook" },
-  { icon: Instagram, href: "#", name: "Instagram" },
-  { icon: SiTiktok, href: "#", name: "Tiktok" },
-  { icon: Linkedin, href: "#", name: "LinkedIn" }];
-
+  const footerSections: { title: string; links: FooterLink[] }[] = [
+    {
+      title: "Produkti",
+      links: [
+        { name: "Planet eSIM", href: "#" },
+        { name: "Harta e Mbulimit", href: "#" },
+        { name: "Çmimet", href: "#" },
+        { name: "Përputhshmëria e Pajisjeve", href: "#" }
+      ]
+    },
+    {
+      title: "e-SimFly",
+      links: [
+        { name: "Privatësia & Cookies", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
+        { name: "Termat & Kushtet", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
+      ]
+    },
+    {
+      title: "Kompania",
+      links: [
+        { name: "Rreth Nesh", href: "https://esimfly.al/about" },
+        { name: "Help Center", href: "https://esimfly.al/support" },
+      ]
+    },
+    {
+      title: "Na Ndiqni",
+      links: [
+        { icon: Facebook, href: "#", name: "Facebook" },
+        { icon: Twitter, href: "#", name: "Twitter" },
+        { icon: Instagram, href: "#", name: "Instagram" },
+        { icon: Linkedin, href: "#", name: "LinkedIn" }
+      ]
+    }
+  ];
 
   return (
     <footer className="glass-medium text-white">
@@ -75,7 +72,6 @@ const Footer = () => {
               Duke lidhur udhëtarët në mbarë botën me zgjidhje eSIM të besueshme dhe të përballueshme. 
               Qëndroni të lidhur, vazhdoni të eksploroni.
             </p>
-            
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
@@ -95,12 +91,12 @@ const Footer = () => {
 
           {/* Footer Links */}
           {footerSections.map((section, index) =>
-          <div key={index}>
+            <div key={index}>
               <h3 className="font-semibold mb-4 text-white">{section.title}</h3>
               <ul className="space-y-3">
                 {section.links.map((link, linkIndex) =>
-              <li key={linkIndex}>
-                    {section.title === "Na Ndiqni" && link.icon ? (
+                  <li key={linkIndex}>
+                    {"icon" in link ? (
                       <a
                         href={link.href}
                         className="flex items-center gap-3 text-gray-300 text-base font-medium hover:text-accent transition-none"
@@ -114,14 +110,14 @@ const Footer = () => {
                       <a
                         href={link.href}
                         className="text-gray-300 text-sm"
-                        {...(link.target ? { target: link.target } : {})}
-                        {...(link.rel ? { rel: link.rel } : {})}
+                        target={link.target}
+                        rel={link.rel}
                       >
                         {link.name}
                       </a>
                     )}
                   </li>
-              )}
+                )}
               </ul>
             </div>
           )}
@@ -152,24 +148,10 @@ const Footer = () => {
           <div className="text-gray-300 text-sm mb-4 md:mb-0">
             © {new Date().getFullYear()} e-SimFly. Të gjitha të drejtat e rezervuara.
           </div>
-          
-          {/* Social Links */}
-          <div className="flex space-x-4">
-            {socialLinks.map((social, index) =>
-            <a
-              key={index}
-              href={social.href}
-              className="text-gray-300"
-              aria-label={social.name}>
-
-                <social.icon className="w-5 h-5" />
-              </a>
-            )}
-          </div>
         </div>
       </div>
-    </footer>);
-
+    </footer>
+  );
 };
 
 export default Footer;
