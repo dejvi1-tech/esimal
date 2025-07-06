@@ -49,7 +49,7 @@ const Footer = () => {
 
 
   return (
-    <footer className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)] border shadow-lg text-white">
+    <footer className="glass-medium text-white">
       <div className="container mx-auto px-4 py-16">
         <div className="grid lg:grid-cols-5 md:grid-cols-2 gap-8">
           {/* Brand Section */}
@@ -124,9 +124,9 @@ const Footer = () => {
               <input
                 type="email"
                 placeholder="Shkruani email-in tuaj"
-                className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg flex-1 px-4 py-2 rounded-l-lg text-white placeholder-gray-300" />
+                className="input-glass flex-1 px-4 py-2 rounded-l-lg text-white placeholder-gray-300" />
 
-              <button className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg px-6 py-2 bg-accent text-accent-foreground rounded-r-lg font-semibold">
+              <button className="btn-glass px-6 py-2 bg-accent text-accent-foreground rounded-r-lg font-semibold">
                 Regjistrohu
               </button>
             </div>

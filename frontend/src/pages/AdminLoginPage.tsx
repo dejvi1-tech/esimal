@@ -64,42 +64,42 @@ const AdminLoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#4B0082] text-white flex items-center justify-center">
-      <div className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)] border shadow-lg p-8 md:p-12 rounded-2xl mx-auto max-w-md w-full text-white">
+      <div className="glass-medium p-8 md:p-12 rounded-2xl mx-auto max-w-md w-full text-white">
         <h2 className="text-3xl font-bold text-white text-center mb-2">Admin Login</h2>
         <p className="text-gray-200 text-center mb-6">Access the admin panel</p>
         <form className="space-y-6" onSubmit={handleSubmit}>
-                      <div>
-              <label htmlFor="username" className="block text-sm font-medium text-white">Username</label>
-              <div className="mt-1">
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg w-full text-white placeholder-gray-300"
-                  placeholder="Enter username"
-                />
-              </div>
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-white">Username</label>
+            <div className="mt-1">
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="input-glass w-full text-white placeholder-gray-300"
+                placeholder="Enter username"
+              />
             </div>
-                      <div>
-              <label htmlFor="password" className="block text-sm font-medium text-white">Password</label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg w-full text-white placeholder-gray-300"
-                  placeholder="Enter password"
-                />
-              </div>
+          </div>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-white">Password</label>
+            <div className="mt-1">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="input-glass w-full text-white placeholder-gray-300"
+                placeholder="Enter password"
+              />
             </div>
+          </div>
           {error && (
-            <div className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.16)] border-[rgba(255,255,255,0.25)] border shadow-lg p-4 rounded-2xl max-w-lg mx-auto text-red-400">
+            <div className="modal-glass p-4 rounded-2xl max-w-lg mx-auto text-red-400">
               {error}
             </div>
           )}
@@ -107,7 +107,7 @@ const AdminLoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="backdrop-blur-lg-safari bg-[rgba(255,255,255,0.1)] border-[rgba(255,255,255,0.2)] border shadow-lg bg-accent text-black w-full py-3 rounded-xl text-center"
+              className="btn-glass bg-accent text-black w-full py-3 rounded-xl text-center"
             >
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
