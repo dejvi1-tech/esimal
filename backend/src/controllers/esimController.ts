@@ -390,6 +390,19 @@ export const getEsimUsageByIccid = asyncHandler(async (
     // Try to get usage details from Roamify
     try {
       usage = await RoamifyService.getEsimUsageDetails(iccid);
+      
+      // Validate Roamify data - if it returns null/0 values, use database data instead
+      if (!usage.dataLimit || usage.dataLimit === 0) {
+        console.log(`[DEBUG] Roamify returned invalid dataLimit (${usage.dataLimit}), using database data`);
+        usage.dataLimit = order.data_amount;
+        usage.dataRemaining = order.data_amount - (usage.dataUsed || 0);
+      }
+      
+      if (usage.dataRemaining === null || usage.dataRemaining === undefined) {
+        console.log(`[DEBUG] Roamify returned invalid dataRemaining (${usage.dataRemaining}), calculating from database`);
+        usage.dataRemaining = order.data_amount - (usage.dataUsed || 0);
+      }
+      
     } catch (error: any) {
       usageError = error;
       console.warn(`Failed to get usage from Roamify for ICCID ${iccid}:`, error.message);
@@ -409,8 +422,8 @@ export const getEsimUsageByIccid = asyncHandler(async (
       data: {
         iccid,
         dataUsed: usage.dataUsed || 0,
-        dataLimit: usage.dataLimit || order.data_amount || 5,
-        dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : (usage.dataLimit || order.data_amount || 5),
+        dataLimit: order.data_amount || 5, // Always use database data as source of truth
+        dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : order.data_amount,
         status: usage.status,
         expiry: order.created_at,
         createdAt: order.created_at,
