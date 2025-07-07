@@ -5,21 +5,44 @@ const ADMIN_USERNAME = 'egde';
 const ADMIN_PASSWORD = 'Elbasan2016!'; // Change this to a strong password
 const JWT_SECRET = 'z1ZqAp7aybxGbkEu33Ipz2dwDyGlqbJY9slb08mZd4s/qNRLicLkMpIC3k0ynf//TeFqjvsGzoDLrYI3Fqj7tA=='; // Change this to a strong secret
 
-// Middleware to protect admin routes
+/**
+ * Middleware to protect admin routes using cookie-based JWT authentication.
+ *
+ * Checks for JWT in req.cookies.auth_token. If not present, falls back to Authorization header.
+ * Attaches admin info to req if valid, else returns 401 Unauthorized.
+ *
+ * Args:
+ *   req (Request): Express request object.
+ *   res (Response): Express response object.
+ *   next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *   void
+ */
 export function requireAdminAuth(req: Request, res: Response, next: NextFunction): void {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  // 1. Try cookie-based auth first
+  let token = req.cookies?.auth_token;
+
+  // 2. Fallback to Authorization header if no cookie
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
+
+  if (!token) {
+    res.status(401).json({ error: 'Unauthorized: No auth token provided' });
     return;
   }
-  const token = authHeader.split(' ')[1];
+
   try {
     const payload = jwt.verify(token, JWT_SECRET) as { username: string };
     if (payload.username !== ADMIN_USERNAME) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }
-    // Optionally attach user info to req
+    // Attach admin info to req
     (req as any).admin = true;
     next();
   } catch (err) {
