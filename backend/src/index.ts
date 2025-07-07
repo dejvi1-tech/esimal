@@ -43,11 +43,8 @@ app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
 // Enhanced CORS configuration
 const allowedOrigins = [
   'https://esimfly.al',
-  'http://localhost:8080',
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:3000'
+  'https://www.esimfly.al'
+  
 ];
 const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {

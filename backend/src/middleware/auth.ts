@@ -58,6 +58,13 @@ export function adminLoginHandler(req: Request, res: Response, next: NextFunctio
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     console.log('✅ Login successful');
     const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
+    // Set JWT as cookie for parallel cookie/localStorage support
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: true, // Set to true in production (requires HTTPS)
+      sameSite: 'strict',
+      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    });
     res.json({ 
       success: true,
       token,
