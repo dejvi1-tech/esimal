@@ -87,7 +87,7 @@ const CountryPage: React.FC = () => {
     const fetchPackages = async () => {
       try {
         console.debug('[CountryPage] slug:', slug);
-        const apiUrl = `${import.meta.env.VITE_API_URL}/api/packages/get-section-packages?slug=${slug}`;
+        const apiUrl = `/api/packages/get-section-packages?slug=${slug}`;
         console.debug('[CountryPage] Fetching:', apiUrl);
         const response = await fetch(apiUrl);
         console.debug('[CountryPage] Response status:', response.status);

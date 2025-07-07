@@ -115,7 +115,7 @@ const CheckoutPage: React.FC = () => {
     const fetchPackageData = async () => {
       try {
         console.log('[DEBUG] fetchPackageData called with packageId:', effectivePackageId);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/frontend-packages?lang=${language}`);
+        const response = await fetch(`/api/frontend-packages?lang=${language}`);
         const packages = await response.json();
         const packageItem = packages.find((pkg: PackageData) => pkg.id === effectivePackageId);
         if (packageItem) {

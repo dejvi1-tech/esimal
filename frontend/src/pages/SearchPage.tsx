@@ -40,7 +40,7 @@ const SearchPage: React.FC = () => {
     setError('');
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/search-packages?country=${encodeURIComponent(country)}&lang=${language}`);
+      const response = await fetch(`/api/search-packages?country=${encodeURIComponent(country)}&lang=${language}`);
       if (response.ok) {
         const data = await response.json();
         setPackages(data);
@@ -71,7 +71,7 @@ const SearchPage: React.FC = () => {
     setBuyingPackage(pkg.id);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/create-order`, {
+      const response = await fetch(`/api/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

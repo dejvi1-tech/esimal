@@ -18,7 +18,7 @@ const CheckBalancePage: React.FC = () => {
     setUsage(null);
 
     try {
-      const response = await fetch(`https://esimal.onrender.com/api/esims/usage/${esimNumber.trim()}`);
+      const response = await fetch(`/api/esims/usage/${esimNumber.trim()}`);
       const result = await response.json();
 
       if (!response.ok) {
