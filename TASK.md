@@ -136,4 +136,7 @@
   - Albania 3GB 30 days: `esim-albania-30days-3gb-all` ✅
   - Albania 10GB 30 days: `esim-albania-30days-10gb-all` ✅
   - Albania 20GB 30 days: `esim-albania-30days-20gb-all` ✅
-  - Greece 1GB 30 days: `esim-greece-30days-1gb-all` ✅ (previously fixed) 
+  - Greece 1GB 30 days: `esim-greece-30days-1gb-all` ✅ (previously fixed)
+
+## [ ] Add /api/admin/csrf-token GET route to return CSRF token for frontend (2024-06-09)
+## [ ] Add unit test for /api/admin/csrf-token route (2024-06-09) 
