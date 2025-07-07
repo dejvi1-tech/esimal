@@ -397,8 +397,8 @@ export const getEsimUsageByIccid = asyncHandler(async (
       // Fallback: Provide mock usage data based on order
       usage = {
         dataUsed: 0, // Mock: No data used yet
-        dataLimit: order.data_amount || 1,
-        dataRemaining: order.data_amount || 1,
+        dataLimit: order.data_amount || 5,
+        dataRemaining: order.data_amount || 5, // Should be full amount when unused
         status: order.status === 'completed' ? 'active' : 'inactive',
         lastUpdated: new Date().toISOString()
       };
@@ -408,9 +408,9 @@ export const getEsimUsageByIccid = asyncHandler(async (
       status: 'success',
       data: {
         iccid,
-        dataUsed: usage.dataUsed,
+        dataUsed: usage.dataUsed || 0,
         dataLimit: usage.dataLimit || order.data_amount || 5,
-        dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : (usage.dataLimit || order.data_amount || 5) - (usage.dataUsed || 0),
+        dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : (usage.dataLimit || order.data_amount || 5),
         status: usage.status,
         expiry: order.created_at,
         createdAt: order.created_at,
