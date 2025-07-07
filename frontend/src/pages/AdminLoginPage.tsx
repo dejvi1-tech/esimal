@@ -33,6 +33,7 @@ const AdminLoginPage: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody),
       });
 
@@ -43,7 +44,6 @@ const AdminLoginPage: React.FC = () => {
       console.log('📡 Response data:', data);
 
       if (response.ok) {
-        localStorage.setItem('admin_token', data.token);
         toast.success('Login successful!');
         navigate('/admin');
       } else {
