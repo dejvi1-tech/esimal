@@ -48,7 +48,20 @@ const CheckBalancePage: React.FC = () => {
   };
 
   // Check if eSIM is expired (no data remaining)
-  const isExpired = usage && usage.dataRemaining === 0;
+  const isExpired = usage && (
+    (usage.dataRemaining === 0 && usage.dataUsed > 0) || 
+    usage.status === 'expired' || 
+    usage.status === 'inactive'
+  );
+
+  // Debug logging
+  console.log('Usage data received:', usage);
+  console.log('Is expired calculation:', {
+    dataRemaining: usage?.dataRemaining,
+    dataUsed: usage?.dataUsed,
+    status: usage?.status,
+    isExpired: isExpired
+  });
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
