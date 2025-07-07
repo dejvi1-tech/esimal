@@ -1,4 +1,7 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const router = (0, express_1.Router)();
@@ -6,6 +9,7 @@ const packageController_1 = require("../controllers/packageController");
 const adminController_1 = require("../controllers/adminController");
 const auth_1 = require("../middleware/auth");
 const asyncHandler_1 = require("../utils/asyncHandler");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 router.get('/test', (req, res) => {
     res.json({ ok: true });
 });
@@ -150,6 +154,19 @@ router.post('/packages/find-germany-packages', auth_1.requireAdminAuth, (0, asyn
             message: 'Failed to find Germany packages',
             error: error instanceof Error ? error.message : 'Unknown error'
         });
+    }
+}));
+router.get('/admin-check', ((req, res) => {
+    const token = req.cookies.auth_token;
+    if (!token) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    try {
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'your-default-secret');
+        return res.status(200).json({ success: true, user: decoded });
+    }
+    catch (err) {
+        return res.status(401).json({ error: 'Invalid token' });
     }
 }));
 exports.default = router;

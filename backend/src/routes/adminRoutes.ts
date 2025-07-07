@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 const router = Router();
 import { getAllPackages, getMyPackages, getAllRoamifyPackages, deduplicatePackages, getPackageCountries, syncRoamifyPackages, savePackage, deleteMyPackage, runCompletePackageSync } from '../controllers/packageController';
 import { 
@@ -15,6 +15,7 @@ import {
 } from '../controllers/adminController';
 import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
+import jwt from 'jsonwebtoken';
 
 router.get('/test', (req, res) => {
   res.json({ ok: true });
@@ -188,5 +189,20 @@ router.post('/packages/find-germany-packages', requireAdminAuth, asyncHandler(as
     });
   }
 }));
+
+router.get('/admin-check', ((req: any, res: any) => {
+  const token = req.cookies.auth_token;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-default-secret');
+    return res.status(200).json({ success: true, user: decoded });
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}) as any);
 
 export default router; 

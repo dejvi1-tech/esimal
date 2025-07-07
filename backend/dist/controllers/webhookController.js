@@ -397,7 +397,7 @@ async function sendConfirmationEmail(order, paymentIntent, metadata) {
             dataAmount: `${packageData.data_amount}GB`,
             days: packageData.days,
             esimCode: metadata.esimId || order.esim_code || order.roamify_esim_id || 'PENDING',
-            iccid: metadata.esimId || order.esim_code || order.roamify_esim_id || '',
+            iccid: order.iccid || metadata.esimId || order.esim_code || order.roamify_esim_id || '', // Use real ICCID if available
             qrCodeData: '', // Will be set from real Roamify data first, then fallback to DB
             qrCodeUrl: '',
             isGuestOrder: true,
@@ -421,7 +421,7 @@ async function sendConfirmationEmail(order, paymentIntent, metadata) {
             });
             // Use the real eSIM profile data from Roamify - ABSOLUTE PRIORITY
             emailData.esimCode = metadata.esimId || emailData.esimCode;
-            emailData.iccid = metadata.esimId || emailData.iccid;
+            emailData.iccid = metadata.iccid || emailData.iccid; // Use real ICCID if available
             emailData.qrCodeUrl = metadata.esimProfile.qrCodeUrl || '';
             // CRITICAL: Use real LPA code from Roamify - this is the most important field
             if (metadata.esimProfile.lpaCode) {
@@ -708,12 +708,14 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 logger_1.logger.info(`✅ Guest user exists: ${GUEST_USER_ID} (${guestUser.email})`);
             }
         }
+        // Initialize ICCID variable at function scope
+        let iccid = null;
         const userOrderData = {
             user_id: safeUserId,
             package_id: packageId,
             roamify_order_id: roamifySuccess && roamifyOrder ? roamifyOrder.orderId : null,
             qr_code_url: '', // Will be populated later if needed
-            iccid: roamifySuccess && roamifyOrder ? roamifyOrder.esimId : null, // Use esimId as iccid
+            iccid: null, // Will be updated with real ICCID after retrieval
             status: status,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -839,6 +841,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
             throw new Error(`Failed to update order with eSIM data: ${updateError.message}`);
         }
         logger_1.logger.info(`💾 Order updated with eSIM code: ${esimId}`);
+        // ICCID retrieval will be moved to after QR code generation is successful
         // STEP 1: Send immediate thank you email
         logger_1.logger.info(`📧 Sending immediate thank you email before QR code generation`);
         await sendThankYouEmail(order, paymentIntent, metadata);
@@ -899,21 +902,68 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 updated_at: new Date().toISOString(),
             })
                 .eq('id', orderId);
-            // Update user_orders with QR code URL if entry exists
+            // Update user_orders with QR code URL and ICCID if entry exists
             if (userOrder && userOrder.id) {
-                await supabase_1.supabase
-                    .from('user_orders')
-                    .update({
+                const userOrderUpdateData = {
                     qr_code_url: qrData.qrCodeUrl,
                     updated_at: new Date().toISOString(),
-                })
+                };
+                // Add ICCID if it was retrieved
+                if (iccid) {
+                    userOrderUpdateData.iccid = iccid;
+                }
+                await supabase_1.supabase
+                    .from('user_orders')
+                    .update(userOrderUpdateData)
                     .eq('id', userOrder.id);
-                logger_1.logger.info(`✅ Updated user_orders with QR code URL`, { orderId, userOrderId: userOrder.id });
+                logger_1.logger.info(`✅ Updated user_orders with QR code URL and ICCID`, {
+                    orderId,
+                    userOrderId: userOrder.id,
+                    hasIccid: !!iccid,
+                    iccid: iccid || 'not_retrieved'
+                });
             }
             else {
                 logger_1.logger.warn(`⚠️ Skipping user_orders QR code update - no user_orders entry exists`, { orderId });
             }
             logger_1.logger.info(`✅ QR code data saved to database`);
+            // NEW: Retrieve ICCID after QR code generation is successful (eSIM is fully activated)
+            try {
+                logger_1.logger.info(`🔍 [ICCID DEBUG] Starting ICCID retrieval for eSIM UUID: ${esimId} (after QR code generation)`);
+                const iccidData = await roamifyService_1.RoamifyService.getEsimIccid(esimId);
+                logger_1.logger.info(`🔍 [ICCID DEBUG] ICCID data received:`, iccidData);
+                if (iccidData && iccidData.iccid && iccidData.iccid.startsWith("89")) {
+                    iccid = iccidData.iccid;
+                    logger_1.logger.info(`✅ [ICCID DEBUG] ICCID retrieved successfully: ${iccid}`);
+                    // Update order with ICCID
+                    const { error: iccidUpdateError } = await supabase_1.supabase
+                        .from('orders')
+                        .update({
+                        iccid: iccid,
+                        updated_at: new Date().toISOString(),
+                    })
+                        .eq('id', orderId);
+                    if (iccidUpdateError) {
+                        logger_1.logger.error('❌ Error updating order with ICCID:', iccidUpdateError, {
+                            orderId,
+                            iccid,
+                            esimId,
+                        });
+                    }
+                    else {
+                        logger_1.logger.info(`✅ Order updated with ICCID: ${iccid}`);
+                    }
+                }
+                else {
+                    logger_1.logger.error(`❌ [ICCID DEBUG] ICCID retrieval failed or returned non-ICCID value for eSIM ${esimId}:`, iccidData);
+                    iccid = null;
+                }
+            }
+            catch (iccidError) {
+                logger_1.logger.error(`❌ [ICCID DEBUG] Failed to retrieve ICCID for eSIM ${esimId}:`, iccidError);
+                // Continue without ICCID - it can be retrieved later
+                iccid = null;
+            }
             // STEP 3: Send confirmation email with QR code only when ready
             logger_1.logger.info(`📧 Sending second email with REAL QR code data from Roamify`, {
                 orderId,
@@ -929,6 +979,7 @@ async function deliverEsim(order, paymentIntent, metadata) {
                 ...metadata,
                 esimProfile: qrData,
                 esimId: esimId,
+                iccid: iccid, // Pass the retrieved ICCID
             });
             logger_1.logger.info(`✅ Two-step email flow completed successfully with REAL Roamify QR code`, {
                 orderId,

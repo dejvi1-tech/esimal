@@ -25,6 +25,7 @@ import { RoamifyService } from './services/roamifyService';
 import { AnalyticsService } from './utils/analytics';
 import { asyncHandler } from './utils/asyncHandler';
 import { getSectionPackages, searchPackages } from './controllers/packageController';
+import cookieParser from 'cookie-parser';
 
 // Load environment variables
 config();
@@ -83,6 +84,7 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), hand
 // THEN your other middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser() as any);
 
 // Rate limiting for public API
 const limiter = rateLimit({

@@ -22,6 +22,7 @@ const syncRoutes_1 = __importDefault(require("./routes/syncRoutes"));
 const webhookController_1 = require("./controllers/webhookController");
 const supabase_js_1 = require("@supabase/supabase-js");
 const packageController_1 = require("./controllers/packageController");
+const cookie_parser_1 = __importDefault(require("cookie-parser"));
 // Load environment variables
 (0, dotenv_1.config)();
 // Create admin client for operations that need service role
@@ -32,11 +33,7 @@ app.set('trust proxy', 1); // ✅ FIXED from `true` to `1`
 // Enhanced CORS configuration
 const allowedOrigins = [
     'https://esimfly.al',
-    'http://localhost:8080',
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://127.0.0.1:3000'
+    'https://www.esimfly.al'
 ];
 const corsOptions = {
     origin: function (origin, callback) {
@@ -71,6 +68,7 @@ app.post('/api/webhooks/stripe', express_1.default.raw({ type: 'application/json
 // THEN your other middleware
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
+app.use((0, cookie_parser_1.default)());
 // Rate limiting for public API
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
