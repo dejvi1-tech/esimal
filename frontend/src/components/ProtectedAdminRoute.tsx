@@ -11,7 +11,7 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/admin-check', { credentials: 'include' });
+        const response = await fetch('/api/admin/admin-check', { credentials: 'include' });
         if (response.ok) {
           setIsAuthenticated(true);
         } else {

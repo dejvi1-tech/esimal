@@ -129,7 +129,7 @@ const AdminPanel: React.FC = () => {
     // Auth check for admin panel (cookie-based)
     const checkAdminAuth = async () => {
       try {
-        const res = await fetch('/api/admin-check', { credentials: 'include' });
+        const res = await fetch('/api/admin/admin-check', { credentials: 'include' });
         if (!res.ok) {
           navigate('/admin/login');
         }
