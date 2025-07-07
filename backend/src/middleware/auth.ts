@@ -1,9 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const ADMIN_USERNAME = 'egde';
-const ADMIN_PASSWORD = 'Elbasan2016!'; // Change this to a strong password
-const JWT_SECRET = 'z1ZqAp7aybxGbkEu33Ipz2dwDyGlqbJY9slb08mZd4s/qNRLicLkMpIC3k0ynf//TeFqjvsGzoDLrYI3Fqj7tA=='; // Change this to a strong secret
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !JWT_SECRET) {
+  throw new Error('ADMIN_USERNAME, ADMIN_PASSWORD, and JWT_SECRET must be set in environment variables');
+}
+
+// Type assertion for JWT_SECRET
+const JWT_SECRET_STR: string = JWT_SECRET as string;
 
 /**
  * Middleware to protect admin routes using cookie-based JWT authentication.
@@ -37,7 +44,7 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
   }
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as { username: string };
+    const payload = jwt.verify(token, JWT_SECRET_STR) as { username: string };
     if (payload.username !== ADMIN_USERNAME) {
       res.status(403).json({ error: 'Forbidden' });
       return;
@@ -80,7 +87,7 @@ export function adminLoginHandler(req: Request, res: Response, next: NextFunctio
   
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     console.log('✅ Login successful');
-    const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
+    const token = jwt.sign({ username }, JWT_SECRET_STR, { expiresIn: '8h' });
     // Set JWT as cookie for parallel cookie/localStorage support
     res.cookie('auth_token', token, {
       httpOnly: true,

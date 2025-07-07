@@ -9,19 +9,20 @@ import {
   getOrderDetails,
 } from '../controllers/orderController';
 import { orderRateLimiter } from '../middleware/rateLimiter';
-import { validatePackageBeforeCheckout, addValidationHeaders } from '../middleware/packageValidation';
+import { validatePackageBeforeCheckout, addValidationHeaders, validateCreateOrder } from '../middleware/packageValidation';
+import { requireAdminAuth } from '../middleware/auth';
 
 const router = express.Router();
 
 // Public routes for creating orders
-router.post('/', orderRateLimiter, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
+router.post('/', orderRateLimiter, validateCreateOrder, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
   try {
     await createOrder(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.post('/my-packages', orderRateLimiter, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
+router.post('/my-packages', orderRateLimiter, validateCreateOrder, validatePackageBeforeCheckout, addValidationHeaders, async (req, res, next): Promise<void> => {
   try {
     await createMyPackageOrder(req, res, next);
   } catch (err) {
@@ -39,28 +40,28 @@ router.get('/:orderId/details', async (req, res, next): Promise<void> => {
 });
 
 // Admin-only routes for order management
-router.get('/', async (req, res, next): Promise<void> => {
+router.get('/', requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await getAllOrders(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.get('/:id', async (req, res, next): Promise<void> => {
+router.get('/:id', requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await getOrder(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.put('/:id/status', async (req, res, next): Promise<void> => {
+router.put('/:id/status', requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await updateOrderStatus(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.post('/:id/cancel', async (req, res, next): Promise<void> => {
+router.post('/:id/cancel', requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await cancelOrder(req, res, next);
   } catch (err) {

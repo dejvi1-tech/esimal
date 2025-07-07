@@ -8,6 +8,8 @@ import {
   getSectionPackages,
   searchPackages,
 } from '../controllers/packageController';
+import { requireAdminAuth } from '../middleware/auth';
+import { validateCreatePackage, validateUpdatePackage } from '../middleware/packageValidation';
 
 const router = express.Router();
 
@@ -19,7 +21,7 @@ router.get('/', async (req, res, next): Promise<void> => {
     next(err);
   }
 });
-router.post('/', async (req, res, next): Promise<void> => {
+router.post('/', requireAdminAuth, validateCreatePackage, async (req, res, next): Promise<void> => {
   try {
     await createPackage(req, res, next);
   } catch (err) {
@@ -47,14 +49,14 @@ router.get('/:id', async (req, res, next): Promise<void> => {
     next(err);
   }
 });
-router.put('/:id', async (req, res, next): Promise<void> => {
+router.put('/:id', requireAdminAuth, validateUpdatePackage, async (req, res, next): Promise<void> => {
   try {
     await updatePackage(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.delete('/:id', async (req, res, next): Promise<void> => {
+router.delete('/:id', requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await deletePackage(req, res, next);
   } catch (err) {

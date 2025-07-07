@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { RoamifyService } from '../services/roamifyService';
 import { logger } from '../utils/logger';
+import { createOrderSchema, createPackageSchema, updatePackageSchema } from '../utils/zodSchemas';
 
 export interface PackageValidationResult {
   isValid: boolean;
@@ -340,4 +341,31 @@ export const addValidationHeaders = (req: Request, res: Response, next: NextFunc
   }
   
   next();
-}; 
+};
+
+export function validateCreateOrder(req: Request, res: Response, next: NextFunction) {
+  try {
+    createOrderSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid order input', details: err.errors });
+  }
+}
+
+export function validateCreatePackage(req: Request, res: Response, next: NextFunction) {
+  try {
+    createPackageSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid package input', details: err.errors });
+  }
+}
+
+export function validateUpdatePackage(req: Request, res: Response, next: NextFunction) {
+  try {
+    updatePackageSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid package update input', details: err.errors });
+  }
+} 
