@@ -33,6 +33,36 @@ const CheckBalancePage: React.FC = () => {
     }
   };
 
+  // Calculate progress percentage
+  const getProgressPercentage = () => {
+    if (!usage || !usage.dataLimit || usage.dataLimit === 0) return 0;
+    return Math.min((usage.dataUsed / usage.dataLimit) * 100, 100);
+  };
+
+  // Get progress bar color based on usage
+  const getProgressBarColor = () => {
+    const percentage = getProgressPercentage();
+    if (percentage < 30) return 'from-green-400 to-green-600';
+    if (percentage < 70) return 'from-yellow-400 to-orange-500';
+    return 'from-red-400 to-red-600';
+  };
+
+  // Check if eSIM is expired (no data remaining)
+  const isExpired = usage && (
+    (usage.dataRemaining === 0 && usage.dataUsed > 0) || 
+    usage.status === 'expired' || 
+    usage.status === 'inactive'
+  );
+
+  // Debug logging
+  console.log('Usage data received:', usage);
+  console.log('Is expired calculation:', {
+    dataRemaining: usage?.dataRemaining,
+    dataUsed: usage?.dataUsed,
+    status: usage?.status,
+    isExpired: isExpired
+  });
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <Helmet>
@@ -78,28 +108,62 @@ const CheckBalancePage: React.FC = () => {
         )}
         {usage && (
           <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-purple-900 via-blue-900 to-slate-900 border border-purple-700 shadow-2xl text-left text-white">
-            <div className="mb-2 text-lg font-bold text-purple-200">eSIM: <span className="font-mono">{usage.iccid}</span></div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-sm text-gray-200">Status:</span>
-              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${usage.status === 'active' ? 'bg-green-200 text-green-900' : 'bg-gray-300 text-gray-800'}`}>{usage.status}</span>
+            {/* eSIM Number */}
+            <div className="mb-4 text-lg font-bold text-purple-200">
+              eSIM: <span className="font-mono">{usage.iccid}</span>
             </div>
-            <div className="mb-4">
-              <div className="flex justify-between text-xs text-gray-300 mb-1">
-                <span>Used: {usage.dataUsed ?? '?'} GB</span>
-                <span>Limit: {usage.dataLimit ?? '?'} GB</span>
-                <span>Remaining: {usage.dataRemaining ?? '?'} GB</span>
+            
+            {/* Status */}
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-sm text-gray-200">Status:</span>
+              {isExpired ? (
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-red-200 text-red-900">
+                  Expired ❌
+                </span>
+              ) : (
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-200 text-green-900">
+                  Active ✅
+                </span>
+              )}
+            </div>
+            
+            {/* Usage Information */}
+            <div className="mb-4 space-y-2">
+              <div className="text-sm text-gray-200">
+                Usage: <span className="font-semibold text-white">{usage.dataUsed || 0} GB</span> / <span className="font-semibold text-white">{usage.dataLimit || '?'} GB</span>
               </div>
-              <div className="w-full bg-gray-700 rounded-full h-3">
+              <div className="text-sm text-gray-200">
+                Remaining: <span className="font-semibold text-white">{usage.dataRemaining || 0} GB</span>
+              </div>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
                 <div
-                  className="bg-gradient-to-r from-blue-400 to-purple-400 h-3 rounded-full transition-all"
-                  style={{ width: usage.dataLimit && usage.dataUsed != null ? `${Math.min(100, (usage.dataUsed / usage.dataLimit) * 100)}%` : '0%' }}
+                  className={`bg-gradient-to-r ${getProgressBarColor()} h-4 rounded-full transition-all duration-1000 ease-out`}
+                  style={{ 
+                    width: `${getProgressPercentage()}%`,
+                    animation: 'slideIn 1s ease-out'
+                  }}
                 ></div>
               </div>
             </div>
-            <div className="text-xs text-gray-400 mt-2">Checked: {usage.createdAt ? new Date(usage.createdAt).toLocaleString() : '-'}</div>
           </div>
         )}
       </div>
+      
+      {/* Add CSS animation */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from {
+            width: 0%;
+          }
+          to {
+            width: ${usage ? getProgressPercentage() : 0}%;
+          }
+        }
+      `}</style>
     </div>
   );
 };

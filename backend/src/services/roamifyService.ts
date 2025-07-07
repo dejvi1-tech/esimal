@@ -860,8 +860,33 @@ export class RoamifyService {
         const response = await axios.get(url, { headers, params });
 
         if (response.data) {
-          usageData = response.data;
-          logger.info(`✅ Usage details retrieved via /api/esim/usage/details:`, usageData);
+          // Handle the specific Roamify response format
+          const roamifyData = response.data.data || response.data;
+          if (roamifyData && roamifyData.allowedData !== undefined) {
+            // Convert MB to GB
+            const allowedDataGB = roamifyData.allowedData / 1024;
+            const remainingDataGB = roamifyData.remainingData / 1024;
+            const usedDataGB = Math.max(0, allowedDataGB - remainingDataGB);
+            
+            usageData = {
+              dataUsed: usedDataGB,
+              dataLimit: allowedDataGB,
+              dataRemaining: remainingDataGB,
+              status: roamifyData.status || 'active'
+            };
+            
+            logger.info(`✅ Usage details extracted from Roamify:`, {
+              allowedDataMB: roamifyData.allowedData,
+              remainingDataMB: roamifyData.remainingData,
+              allowedDataGB,
+              remainingDataGB,
+              usedDataGB,
+              status: roamifyData.status
+            });
+          } else {
+            usageData = response.data;
+            logger.info(`✅ Usage details retrieved via /api/esim/usage/details:`, usageData);
+          }
         }
       } catch (error: any) {
         lastError = error;
