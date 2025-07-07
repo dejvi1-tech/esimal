@@ -207,4 +207,10 @@ router.get('/admin-check', ((req: any, res: any) => {
   }
 }) as any);
 
+// CSRF token route for admin panel
+router.get('/csrf-token', (req: Request, res: Response) => {
+  // Reason: Expose CSRF token for frontend to fetch and use in protected requests
+  res.json({ csrfToken: req.csrfToken?.() });
+});
+
 export default router; 
