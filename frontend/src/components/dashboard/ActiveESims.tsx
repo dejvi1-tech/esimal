@@ -44,11 +44,8 @@ export const ActiveESims: React.FC = () => {
   useEffect(() => {
     const fetchESims = async () => {
       try {
-        const token = localStorage.getItem('auth_token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/esims/active`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await fetch('/api/esims/active', {
+          credentials: 'include',
         });
 
         if (!response.ok) {
@@ -100,14 +97,11 @@ export const ActiveESims: React.FC = () => {
 
   const handleActivate = async (esimId: string) => {
     try {
-      const token = localStorage.getItem('auth_token');
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/esims/${esimId}/activate`,
+        `/api/esims/${esimId}/activate`,
         {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: 'include',
         }
       );
 

@@ -10,35 +10,17 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('admin_token');
-      
-      if (!token) {
-        setIsAuthenticated(false);
-        return;
-      }
-
       try {
-        // Test the token by making a request to a protected endpoint
-        const response = await fetch(`/api/admin/test`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
+        const response = await fetch('/api/admin-check', { credentials: 'include' });
         if (response.ok) {
           setIsAuthenticated(true);
         } else {
-          // Token is invalid or expired
-          localStorage.removeItem('admin_token');
           setIsAuthenticated(false);
         }
       } catch (error) {
-        // Network error or other issue
-        localStorage.removeItem('admin_token');
         setIsAuthenticated(false);
       }
     };
-
     checkAuth();
   }, []);
 
