@@ -77,22 +77,21 @@ const CheckBalancePage: React.FC = () => {
           <div className="mt-6 text-red-600 dark:text-red-400 font-semibold">{error}</div>
         )}
         {usage && (
-          <div className="mt-8 p-6 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-purple-200 dark:border-purple-700 shadow-md text-left">
-            <div className="mb-2 text-lg font-bold text-purple-700 dark:text-purple-300">eSIM: <span className="font-mono">{usage.iccid}</span></div>
+          <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-purple-900 via-blue-900 to-slate-900 border border-purple-700 shadow-2xl text-left text-white">
+            <div className="mb-2 text-lg font-bold text-purple-200">eSIM: <span className="font-mono">{usage.iccid}</span></div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-300">Status:</span>
-              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${usage.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-700'}`}>{usage.status}</span>
+              <span className="text-sm text-gray-200">Status:</span>
+              <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${usage.status === 'active' ? 'bg-green-200 text-green-900' : 'bg-gray-300 text-gray-800'}`}>{usage.status}</span>
             </div>
-            <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">Expiry: {usage.expiry ? new Date(usage.expiry).toLocaleDateString() : 'N/A'}</div>
             <div className="mb-4">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <div className="flex justify-between text-xs text-gray-300 mb-1">
                 <span>Used: {usage.dataUsed ?? '?'} GB</span>
                 <span>Limit: {usage.dataLimit ?? '?'} GB</span>
                 <span>Remaining: {usage.dataRemaining ?? '?'} GB</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+              <div className="w-full bg-gray-700 rounded-full h-3">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all"
+                  className="bg-gradient-to-r from-blue-400 to-purple-400 h-3 rounded-full transition-all"
                   style={{ width: usage.dataLimit && usage.dataUsed != null ? `${Math.min(100, (usage.dataUsed / usage.dataLimit) * 100)}%` : '0%' }}
                 ></div>
               </div>

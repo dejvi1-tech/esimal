@@ -16,7 +16,6 @@ export interface Order {
   status: string;
   package: Package;
   activation_date: string;
-  expiry_date: string;
   created_at: string;
   esim_id: string;
 }
