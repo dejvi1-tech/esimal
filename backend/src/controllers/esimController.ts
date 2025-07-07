@@ -409,8 +409,8 @@ export const getEsimUsageByIccid = asyncHandler(async (
       data: {
         iccid,
         dataUsed: usage.dataUsed,
-        dataLimit: usage.dataLimit || order.data_amount,
-        dataRemaining: usage.dataRemaining,
+        dataLimit: usage.dataLimit || order.data_amount || 5,
+        dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : (usage.dataLimit || order.data_amount || 5) - (usage.dataUsed || 0),
         status: usage.status,
         expiry: order.created_at,
         createdAt: order.created_at,
