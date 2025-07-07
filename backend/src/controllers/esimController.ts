@@ -391,27 +391,9 @@ export const getEsimUsageByIccid = asyncHandler(async (
     try {
       usage = await RoamifyService.getEsimUsageDetails(iccid);
       
-      // Extract data from Roamify's response format
-      if (usage && usage.data) {
-        // Roamify returns data in MB, convert to GB
-        const allowedDataGB = (usage.data.allowedData || 0) / 1024;
-        const remainingDataGB = (usage.data.remainingData || 0) / 1024;
-        const usedDataGB = allowedDataGB - remainingDataGB;
-        
-        usage.dataLimit = allowedDataGB;
-        usage.dataRemaining = remainingDataGB;
-        usage.dataUsed = Math.max(0, usedDataGB);
-        usage.status = usage.data.status || usage.status;
-        
-        console.log(`[DEBUG] Extracted from Roamify:`, {
-          allowedDataMB: usage.data.allowedData,
-          remainingDataMB: usage.data.remainingData,
-          allowedDataGB,
-          remainingDataGB,
-          usedDataGB,
-          status: usage.status
-        });
-      }
+      // Based on the logs, Roamify returns data in a specific format
+      // We need to handle the case where the response might have nested data
+      console.log(`[DEBUG] Raw Roamify response:`, usage);
       
       // Validate Roamify data - if it returns null/0 values, use database data instead
       if (!usage.dataLimit || usage.dataLimit === 0) {
