@@ -26,6 +26,7 @@ import { AnalyticsService } from './utils/analytics';
 import { asyncHandler } from './utils/asyncHandler';
 import { getSectionPackages, searchPackages } from './controllers/packageController';
 import cookieParser from 'cookie-parser';
+import scheduledJobRoutes from './routes/scheduledJobRoutes';
 
 // Load environment variables
 config();
@@ -110,6 +111,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/sync', syncRoutes);
+app.use('/api/scheduled-jobs', scheduledJobRoutes);
 
 // Direct routes to match frontend URLs
 app.get('/api/get-section-packages', getSectionPackages);
