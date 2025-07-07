@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { getAdminHeaders } from '../utils/adminHeaders';
 
 interface ProtectedAdminRouteProps {
   children: React.ReactNode;
@@ -11,7 +12,8 @@ const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ children }) =
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/admin/admin-check', { credentials: 'include' });
+        const headers = await getAdminHeaders('GET');
+        const response = await fetch('/api/admin/admin-check', { headers, credentials: 'include' });
         if (response.ok) {
           setIsAuthenticated(true);
         } else {

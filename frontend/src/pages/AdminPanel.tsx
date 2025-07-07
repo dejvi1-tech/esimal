@@ -3,6 +3,7 @@ import { europeanCountries } from '../data/countries';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { countrySlug } from '../lib/utils';
+import { getAdminHeaders } from '../utils/adminHeaders';
 
 interface Package {
   id: string;
@@ -199,7 +200,9 @@ const AdminPanel: React.FC = () => {
   const fetchMyPackages = async () => {
     try {
       setLoading(true);
+      const headers = await getAdminHeaders('GET');
       const response = await fetch('/api/admin/my-packages', {
+        headers,
         credentials: 'include',
       });
 
@@ -223,7 +226,9 @@ const AdminPanel: React.FC = () => {
   const fetchMainPackages = async () => {
     try {
       setMainLoading(true);
+      const headers = await getAdminHeaders('GET');
       const response = await fetch('/api/admin/packages', {
+        headers,
         credentials: 'include',
       });
 
@@ -249,10 +254,12 @@ const AdminPanel: React.FC = () => {
       console.log(`Fetching ALL Roamify packages (single request with limit ${limit})...`);
       setRoamifyLoading(true);
       
+      const headers = await getAdminHeaders('GET');
       const fullUrl = `/api/admin/all-roamify-packages?page=1&limit=${limit}`;
       console.log('Fetching from URL:', fullUrl);
       
       const response = await fetch(fullUrl, {
+        headers,
         credentials: 'include',
       });
 
@@ -422,14 +429,14 @@ const AdminPanel: React.FC = () => {
   const handleSavePackage = async (pkg: Package) => {
     setSaving(true);
     try {
-      // Convert data_amount from MB to GB for the API (since the database stores it in MB)
       const packageData = {
         ...pkg,
-        data_amount: pkg.data_amount // Already in GB
+        data_amount: pkg.data_amount
       };
-
+      const headers = await getAdminHeaders('PUT');
       const response = await fetch(`/api/admin/update-package/${pkg.id}`, {
         method: 'PUT',
+        headers,
         credentials: 'include',
         body: JSON.stringify(packageData)
       });
@@ -461,8 +468,10 @@ const AdminPanel: React.FC = () => {
 
     setDeletingPackage(packageId);
     try {
+      const headers = await getAdminHeaders('DELETE');
       const response = await fetch(`/api/admin/delete-package/${packageId}`, {
         method: 'DELETE',
+        headers,
         credentials: 'include',
       });
 
@@ -495,9 +504,10 @@ const AdminPanel: React.FC = () => {
         sale_price: pkg.base_price || pkg.price || 0,
         profit: 0
       };
-
+      const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/admin/save-package', {
         method: 'POST',
+        headers,
         credentials: 'include',
         body: JSON.stringify(packageData)
       });
@@ -594,8 +604,10 @@ const AdminPanel: React.FC = () => {
         }
       };
 
+      const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/admin/save-package', {
         method: 'POST',
+        headers,
         credentials: 'include',
         body: JSON.stringify(packageData)
       });
@@ -688,8 +700,10 @@ const AdminPanel: React.FC = () => {
         }
       };
 
+      const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/admin/save-package', {
         method: 'POST',
+        headers,
         credentials: 'include',
         body: JSON.stringify(packageData)
       });
@@ -770,8 +784,10 @@ const AdminPanel: React.FC = () => {
 
     setDeduplicating(true);
     try {
+      const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/admin/deduplicate-packages', {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
 
@@ -795,8 +811,10 @@ const AdminPanel: React.FC = () => {
   const handleSyncRoamifyPackages = async () => {
     setSyncing(true);
     try {
+      const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/sync/roamify-packages', {
         method: 'POST',
+        headers,
         credentials: 'include',
       });
 

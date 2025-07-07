@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getAdminHeaders } from '../utils/adminHeaders';
 
 const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -26,14 +27,15 @@ const AdminLoginPage: React.FC = () => {
     });
 
     try {
+      const headers = await getAdminHeaders('POST');
       const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify(requestBody),
       });
 
-      console.log('�� Response status:', res.status);
+      console.log(' Response status:', res.status);
       console.log('📡 Response headers:', Object.fromEntries(res.headers.entries()));
 
       if (res.ok) {
