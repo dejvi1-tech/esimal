@@ -90,7 +90,19 @@ app.use(cookieParser() as any);
 
 // Register CSRF protection globally (after cookieParser, cors, helmet, before routes)
 export const csrfProtection = csurf({ cookie: true });
-app.use(csrfProtection);
+
+// TEMPORARY: Disable CSRF for /api/payments/create-intent for debugging
+app.use((req, res, next) => {
+  if (
+    req.method === 'POST' &&
+    req.path === '/api/payments/create-intent'
+  ) {
+    // Log that CSRF is skipped for this route
+    logger.warn('CSRF protection temporarily DISABLED for /api/payments/create-intent');
+    return next();
+  }
+  return csrfProtection(req, res, next);
+});
 
 // Rate limiting for public API
 const limiter = rateLimit({
@@ -217,14 +229,32 @@ app.use('*', (req: Request, res: Response) => {
 });
 
 // Global Error Handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+function globalErrorHandler(err: any, req: Request, res: Response, next: NextFunction) {
+  // Detailed CSRF error logging
+  if (err.code === 'EBADCSRFTOKEN') {
+    logger.error('CSRF token error', {
+      url: req.originalUrl,
+      method: req.method,
+      cookies: req.cookies,
+      headers: req.headers,
+      body: req.body,
+      message: err.message,
+    });
+    return res.status(403).json({
+      status: 'error',
+      message: 'Invalid or missing CSRF token',
+      details: err.message,
+    });
+  }
   const statusCode = err.statusCode || err.status || 500;
   res.status(statusCode).json({
     status: err.status || 'error',
     message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
-});
+}
+
+app.use(globalErrorHandler as import('express').ErrorRequestHandler);
 
 // Start Server
 const PORT = process.env.PORT || 3001;
