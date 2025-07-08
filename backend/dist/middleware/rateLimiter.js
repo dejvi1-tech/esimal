@@ -56,8 +56,8 @@ class RateLimiter {
 }
 // Create rate limiters for different endpoints
 exports.orderRateLimiter = new RateLimiter({
-    windowMs: 60 * 1000, // 1 minute
-    maxRequests: 5, // 5 orders per minute
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    maxRequests: 10, // 10 orders per 10 minutes
     message: 'Too many order requests. Please try again later.'
 }).middleware;
 exports.apiRateLimiter = new RateLimiter({

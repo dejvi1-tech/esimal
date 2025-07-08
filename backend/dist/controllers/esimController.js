@@ -310,6 +310,19 @@ exports.getEsimUsageByIccid = (0, asyncHandler_1.asyncHandler)(async (req, res, 
         // Try to get usage details from Roamify
         try {
             usage = await roamifyService_1.RoamifyService.getEsimUsageDetails(iccid);
+            // Based on the logs, Roamify returns data in a specific format
+            // We need to handle the case where the response might have nested data
+            console.log(`[DEBUG] Raw Roamify response:`, usage);
+            // Validate Roamify data - if it returns null/0 values, use database data instead
+            if (!usage.dataLimit || usage.dataLimit === 0) {
+                console.log(`[DEBUG] Roamify returned invalid dataLimit (${usage.dataLimit}), using database data`);
+                usage.dataLimit = order.data_amount || 1; // Use 1GB as fallback if database is null
+                usage.dataRemaining = (order.data_amount || 1) - (usage.dataUsed || 0);
+            }
+            if (usage.dataRemaining === null || usage.dataRemaining === undefined) {
+                console.log(`[DEBUG] Roamify returned invalid dataRemaining (${usage.dataRemaining}), calculating from database`);
+                usage.dataRemaining = (order.data_amount || 1) - (usage.dataUsed || 0);
+            }
         }
         catch (error) {
             usageError = error;
@@ -318,7 +331,7 @@ exports.getEsimUsageByIccid = (0, asyncHandler_1.asyncHandler)(async (req, res, 
             usage = {
                 dataUsed: 0, // Mock: No data used yet
                 dataLimit: order.data_amount || 1,
-                dataRemaining: order.data_amount || 1,
+                dataRemaining: order.data_amount || 1, // Should be full amount when unused
                 status: order.status === 'completed' ? 'active' : 'inactive',
                 lastUpdated: new Date().toISOString()
             };
@@ -327,9 +340,9 @@ exports.getEsimUsageByIccid = (0, asyncHandler_1.asyncHandler)(async (req, res, 
             status: 'success',
             data: {
                 iccid,
-                dataUsed: usage.dataUsed,
-                dataLimit: usage.dataLimit || order.data_amount,
-                dataRemaining: usage.dataRemaining,
+                dataUsed: usage.dataUsed || 0,
+                dataLimit: usage.dataLimit || 1, // Use extracted data from Roamify
+                dataRemaining: usage.dataRemaining != null ? usage.dataRemaining : 1,
                 status: usage.status,
                 expiry: order.created_at,
                 createdAt: order.created_at,

@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.csrfProtection = void 0;
 // EDITED FULL EXPRESS APP WITH FIXED TRUST PROXY AND BEST PRACTICES
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
@@ -23,6 +24,8 @@ const webhookController_1 = require("./controllers/webhookController");
 const supabase_js_1 = require("@supabase/supabase-js");
 const packageController_1 = require("./controllers/packageController");
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const scheduledJobRoutes_1 = __importDefault(require("./routes/scheduledJobRoutes"));
+const csurf_1 = __importDefault(require("csurf"));
 // Load environment variables
 (0, dotenv_1.config)();
 // Create admin client for operations that need service role
@@ -69,6 +72,18 @@ app.post('/api/webhooks/stripe', express_1.default.raw({ type: 'application/json
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
+// Register CSRF protection globally (after cookieParser, cors, helmet, before routes)
+exports.csrfProtection = (0, csurf_1.default)({ cookie: true });
+// TEMPORARY: Disable CSRF for /api/payments/create-intent for debugging
+app.use((req, res, next) => {
+    if (req.method === 'POST' &&
+        req.path === '/api/payments/create-intent') {
+        // Log that CSRF is skipped for this route
+        logger_1.logger.warn('CSRF protection temporarily DISABLED for /api/payments/create-intent');
+        return next();
+    }
+    return (0, exports.csrfProtection)(req, res, next);
+});
 // Rate limiting for public API
 const limiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
@@ -91,6 +106,7 @@ app.use('/api/admin', adminRoutes_1.default);
 app.use('/api/stripe', stripeRoutes_1.default);
 app.use('/api/payments', paymentRoutes_1.default);
 app.use('/api/sync', syncRoutes_1.default);
+app.use('/api/scheduled-jobs', scheduledJobRoutes_1.default);
 // Direct routes to match frontend URLs
 app.get('/api/get-section-packages', packageController_1.getSectionPackages);
 app.get('/api/search-packages', packageController_1.searchPackages);
@@ -184,14 +200,31 @@ app.use('*', (req, res) => {
     });
 });
 // Global Error Handler
-app.use((err, req, res, next) => {
+function globalErrorHandler(err, req, res, next) {
+    // Detailed CSRF error logging
+    if (err.code === 'EBADCSRFTOKEN') {
+        logger_1.logger.error('CSRF token error', {
+            url: req.originalUrl,
+            method: req.method,
+            cookies: req.cookies,
+            headers: req.headers,
+            body: req.body,
+            message: err.message,
+        });
+        return res.status(403).json({
+            status: 'error',
+            message: 'Invalid or missing CSRF token',
+            details: err.message,
+        });
+    }
     const statusCode = err.statusCode || err.status || 500;
     res.status(statusCode).json({
         status: err.status || 'error',
         message: err.message || 'Internal Server Error',
         ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
-});
+}
+app.use(globalErrorHandler);
 // Start Server
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

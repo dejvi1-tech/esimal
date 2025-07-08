@@ -7,9 +7,10 @@ const express_1 = __importDefault(require("express"));
 const orderController_1 = require("../controllers/orderController");
 const rateLimiter_1 = require("../middleware/rateLimiter");
 const packageValidation_1 = require("../middleware/packageValidation");
+const auth_1 = require("../middleware/auth");
 const router = express_1.default.Router();
 // Public routes for creating orders
-router.post('/', rateLimiter_1.orderRateLimiter, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
+router.post('/', rateLimiter_1.orderRateLimiter, packageValidation_1.validateCreateOrder, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
     try {
         await (0, orderController_1.createOrder)(req, res, next);
     }
@@ -17,7 +18,7 @@ router.post('/', rateLimiter_1.orderRateLimiter, packageValidation_1.validatePac
         next(err);
     }
 });
-router.post('/my-packages', rateLimiter_1.orderRateLimiter, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
+router.post('/my-packages', rateLimiter_1.orderRateLimiter, packageValidation_1.validateCreateOrder, packageValidation_1.validatePackageBeforeCheckout, packageValidation_1.addValidationHeaders, async (req, res, next) => {
     try {
         await (0, orderController_1.createMyPackageOrder)(req, res, next);
     }
@@ -35,7 +36,7 @@ router.get('/:orderId/details', async (req, res, next) => {
     }
 });
 // Admin-only routes for order management
-router.get('/', async (req, res, next) => {
+router.get('/', auth_1.requireAdminAuth, async (req, res, next) => {
     try {
         await (0, orderController_1.getAllOrders)(req, res, next);
     }
@@ -43,7 +44,7 @@ router.get('/', async (req, res, next) => {
         next(err);
     }
 });
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', auth_1.requireAdminAuth, async (req, res, next) => {
     try {
         await (0, orderController_1.getOrder)(req, res, next);
     }
@@ -51,7 +52,7 @@ router.get('/:id', async (req, res, next) => {
         next(err);
     }
 });
-router.put('/:id/status', async (req, res, next) => {
+router.put('/:id/status', packageValidation_1.validateUpdateOrderStatus, auth_1.requireAdminAuth, async (req, res, next) => {
     try {
         await (0, orderController_1.updateOrderStatus)(req, res, next);
     }
@@ -59,7 +60,7 @@ router.put('/:id/status', async (req, res, next) => {
         next(err);
     }
 });
-router.post('/:id/cancel', async (req, res, next) => {
+router.post('/:id/cancel', packageValidation_1.validateCancelOrder, auth_1.requireAdminAuth, async (req, res, next) => {
     try {
         await (0, orderController_1.cancelOrder)(req, res, next);
     }

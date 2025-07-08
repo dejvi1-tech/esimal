@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const packageController_1 = require("../controllers/packageController");
+const auth_1 = require("../middleware/auth");
+const packageValidation_1 = require("../middleware/packageValidation");
 const router = express_1.default.Router();
 // Admin-only routes for package management
 router.get('/', async (req, res, next) => {
@@ -15,7 +17,7 @@ router.get('/', async (req, res, next) => {
         next(err);
     }
 });
-router.post('/', async (req, res, next) => {
+router.post('/', auth_1.requireAdminAuth, packageValidation_1.validateCreatePackage, async (req, res, next) => {
     try {
         await (0, packageController_1.createPackage)(req, res, next);
     }
@@ -47,7 +49,7 @@ router.get('/:id', async (req, res, next) => {
         next(err);
     }
 });
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', auth_1.requireAdminAuth, packageValidation_1.validateUpdatePackage, async (req, res, next) => {
     try {
         await (0, packageController_1.updatePackage)(req, res, next);
     }
@@ -55,7 +57,7 @@ router.put('/:id', async (req, res, next) => {
         next(err);
     }
 });
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', auth_1.requireAdminAuth, async (req, res, next) => {
     try {
         await (0, packageController_1.deletePackage)(req, res, next);
     }

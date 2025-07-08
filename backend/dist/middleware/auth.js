@@ -7,24 +7,50 @@ exports.requireAdminAuth = requireAdminAuth;
 exports.adminLoginHandler = adminLoginHandler;
 exports.adminLogoutHandler = adminLogoutHandler;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const ADMIN_USERNAME = 'egde';
-const ADMIN_PASSWORD = 'Elbasan2016!'; // Change this to a strong password
-const JWT_SECRET = 'z1ZqAp7aybxGbkEu33Ipz2dwDyGlqbJY9slb08mZd4s/qNRLicLkMpIC3k0ynf//TeFqjvsGzoDLrYI3Fqj7tA=='; // Change this to a strong secret
-// Middleware to protect admin routes
+const zod_1 = require("zod");
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!ADMIN_USERNAME || !ADMIN_PASSWORD || !JWT_SECRET) {
+    throw new Error('ADMIN_USERNAME, ADMIN_PASSWORD, and JWT_SECRET must be set in environment variables');
+}
+// Type assertion for JWT_SECRET
+const JWT_SECRET_STR = JWT_SECRET;
+/**
+ * Middleware to protect admin routes using cookie-based JWT authentication.
+ *
+ * Checks for JWT in req.cookies.auth_token. If not present, falls back to Authorization header.
+ * Attaches admin info to req if valid, else returns 401 Unauthorized.
+ *
+ * Args:
+ *   req (Request): Express request object.
+ *   res (Response): Express response object.
+ *   next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *   void
+ */
 function requireAdminAuth(req, res, next) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    // 1. Try cookie-based auth first
+    let token = req.cookies?.auth_token;
+    // 2. Fallback to Authorization header if no cookie
+    if (!token) {
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1];
+        }
+    }
+    if (!token) {
+        res.status(401).json({ error: 'Unauthorized: No auth token provided' });
         return;
     }
-    const token = authHeader.split(' ')[1];
     try {
-        const payload = jsonwebtoken_1.default.verify(token, JWT_SECRET);
+        const payload = jsonwebtoken_1.default.verify(token, JWT_SECRET_STR);
         if (payload.username !== ADMIN_USERNAME) {
             res.status(403).json({ error: 'Forbidden' });
             return;
         }
-        // Optionally attach user info to req
+        // Attach admin info to req
         req.admin = true;
         next();
     }
@@ -41,32 +67,52 @@ function requireAdminAuth(req, res, next) {
         return;
     }
 }
-// Route handler for login
+/**
+ * Route handler for admin login. Validates input with zod, checks credentials, and issues JWT cookie.
+ *
+ * Args:
+ *   req (Request): Express request object.
+ *   res (Response): Express response object.
+ *   next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *   void
+ */
 function adminLoginHandler(req, res, next) {
-    console.log('🔐 Admin login attempt');
-    console.log('📝 Request body:', req.body);
-    console.log('🔑 Expected username:', ADMIN_USERNAME);
-    console.log('🔑 Expected password:', ADMIN_PASSWORD);
-    const { username, password } = req.body;
-    console.log('📝 Received username:', username);
-    console.log('📝 Received password:', password);
-    if (!username || !password) {
-        console.log('❌ Missing username or password');
+    const loginSchema = zod_1.z.object({
+        username: zod_1.z.string().min(1, 'Username is required'),
+        password: zod_1.z.string().min(1, 'Password is required'),
+    });
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('❌ Zod validation failed:', parseResult.error.errors);
+        }
         res.status(400).json({
             success: false,
-            error: 'Username and password are required'
+            error: 'Validation error',
+            details: parseResult.error.errors
         });
         return;
     }
+    const { username, password } = parseResult.data;
+    if (process.env.NODE_ENV === 'development') {
+        console.log('🔐 Admin login attempt');
+        console.log('📝 Received username:', username);
+        console.log('📝 Received password: [REDACTED]');
+        console.log('🔑 Expected username:', ADMIN_USERNAME);
+        console.log('🔑 Expected password: [REDACTED]');
+    }
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        console.log('✅ Login successful');
-        const token = jsonwebtoken_1.default.sign({ username }, JWT_SECRET, { expiresIn: '8h' });
-        // Set JWT as cookie for parallel cookie/localStorage support
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ Login successful');
+        }
+        const token = jsonwebtoken_1.default.sign({ username }, JWT_SECRET_STR, { expiresIn: '8h' });
         res.cookie('auth_token', token, {
             httpOnly: true,
-            secure: true, // Set to true in production (requires HTTPS)
+            secure: true,
             sameSite: 'strict',
-            maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+            maxAge: 1000 * 60 * 60 * 24 * 7
         });
         res.json({
             success: true,
@@ -75,7 +121,9 @@ function adminLoginHandler(req, res, next) {
         });
         return;
     }
-    console.log('❌ Invalid credentials');
+    if (process.env.NODE_ENV === 'development') {
+        console.log('❌ Invalid credentials');
+    }
     res.status(401).json({
         success: false,
         error: 'Invalid username or password'

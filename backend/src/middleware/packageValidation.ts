@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { supabase } from '../config/supabase';
 import { RoamifyService } from '../services/roamifyService';
 import { logger } from '../utils/logger';
@@ -388,11 +388,23 @@ export function validateCancelOrder(req: Request, res: Response, next: NextFunct
   }
 }
 
-export function validateSavePackage(req: Request, res: Response, next: NextFunction) {
+/**
+ * Middleware to validate save package request body.
+ *
+ * Args:
+ *     req (Request): Express request object.
+ *     res (Response): Express response object.
+ *     next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *     void
+ */
+export const validateSavePackage: RequestHandler = (req, res, next) => {
   try {
     savePackageSchema.parse(req.body);
     next();
   } catch (err: any) {
     res.status(400).json({ error: 'Invalid save package input', details: err.errors });
+    return;
   }
-} 
+}; 

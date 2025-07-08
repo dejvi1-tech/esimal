@@ -1,13 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addValidationHeaders = exports.validatePackageBeforeCheckout = void 0;
+exports.validateSavePackage = exports.addValidationHeaders = exports.validatePackageBeforeCheckout = void 0;
 exports.validatePackage = validatePackage;
 exports.batchValidatePackages = batchValidatePackages;
 exports.clearValidationCache = clearValidationCache;
 exports.getValidationCacheStats = getValidationCacheStats;
+exports.validateCreateOrder = validateCreateOrder;
+exports.validateCreatePackage = validateCreatePackage;
+exports.validateUpdatePackage = validateUpdatePackage;
+exports.validateUpdateOrderStatus = validateUpdateOrderStatus;
+exports.validateCancelOrder = validateCancelOrder;
 const supabase_1 = require("../config/supabase");
 const roamifyService_1 = require("../services/roamifyService");
 const logger_1 = require("../utils/logger");
+const zodSchemas_1 = require("../utils/zodSchemas");
 /**
  * Validate package before checkout
  */
@@ -287,4 +293,71 @@ const addValidationHeaders = (req, res, next) => {
     next();
 };
 exports.addValidationHeaders = addValidationHeaders;
+function validateCreateOrder(req, res, next) {
+    try {
+        zodSchemas_1.createOrderSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid order input', details: err.errors });
+    }
+}
+function validateCreatePackage(req, res, next) {
+    try {
+        zodSchemas_1.createPackageSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid package input', details: err.errors });
+    }
+}
+function validateUpdatePackage(req, res, next) {
+    try {
+        zodSchemas_1.updatePackageSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid package update input', details: err.errors });
+    }
+}
+function validateUpdateOrderStatus(req, res, next) {
+    try {
+        zodSchemas_1.updateOrderStatusSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid order status update input', details: err.errors });
+    }
+}
+function validateCancelOrder(req, res, next) {
+    try {
+        zodSchemas_1.cancelOrderSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid order cancel input', details: err.errors });
+    }
+}
+/**
+ * Middleware to validate save package request body.
+ *
+ * Args:
+ *     req (Request): Express request object.
+ *     res (Response): Express response object.
+ *     next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *     void
+ */
+const validateSavePackage = (req, res, next) => {
+    try {
+        zodSchemas_1.savePackageSchema.parse(req.body);
+        next();
+    }
+    catch (err) {
+        res.status(400).json({ error: 'Invalid save package input', details: err.errors });
+        return;
+    }
+};
+exports.validateSavePackage = validateSavePackage;
 //# sourceMappingURL=packageValidation.js.map
