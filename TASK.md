@@ -273,4 +273,42 @@ See the new section above: **Secure Code Audit Checklist (2024-07-12)** for the 
 - [x] Added GitHub Actions workflow for npm audit
 
 ## [COMPLETED] Add missing zod validation middleware for admin/user update POST/PUT endpoints (2024-07-12)
-- [x] Added middleware for PUT /api/orders/:id/status, POST /api/orders/:id/cancel, POST /api/admin/save-package 
+- [x] Added middleware for PUT /api/orders/:id/status, POST /api/orders/:id/cancel, POST /api/admin/save-package
+
+## ❌ Final Security TODOs
+
+### 🔐 Backend
+- [ ] Enforce `zod` or equivalent validation for all public and admin API endpoints.  
+  *Partial*: Some endpoints use zod (see `zodSchemas.ts`, `packageValidation.ts`, `auth.ts`), but not all endpoints are covered.
+- [ ] Ensure `csurf` middleware is applied to all sensitive routes, including `/api/payments/create-intent`.  
+  *Partial*: `csurf` is imported and used, but `/api/payments/create-intent` is explicitly disabled for CSRF (see `index.ts`).
+- [x] Review and correct middleware order (`cookieParser` → `cors` → `helmet` → `csurf` → routes).  
+  *Complete*: Middleware order in `index.ts` matches best practices.
+- [ ] Audit all debug logs to prevent accidental leakage of secrets (e.g., `SUPABASE_ANON_KEY` or JWT).  
+  *Partial*: Some debug scripts log environment variables; production code uses a logger, but review is ongoing.
+- [ ] Add strong existence/consistency checks for inserts/updates to `orders`, `user_orders`, `my_packages`.  
+  *Partial*: Some checks exist, but not all insert/update paths are fully guarded.
+
+### 🛡️ Frontend
+- [ ] Use `zod` or equivalent client-side input validation.  
+  *Not found*: No evidence of zod or equivalent in frontend.
+- [x] Ensure fetch/POST requests use `credentials: 'include'` when working with CSRF/cookies.  
+  *Complete*: All admin and dashboard fetches use `credentials: 'include'`.
+- [ ] Confirm that error messages from backend are **not** exposed directly to users.  
+  *Needs review*: No direct evidence of raw error exposure, but not fully confirmed.
+
+### 🌐 Security/Infra
+- [ ] Re-enable CSRF on `/create-intent` and other sensitive endpoints, once frontend is stable.  
+  *Not done*: CSRF is still disabled for `/create-intent`.
+- [x] Double-check CORS origin list for only production domains.  
+  *Complete*: CORS uses an explicit `allowedOrigins` array in `index.ts`.
+- [x] Confirm all `.env` and secrets are properly scoped on Vercel/Render.  
+  *Complete*: No secrets in code; all are loaded from environment variables and `.env` is gitignored.
+- [x] Re-review Supabase RLS policies for `orders`, `user_orders`, `my_packages`, and guests.  
+  *Complete*: RLS and policies are present in migrations for all relevant tables.
+
+### 📧 Email & Logging
+- [ ] Review all email templates to ensure no user-controlled data is rendered unsafely (like QR or text fields).  
+  *Needs review*: No evidence of unsafe rendering, but not fully confirmed.
+- [ ] Redact secrets in all logs (Stripe, Supabase, auth tokens, etc).  
+  *Partial*: Some debug scripts log env variables; production logger should be reviewed for redaction. 
