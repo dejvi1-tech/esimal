@@ -27,6 +27,7 @@ import { asyncHandler } from './utils/asyncHandler';
 import { getSectionPackages, searchPackages } from './controllers/packageController';
 import cookieParser from 'cookie-parser';
 import scheduledJobRoutes from './routes/scheduledJobRoutes';
+import csurf from 'csurf';
 
 // Load environment variables
 config();
@@ -86,6 +87,10 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), hand
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser() as any);
+
+// Register CSRF protection globally (after cookieParser, cors, helmet, before routes)
+export const csrfProtection = csurf({ cookie: true });
+app.use(csrfProtection);
 
 // Rate limiting for public API
 const limiter = rateLimit({

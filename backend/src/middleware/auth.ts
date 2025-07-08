@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { z } from 'zod';
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -64,49 +65,66 @@ export function requireAdminAuth(req: Request, res: Response, next: NextFunction
   }
 }
 
-// Route handler for login
+/**
+ * Route handler for admin login. Validates input with zod, checks credentials, and issues JWT cookie.
+ *
+ * Args:
+ *   req (Request): Express request object.
+ *   res (Response): Express response object.
+ *   next (NextFunction): Express next middleware function.
+ *
+ * Returns:
+ *   void
+ */
 export function adminLoginHandler(req: Request, res: Response, next: NextFunction): void {
-  console.log('🔐 Admin login attempt');
-  console.log('📝 Request body:', req.body);
-  console.log('🔑 Expected username:', ADMIN_USERNAME);
-  console.log('🔑 Expected password:', ADMIN_PASSWORD);
-  
-  const { username, password } = req.body;
-  
-  console.log('📝 Received username:', username);
-  console.log('📝 Received password:', password);
-  
-  if (!username || !password) {
-    console.log('❌ Missing username or password');
-    res.status(400).json({ 
+  const loginSchema = z.object({
+    username: z.string().min(1, 'Username is required'),
+    password: z.string().min(1, 'Password is required'),
+  });
+  const parseResult = loginSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('❌ Zod validation failed:', parseResult.error.errors);
+    }
+    res.status(400).json({
       success: false,
-      error: 'Username and password are required' 
+      error: 'Validation error',
+      details: parseResult.error.errors
     });
     return;
   }
-  
+  const { username, password } = parseResult.data;
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔐 Admin login attempt');
+    console.log('📝 Received username:', username);
+    console.log('📝 Received password: [REDACTED]');
+    console.log('🔑 Expected username:', ADMIN_USERNAME);
+    console.log('🔑 Expected password: [REDACTED]');
+  }
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    console.log('✅ Login successful');
+    if (process.env.NODE_ENV === 'development') {
+      console.log('✅ Login successful');
+    }
     const token = jwt.sign({ username }, JWT_SECRET_STR, { expiresIn: '8h' });
-    // Set JWT as cookie for parallel cookie/localStorage support
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: true, // Set to true in production (requires HTTPS)
+      secure: true,
       sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+      maxAge: 1000 * 60 * 60 * 24 * 7
     });
-    res.json({ 
+    res.json({
       success: true,
       token,
       message: 'Login successful'
     });
     return;
   }
-  
-  console.log('❌ Invalid credentials');
-  res.status(401).json({ 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('❌ Invalid credentials');
+  }
+  res.status(401).json({
     success: false,
-    error: 'Invalid username or password' 
+    error: 'Invalid username or password'
   });
   return;
 }

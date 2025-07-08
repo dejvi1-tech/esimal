@@ -139,4 +139,122 @@
   - Greece 1GB 30 days: `esim-greece-30days-1gb-all` ✅ (previously fixed)
 
 ## [ ] Add /api/admin/csrf-token GET route to return CSRF token for frontend (2024-06-09)
-## [ ] Add unit test for /api/admin/csrf-token route (2024-06-09) 
+## [ ] Add unit test for /api/admin/csrf-token route (2024-06-09)
+
+## [IN PROGRESS] Secure Code Audit Checklist (2024-07-12)
+
+This audit is designed for step-by-step verification in Cursor. Each item includes a clear check and remediation path.
+
+---
+
+### 🔐 AUTH FLOW
+
+- [x] `auth_token` is set via **HttpOnly secure cookie** in login handler
+- [x] **No `admin_token` in localStorage**
+- [ ] **No use of `Authorization: Bearer` in production code** (Only fallback in dev/test)
+- [x] All admin fetches use `credentials: 'include'`
+- [x] JWT expiration is handled and returns 401
+
+---
+
+### 🛡️ CSRF PROTECTION
+
+- [ ] `csurf` middleware is registered in backend (check `index.ts`)
+- [ ] Middleware order: `cookieParser → cors → helmet → csurf → routes`
+- [x] `/api/admin/csrf-token` route exists
+- [x] CSRF token is **not stored in localStorage**
+- [x] Frontend includes `X-CSRF-Token` in headers
+
+---
+
+### 🧪 INPUT VALIDATION (ZOD)
+
+- [ ] Backend uses `zod` or similar schema validation for all inputs
+- [ ] Validation middleware wraps admin endpoints
+- [ ] Types inferred via `z.infer<typeof Schema>`
+- [ ] Frontend validation also uses zod
+
+---
+
+### 🛠️ MIDDLEWARE ORDER & CONFIG
+
+- [ ] Confirm correct order: `cookieParser`, `cors`, `helmet`, `csurf`, routes
+- [x] Cookies set with `{ httpOnly: true, secure, sameSite: 'lax' }`
+- [ ] Helmet properly configured for CSP, referrer, etc
+
+---
+
+### 🌐 CORS CONFIG
+
+- [x] CORS uses explicit origin whitelist
+- [x] No wildcard (`*`) when `credentials: true`
+- [x] CORS middleware set early
+
+---
+
+### 📦 DEPENDENCIES
+
+- [ ] `zod`, `csurf`, and `express-rate-limit` are installed
+- [ ] Versions are pinned in `package.json`
+- [ ] No outdated or vulnerable packages (run `npm audit fix`)
+
+---
+
+### 🔐 SECRETS & ENV
+
+- [x] **No hardcoded secrets** (e.g., JWT secret, admin password) in source or `dist/`
+- [x] All secrets are loaded via `process.env`
+- [x] `.env` is excluded from git
+
+---
+
+### 🔥 LOGGING & ERRORS
+
+- [ ] Centralized error handler exists (in `index.ts`)
+- [ ] No sensitive info (passwords, JWTs, tokens) printed
+- [x] `NODE_ENV === 'production'` hides stack traces
+- [ ] Admin login does **not** log full request bodies
+
+---
+
+### 🔐 ROUTE SECURITY
+
+- [x] All `/api/admin/*` routes use `requireAdminAuth`
+- [x] CSRF enforced only on state-changing requests
+- [x] `/api/admin-check` uses cookie auth
+
+---
+
+### 🧠 ADMIN PANEL FRONTEND
+
+- [x] All requests use `credentials: 'include'`
+- [x] `admin_token` removed from frontend
+- [x] CSRF token fetched fresh per request
+- [x] Uses `useNavigate()` for auth redirects
+- [x] Handles 401/403 errors from backend
+
+---
+
+### 🧪 TEST COVERAGE
+
+- [x] Pytest/JS tests cover login, protected route, CSRF
+- [ ] Unit tests for zod schemas
+- [ ] Unit tests for JWT, CSRF edge cases
+
+---
+
+### 🚨 PRIORITY ACTIONS
+
+1. [x] Remove hardcoded secrets in `dist/` and source
+2. [ ] Add `zod` validation to all backend routes
+3. [x] Install and configure `csurf` properly
+4. [ ] Audit and pin dependencies
+5. [ ] Remove debug logs containing sensitive info
+6. [x] Add middleware order unit tests/check
+7. [ ] Expand tests for zod, JWT, CSRF
+
+---
+
+## [IN PROGRESS] Full Secure Code Audit & Refactor Plan for Cursor (2024-07-12)
+
+See the new section above: **Secure Code Audit Checklist (2024-07-12)** for the current, actionable audit and remediation items. This section is now superseded by the detailed checklist above. 
