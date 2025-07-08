@@ -8,7 +8,7 @@ export async function getAdminHeaders(method: string): Promise<HeadersInit> {
   if (["POST", "PUT", "DELETE"].includes(method.toUpperCase())) {
     let csrf = localStorage.getItem("csrf_token");
     if (!csrf) {
-      const res = await fetch("/api/csrf-token", { credentials: "include" });
+      const res = await fetch("/api/admin/csrf-token", { credentials: "include" });
       const data = await res.json();
       csrf = data.csrfToken;
       if (csrf) localStorage.setItem("csrf_token", csrf);

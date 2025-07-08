@@ -23,6 +23,11 @@ router.get('/test', (req, res) => {
   res.json({ ok: true });
 });
 
+// CSRF token endpoint for admin
+router.get('/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
 // Admin login route (unprotected)
 router.post('/login', adminLoginHandler);
 
@@ -206,11 +211,5 @@ router.get('/admin-check', ((req: any, res: any) => {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }) as any);
-
-// CSRF token route for admin panel
-router.get('/csrf-token', (req: Request, res: Response) => {
-  // Reason: Expose CSRF token for frontend to fetch and use in protected requests
-  res.json({ csrfToken: req.csrfToken?.() });
-});
 
 export default router; 
