@@ -85,7 +85,7 @@ const FeaturedPackagesSection: React.FC = () => {
         {packages.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 text-lg">
-              No featured packages available. Check back soon!
+              {t('no_featured_packages')}
             </div>
           </div>
         ) : (

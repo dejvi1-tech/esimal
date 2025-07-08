@@ -154,7 +154,7 @@ const CoverageModal: React.FC<CoverageModalProps> = ({ isOpen, onClose, coverage
             onClick={onClose}
             className="w-full btn-glass bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-semibold"
           >
-            Close
+                            {t('close')}
           </button>
         </div>
       </div>

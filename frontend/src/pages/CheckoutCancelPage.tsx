@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const CheckoutCancelPage: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   return (
@@ -13,8 +15,8 @@ const CheckoutCancelPage: React.FC = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-2">Pagesa u anulua</h2>
-          <p className="text-gray-200">Pagesa nuk u realizua. Ju lutemi provoni sërish ose kontrolloni të dhënat e kartës.</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{t('payment_cancelled')}</h2>
+          <p className="text-gray-200">{t('payment_not_completed')}</p>
         </div>
         
         <div className="flex flex-col gap-4 mt-4">
@@ -22,13 +24,13 @@ const CheckoutCancelPage: React.FC = () => {
             onClick={() => navigate('/checkout')}
             className="btn-glass bg-accent text-black w-full py-3 rounded-xl text-center"
           >
-            Provo Përsëri
+            {t('try_again')}
           </button>
           <button
             onClick={() => navigate('/')}
             className="btn-glass bg-white/20 text-white w-full py-3 rounded-xl text-center"
           >
-            Kthehu në Ballina
+            {t('return_to_homepage')}
           </button>
         </div>
       </div>

@@ -122,7 +122,7 @@ const MyPackagesSection: React.FC = () => {
         {packages.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 text-xl">
-              No packages available at the moment. Please check back later.
+              {t('no_packages_available_message')}
             </div>
           </div>
         ) : (

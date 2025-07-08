@@ -156,7 +156,7 @@ export const ActiveESims: React.FC = () => {
                 onClick={() => setSelectedEsim(null)}
                 className="text-gray-400 hover:text-gray-500"
               >
-                <span className="sr-only">Close</span>
+                <span className="sr-only">{t('close')}</span>
                 <svg
                   className="h-6 w-6"
                   fill="none"

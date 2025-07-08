@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { countrySlug } from '../lib/utils';
 import { getAdminHeaders } from '../utils/adminHeaders';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Package {
   id: string;
@@ -65,6 +66,7 @@ interface RoamifyPackage {
 }
 
 const AdminPanel: React.FC = () => {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [myPackages, setMyPackages] = useState<Package[]>([]);
   const [mainPackages, setMainPackages] = useState<MainPackage[]>([]);
@@ -1080,13 +1082,13 @@ const AdminPanel: React.FC = () => {
                                 disabled={saving}
                                 className="text-blue-400 hover:text-blue-300 disabled:opacity-50"
                               >
-                                {saving ? 'Saving...' : 'Save'}
+                                {saving ? t('saving') : t('save')}
                               </button>
                               <button
                                 onClick={() => setEditingMyPackage(null)}
                                 className="text-gray-400 hover:text-gray-300"
                               >
-                                Cancel
+                                {t('cancel')}
                               </button>
                             </div>
                           ) : (
@@ -1095,14 +1097,14 @@ const AdminPanel: React.FC = () => {
                                 onClick={() => handleEditMyPackage(pkg)}
                                 className="text-blue-400 hover:text-blue-300"
                               >
-                                Edit
+                                {t('edit')}
                               </button>
                               <button
                                 onClick={() => handleDeleteMyPackage(pkg.id)}
                                 disabled={deletingPackage === pkg.id}
                                 className="text-red-400 hover:text-red-300 disabled:opacity-50"
                               >
-                                {deletingPackage === pkg.id ? 'Deleting...' : 'Delete'}
+                                {deletingPackage === pkg.id ? t('deleting') : t('delete')}
                               </button>
                             </div>
                           )}
