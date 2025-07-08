@@ -9,7 +9,7 @@ import {
   getOrderDetails,
 } from '../controllers/orderController';
 import { orderRateLimiter } from '../middleware/rateLimiter';
-import { validatePackageBeforeCheckout, addValidationHeaders, validateCreateOrder } from '../middleware/packageValidation';
+import { validatePackageBeforeCheckout, addValidationHeaders, validateCreateOrder, validateUpdateOrderStatus, validateCancelOrder } from '../middleware/packageValidation';
 import { requireAdminAuth } from '../middleware/auth';
 
 const router = express.Router();
@@ -54,14 +54,14 @@ router.get('/:id', requireAdminAuth, async (req, res, next): Promise<void> => {
     next(err);
   }
 });
-router.put('/:id/status', requireAdminAuth, async (req, res, next): Promise<void> => {
+router.put('/:id/status', validateUpdateOrderStatus, requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await updateOrderStatus(req, res, next);
   } catch (err) {
     next(err);
   }
 });
-router.post('/:id/cancel', requireAdminAuth, async (req, res, next): Promise<void> => {
+router.post('/:id/cancel', validateCancelOrder, requireAdminAuth, async (req, res, next): Promise<void> => {
   try {
     await cancelOrder(req, res, next);
   } catch (err) {

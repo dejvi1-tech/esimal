@@ -34,4 +34,32 @@ export const updatePackageSchema = z.object({
   operator: z.string().min(1).optional(),
   type: z.string().min(1).optional(),
   validity: z.union([z.string(), z.number()]).optional(),
+});
+
+// Order status update schema (PUT /api/orders/:id/status)
+export const updateOrderStatusSchema = z.object({
+  status: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+// Order cancel schema (POST /api/orders/:id/cancel)
+export const cancelOrderSchema = z.object({}); // No body expected, but keep for extensibility
+
+// Save package schema (POST /api/admin/save-package)
+export const savePackageSchema = z.object({
+  name: z.string().min(1),
+  country_name: z.string().min(1),
+  country_code: z.string().length(2),
+  data_amount: z.number().positive(),
+  days: z.number().positive(),
+  base_price: z.number().positive(),
+  sale_price: z.number().positive().optional(),
+  profit: z.number().optional(),
+  reseller_id: z.string().optional().nullable(),
+  region: z.string().optional(),
+  visible: z.boolean().optional(),
+  show_on_frontend: z.boolean().optional(),
+  location_slug: z.string().optional(),
+  homepage_order: z.number().optional(),
+  features: z.record(z.any()).optional(),
 }); 

@@ -17,7 +17,8 @@
     "test:email": "ts-node src/scripts/testEmail.ts",
     "test:email:simple": "ts-node src/scripts/simpleEmailTest.ts",
     "test:email:direct": "ts-node src/scripts/directEmailTest.ts",
-    "test:order": "node test_order_flow.js"
+    "test:order": "node test_order_flow.js",
+    "audit:fix": "npm audit fix"
   },
   "keywords": [],
   "author": "",

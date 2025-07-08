@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { supabase } from '../config/supabase';
 import { RoamifyService } from '../services/roamifyService';
 import { logger } from '../utils/logger';
-import { createOrderSchema, createPackageSchema, updatePackageSchema } from '../utils/zodSchemas';
+import { createOrderSchema, createPackageSchema, updatePackageSchema, updateOrderStatusSchema, cancelOrderSchema, savePackageSchema } from '../utils/zodSchemas';
 
 export interface PackageValidationResult {
   isValid: boolean;
@@ -367,5 +367,32 @@ export function validateUpdatePackage(req: Request, res: Response, next: NextFun
     next();
   } catch (err: any) {
     res.status(400).json({ error: 'Invalid package update input', details: err.errors });
+  }
+}
+
+export function validateUpdateOrderStatus(req: Request, res: Response, next: NextFunction) {
+  try {
+    updateOrderStatusSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid order status update input', details: err.errors });
+  }
+}
+
+export function validateCancelOrder(req: Request, res: Response, next: NextFunction) {
+  try {
+    cancelOrderSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid order cancel input', details: err.errors });
+  }
+}
+
+export function validateSavePackage(req: Request, res: Response, next: NextFunction) {
+  try {
+    savePackageSchema.parse(req.body);
+    next();
+  } catch (err: any) {
+    res.status(400).json({ error: 'Invalid save package input', details: err.errors });
   }
 } 

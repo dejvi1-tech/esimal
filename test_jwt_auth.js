@@ -1,4 +1,5 @@
 const axios = require('axios');
+const jwt = require('jsonwebtoken');
 
 const BASE_URL = 'http://localhost:3001';
 
@@ -87,6 +88,41 @@ async function testJWTAuthentication() {
         console.log('✅ Logout successful');
       } else {
         console.log('❌ Logout failed');
+      }
+
+      // Test 7: Expired token
+      console.log('\n7. Testing with expired token...');
+      const expiredToken = jwt.sign({ username: 'admin' }, 'your_jwt_secret', { expiresIn: -10 });
+      try {
+        await axios.get(`${BASE_URL}/api/admin/my-packages`, {
+          headers: {
+            'Authorization': `Bearer ${expiredToken}`
+          }
+        });
+        console.log('❌ Expired token should have been rejected');
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          console.log('✅ Expired token correctly rejected');
+        } else {
+          console.log('❌ Unexpected error with expired token');
+        }
+      }
+
+      // Test 8: Malformed token
+      console.log('\n8. Testing with malformed token...');
+      try {
+        await axios.get(`${BASE_URL}/api/admin/my-packages`, {
+          headers: {
+            'Authorization': 'Bearer malformed.token.value'
+          }
+        });
+        console.log('❌ Malformed token should have been rejected');
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          console.log('✅ Malformed token correctly rejected');
+        } else {
+          console.log('❌ Unexpected error with malformed token');
+        }
       }
 
     } else {

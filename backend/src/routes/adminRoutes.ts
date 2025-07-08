@@ -17,6 +17,7 @@ import { requireAdminAuth, adminLoginHandler, adminLogoutHandler } from '../midd
 import { asyncHandler } from '../utils/asyncHandler';
 import jwt from 'jsonwebtoken';
 import csurf from 'csurf';
+import { validateSavePackage } from '../middleware/packageValidation';
 const csrfProtection = csurf({ cookie: true });
 
 router.get('/test', (req, res) => {
@@ -41,7 +42,7 @@ router.get('/all-roamify-packages', requireAdminAuth, asyncHandler(getAllRoamify
 router.get('/package-countries', requireAdminAuth, asyncHandler(getPackageCountries));
 router.post('/deduplicate-packages', requireAdminAuth, csrfProtection, asyncHandler(deduplicatePackages));
 router.post('/sync-roamify-packages', requireAdminAuth, csrfProtection, asyncHandler(syncRoamifyPackages));
-router.post('/save-package', requireAdminAuth, csrfProtection, asyncHandler(savePackage));
+router.post('/save-package', validateSavePackage, requireAdminAuth, csrfProtection, asyncHandler(savePackage));
 router.delete('/delete-package/:id', requireAdminAuth, csrfProtection, asyncHandler(deleteMyPackage));
 
 // Debug routes
