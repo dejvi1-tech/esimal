@@ -77,8 +77,37 @@ app.options('*', cors(corsOptions));
 
 // Security
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://www.googletagmanager.com', 'https://www.google-analytics.com'],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+      imgSrc: ["'self'", 'data:', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+      connectSrc: ["'self'", 'https://api.esimfly.al', 'https://www.google-analytics.com', 'https://www.googletagmanager.com'],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: [],
+    },
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  // X-Content-Type-Options is set to nosniff by default by Helmet
 }));
+
+// Additional security headers (not covered by Helmet directly)
+app.use((req, res, next) => {
+  // Expect-CT: Enforce Certificate Transparency
+  res.setHeader('Expect-CT', 'max-age=86400, enforce');
+  // HSTS: Strict-Transport-Security (only if behind HTTPS)
+  // 1 year, include subdomains, preload
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  // Permissions-Policy: restrict powerful features
+  res.setHeader('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
+  next();
+});
 
 // Stripe webhook route FIRST, with raw body parser
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);

@@ -11,6 +11,7 @@ import europeFlag from '../assets/images/europe.png';
 import italyFlag from '../assets/images/italy.png';
 import { europeanCountries } from '@/data/countries';
 import { formatDataAmount } from '@/utils/formatDataAmount';
+import { z } from 'zod';
 
 console.log('VITE_STRIPE_PUBLIC_KEY:', import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -75,6 +76,16 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean; error: any
   }
 }
 
+const billingSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  name: z.string().min(1, 'First name is required'),
+  surname: z.string().min(1, 'Last name is required'),
+  phone: z.string().min(7, 'Phone is required'),
+  country: z.string().min(1, 'Country is required'),
+});
+
+type BillingInput = z.infer<typeof billingSchema>;
+
 const CheckoutPage: React.FC = () => {
   const { t, language, setLanguage } = useLanguage();
   const navigate = useNavigate();
@@ -91,6 +102,7 @@ const CheckoutPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [storedPackageId, setStoredPackageId] = useState<string | null>(null);
   const paymentFormRef = useRef<PaymentFormRef>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Accept both ?packageId=... and ?package=...
   const packageId = searchParams.get('packageId') || searchParams.get('package');
@@ -175,7 +187,13 @@ const CheckoutPage: React.FC = () => {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[DEBUG] Main form submit - calling PaymentForm submit');
+    setFormError(null);
+    // Zod validation
+    const result = billingSchema.safeParse({ email, name, surname, phone, country });
+    if (!result.success) {
+      setFormError(result.error.errors[0].message);
+      return;
+    }
     if (paymentFormRef.current) {
       await paymentFormRef.current.submit();
     }
@@ -283,6 +301,11 @@ const CheckoutPage: React.FC = () => {
             {/* Left: Form */}
             <div className="flex-1 flex flex-col justify-between">
               <form className="bg-white/90 rounded-2xl shadow-2xl border border-blue-100 p-6 md:p-10 flex flex-col gap-8" onSubmit={handleFormSubmit} style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
+                {formError && (
+                  <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-2 text-center font-semibold">
+                    {formError}
+                  </div>
+                )}
                 {/* Credit Card Section at the top using Stripe Elements */}
                 <div className="border-b border-blue-100 pb-6">
                   <h2 className="text-xl font-bold mb-4 text-gray-900 border-l-4 border-blue-600 pl-4">Credit card</h2>
@@ -314,7 +337,6 @@ const CheckoutPage: React.FC = () => {
                         onChange={e => setEmail(e.target.value)}
                         placeholder="Enter your email"
                         className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80"
-                        required
                       />
                     </div>
                     <div>
@@ -335,16 +357,16 @@ const CheckoutPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">First name *</label>
-                        <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="First name" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" required />
+                        <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="First name" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Last name *</label>
-                        <input type="text" value={surname} onChange={e => setSurname(e.target.value)} placeholder="Last name" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" required />
+                        <input type="text" value={surname} onChange={e => setSurname(e.target.value)} placeholder="Last name" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" />
                       </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Phone *</label>
-                      <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" required />
+                      <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone" className="w-full px-4 py-3 border-2 border-blue-100 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-colors bg-white/80" />
                     </div>
                   </div>
                 </div>

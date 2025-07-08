@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getAdminHeaders } from '../utils/adminHeaders';
+import { z } from 'zod';
+
+const adminLoginSchema = z.object({
+  username: z.string().min(3, 'Username is required'),
+  password: z.string().min(3, 'Password is required'),
+});
+
+type AdminLoginInput = z.infer<typeof adminLoginSchema>;
 
 const AdminLoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -14,6 +22,14 @@ const AdminLoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Zod validation
+    const result = adminLoginSchema.safeParse({ username, password });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
+      setLoading(false);
+      return;
+    }
 
     const requestBody = { username, password };
     const url = '/api/admin/login';
@@ -70,7 +86,6 @@ const AdminLoginPage: React.FC = () => {
                 id="username"
                 name="username"
                 type="text"
-                required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input-glass w-full text-white placeholder-gray-300"
@@ -85,7 +100,6 @@ const AdminLoginPage: React.FC = () => {
                 id="password"
                 name="password"
                 type="password"
-                required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input-glass w-full text-white placeholder-gray-300"

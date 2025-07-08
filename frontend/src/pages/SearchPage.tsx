@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Wifi, Clock, Globe, ShoppingCart, Search } from 'lucide-react';
 import { formatDataAmount } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { z } from 'zod';
 
 interface SearchPackage {
   id: string;
@@ -18,6 +19,13 @@ interface SearchPackage {
   region: string;
 }
 
+const buySchema = z.object({
+  userEmail: z.string().email('Please enter a valid email'),
+  userName: z.string().optional(),
+});
+
+type BuyInput = z.infer<typeof buySchema>;
+
 const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(searchParams.get('country') || '');
@@ -28,6 +36,7 @@ const SearchPage: React.FC = () => {
   const [userEmail, setUserEmail] = useState('');
   const [userName, setUserName] = useState('');
   const { t, language } = useLanguage();
+  const [buyError, setBuyError] = useState<{ [pkgId: string]: string }>({});
 
   useEffect(() => {
     if (searchTerm) {
@@ -63,13 +72,14 @@ const SearchPage: React.FC = () => {
   };
 
   const handleBuyPackage = async (pkg: SearchPackage) => {
-    if (!userEmail.trim()) {
-      alert('Please enter your email address');
+    // Zod validation
+    const result = buySchema.safeParse({ userEmail, userName });
+    if (!result.success) {
+      setBuyError((prev) => ({ ...prev, [pkg.id]: result.error.errors[0].message }));
       return;
     }
-
+    setBuyError((prev) => ({ ...prev, [pkg.id]: '' }));
     setBuyingPackage(pkg.id);
-
     try {
       const response = await fetch(`/api/create-order`, {
         method: 'POST',
@@ -82,12 +92,9 @@ const SearchPage: React.FC = () => {
           userName: userName.trim() || userEmail.trim()
         })
       });
-
       const result = await response.json();
-
       if (response.ok) {
         alert(`Order created successfully! QR code will be sent to ${userEmail}`);
-        // Clear form
         setUserEmail('');
         setUserName('');
       } else {
@@ -236,7 +243,9 @@ const SearchPage: React.FC = () => {
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
-
+                      {buyError[pkg.id] && (
+                        <div className="text-red-600 text-sm mb-2">{buyError[pkg.id]}</div>
+                      )}
                       {/* Buy Button */}
                       <Button
                         onClick={() => handleBuyPackage(pkg)}

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { z } from 'zod';
 
 const CheckBalancePage: React.FC = () => {
   const { t } = useLanguage();
@@ -9,22 +10,25 @@ const CheckBalancePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<any | null>(null);
 
+  const esimNumberSchema = z.object({ esimNumber: z.string().min(8, 'Please enter a valid eSIM number') });
+
   const handleCheckBalance = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!esimNumber.trim()) return;
-
+    // Zod validation
+    const result = esimNumberSchema.safeParse({ esimNumber });
+    if (!result.success) {
+      setError(result.error.errors[0].message);
+      return;
+    }
     setLoading(true);
     setError(null);
     setUsage(null);
-
     try {
       const response = await fetch(`/api/esims/usage/${esimNumber.trim()}`);
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.message || 'Failed to fetch usage details');
       }
-
       setUsage(result.data);
     } catch (err: any) {
       setError(err.message || 'Failed to check balance');
@@ -85,7 +89,6 @@ const CheckBalancePage: React.FC = () => {
                   id="esim-number"
                   name="esim"
                   type="text"
-                  required
                   className="appearance-none relative block w-full px-3 py-4 bg-white/50 dark:bg-slate-800/50 border border-white/30 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 rounded-l-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
                   placeholder={t('enter_your_esim_number')}
                   value={esimNumber}
