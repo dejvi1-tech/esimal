@@ -28,7 +28,7 @@ const CheckoutCancelPage: React.FC = () => {
             onClick={() => navigate('/')}
             className="btn-glass bg-white/20 text-white w-full py-3 rounded-xl text-center"
           >
-            Kthehu në Ballina
+            Kthehu në Kryefaqe
           </button>
         </div>
       </div>
