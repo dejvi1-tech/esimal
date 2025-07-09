@@ -21,16 +21,18 @@ const HeroSection = () => {
     <section className="w-full flex flex-col items-center justify-center px-0 md:px-0 mt-8">
       {/* Panda Hero Image - full width, centered */}
       <img
-        src="/pandahero.png"
+        src="/pandahero1.png"
         alt="Panda Hero"
-        className="w-full mx-auto mb-6"
+        className=" mx-auto mb-6"
         style={{
           display: 'block',
-          maxWidth: '1000px',
+          maxWidth: '900px',
           width: '100%',
-          height: '350px',
-          objectFit: 'contain',
-          opacity: 0.75,
+          height: '400px',
+          objectFit: 'cover',
+          opacity: 0.7,
+          paddingTop: '15px', // or '2rem', '40px', etc.
+          
         }}
       />
       {/* Centered: Heading + Button, with search and logo below image */}
