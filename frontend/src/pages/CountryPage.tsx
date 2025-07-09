@@ -298,7 +298,7 @@ const CountryPage: React.FC = () => {
       {/* Two-column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
         {/* Left: Photo */}
-        <div className="flex flex-col items-start w-full h-full mt-0 md:mt-12">
+        <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
           {/* Panda Image */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-lg md:max-w-xl border border-gray-100">
             <picture>
