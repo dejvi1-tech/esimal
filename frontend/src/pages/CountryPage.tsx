@@ -297,24 +297,8 @@ const CountryPage: React.FC = () => {
     <div className="container mx-auto px-4 py-12">
       {/* Two-column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-        {/* Left: Photo and Title */}
+        {/* Left: Photo */}
         <div className="flex flex-col items-start w-full h-full mt-0 md:-mt-8">
-          {/* Country Title with Flag */}
-          <div className="flex items-center mb-6">
-            <img 
-              src={`https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
-              alt={`${countryName} flag`}
-              className="w-6 h-6 rounded-full object-cover mr-3"
-              style={{
-                borderRadius: '50%',
-                width: '24px',
-                height: '24px',
-                objectFit: 'cover'
-              }}
-            />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">{countryName}</h1>
-          </div>
-          
           {/* Panda Image */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-lg md:max-w-xl border border-gray-100">
             <picture>
@@ -333,6 +317,22 @@ const CountryPage: React.FC = () => {
         </div>
         {/* Right: Plan Cards and Info */}
         <div>
+          {/* Country Title with Flag - positioned above packages */}
+          <div className="flex items-center mb-6" style={{ marginTop: '32px' }}>
+            <img 
+              src={`https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
+              alt={`${countryName} flag`}
+              className="w-6 h-6 rounded-full object-cover"
+              style={{
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                objectFit: 'cover'
+              }}
+            />
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 ml-2">{countryName}</h1>
+          </div>
+          
           <div className="grid grid-cols-2 gap-4 mb-8">
             {packages.map(pkg => (
               <SimplePlanCard
