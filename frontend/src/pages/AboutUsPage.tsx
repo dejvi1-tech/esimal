@@ -21,7 +21,7 @@ const AboutUsPage = () => {
             {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               {/* Image Section */}
-              <div className="flex justify-center lg:justify-start lg:-mt-8">
+              <div className="flex justify-center lg:justify-start lg:-mt-4">
                 <div className="relative">
                   <div className="w-80 h-80 md:w-96 md:h-96 rounded-3xl overflow-hidden shadow-2xl transform hover:scale-105 transition-transform duration-300">
                     <picture>
@@ -41,7 +41,7 @@ const AboutUsPage = () => {
               </div>
 
               {/* Text Section */}
-              <div className="space-y-6 lg:pt-4">
+              <div className="space-y-6 lg:pt-2">
                 <div className="space-y-4">
                   <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 font-orbitron">
                     Teknologji e Zgjuar për Botën Pa Kufij
