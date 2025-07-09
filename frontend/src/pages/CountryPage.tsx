@@ -6,7 +6,7 @@ import { formatDataAmount } from '@/utils/formatDataAmount';
 import { countrySlug, decodeSlug, capitalize } from '../lib/utils';
 import { supabase } from '../lib/supabaseClient';
 
-const planeBeachImage = '/static/esimfly-plane-beach.jpg';
+const planeBeachImage = '/static/panda.png';
 
 interface Package {
   id: string;
