@@ -119,12 +119,15 @@ const HowItWorksPage = () => {
             How does e-SimFly work?
           </h1>
           <div className="w-full flex justify-center">
-            <img
-              src="/images/phone-mockup.png"
-              alt="How it works steps"
-              className="w-full max-w-5xl rounded-3xl shadow-2xl object-contain border-4 border-white/10"
-              style={{ background: 'rgba(30, 22, 54, 0.9)' }}
-            />
+            <picture>
+              <source srcSet="/optimized/images/phone-mockup.webp" type="image/webp" />
+              <img
+                src="/optimized/images/phone-mockup.png"
+                alt="How it works steps"
+                className="w-full max-w-5xl rounded-3xl shadow-2xl object-contain border-4 border-white/10"
+                style={{ background: 'rgba(30, 22, 54, 0.9)' }}
+              />
+            </picture>
           </div>
         </section>
 

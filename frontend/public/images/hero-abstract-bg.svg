@@ -1,0 +1,102 @@
+<svg width="1200" height="800" viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4B0082" />
+      <stop offset="50%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#A855F7" />
+    </linearGradient>
+    
+    <linearGradient id="glassGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.1)" />
+      <stop offset="50%" stop-color="rgba(255,255,255,0.05)" />
+      <stop offset="100%" stop-color="rgba(255,255,255,0.02)" />
+    </linearGradient>
+    
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(124, 58, 237, 0.3)" />
+      <stop offset="100%" stop-color="rgba(124, 58, 237, 0)" />
+    </radialGradient>
+    
+    <!-- Filters -->
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="800" fill="url(#purpleGradient)"/>
+  
+  <!-- Large floating circles -->
+  <circle cx="200" cy="150" r="120" fill="url(#glassGradient)" opacity="0.3" filter="url(#blur)"/>
+  <circle cx="1000" cy="650" r="150" fill="url(#glassGradient)" opacity="0.2" filter="url(#blur)"/>
+  <circle cx="800" cy="200" r="80" fill="url(#glassGradient)" opacity="0.4" filter="url(#blur)"/>
+  
+  <!-- Geometric shapes -->
+  <g opacity="0.6">
+    <!-- Hexagons -->
+    <polygon points="300,100 350,120 350,160 300,180 250,160 250,120" fill="url(#glassGradient)" filter="url(#blur)"/>
+    <polygon points="900,300 950,320 950,360 900,380 850,360 850,320" fill="url(#glassGradient)" filter="url(#blur)"/>
+    
+    <!-- Triangles -->
+    <polygon points="150,400 200,350 250,400" fill="url(#glassGradient)" filter="url(#blur)"/>
+    <polygon points="950,500 1000,450 1050,500" fill="url(#glassGradient)" filter="url(#blur)"/>
+    
+    <!-- Squares rotated -->
+    <g transform="translate(400, 600) rotate(45)">
+      <rect x="-30" y="-30" width="60" height="60" fill="url(#glassGradient)" filter="url(#blur)"/>
+    </g>
+    
+    <g transform="translate(700, 400) rotate(30)">
+      <rect x="-25" y="-25" width="50" height="50" fill="url(#glassGradient)" filter="url(#blur)"/>
+    </g>
+  </g>
+  
+  <!-- Glowing orbs -->
+  <circle cx="150" cy="300" r="20" fill="url(#glowGradient)" filter="url(#glow)"/>
+  <circle cx="1050" cy="150" r="15" fill="url(#glowGradient)" filter="url(#glow)"/>
+  <circle cx="500" cy="700" r="25" fill="url(#glowGradient)" filter="url(#glow)"/>
+  
+  <!-- Network lines -->
+  <g stroke="rgba(255,255,255,0.1)" stroke-width="1" opacity="0.3">
+    <line x1="0" y1="200" x2="1200" y2="200"/>
+    <line x1="0" y1="400" x2="1200" y2="400"/>
+    <line x1="0" y1="600" x2="1200" y2="600"/>
+    <line x1="200" y1="0" x2="200" y2="800"/>
+    <line x1="400" y1="0" x2="400" y2="800"/>
+    <line x1="600" y1="0" x2="600" y2="800"/>
+    <line x1="800" y1="0" x2="800" y2="800"/>
+    <line x1="1000" y1="0" x2="1000" y2="800"/>
+  </g>
+  
+  <!-- Floating particles -->
+  <g opacity="0.7">
+    <circle cx="100" cy="100" r="2" fill="white">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="3s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1100" cy="200" r="3" fill="white">
+      <animate attributeName="opacity" values="0.7;0.1;0.7" dur="4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="200" cy="700" r="2" fill="white">
+      <animate attributeName="opacity" values="0.7;0.3;0.7" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1000" cy="600" r="2" fill="white">
+      <animate attributeName="opacity" values="0.7;0.2;0.7" dur="3.5s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="600" cy="150" r="2" fill="white">
+      <animate attributeName="opacity" values="0.7;0.1;0.7" dur="2s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+  
+  <!-- Subtle wave effect -->
+  <path d="M0,400 Q300,350 600,400 Q900,450 1200,400" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none" opacity="0.5"/>
+  <path d="M0,500 Q300,450 600,500 Q900,550 1200,500" stroke="rgba(255,255,255,0.03)" stroke-width="2" fill="none" opacity="0.3"/>
+</svg> 

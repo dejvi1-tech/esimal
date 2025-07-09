@@ -268,11 +268,14 @@ const HomePage = () => {
                   tabIndex={0}
                   aria-label={t('esim_compatibility_aria')}
                 >
-                  <img
-                    src="/esim-compatibility.jpg"
-                    alt={t('esim_compatibility_alt')}
-                    className="rounded-xl w-full shadow-lg border border-white/20 object-contain"
-                  />
+                  <picture>
+                    <source srcSet="/optimized/esim-compatibility.webp" type="image/webp" />
+                    <img
+                      src="/optimized/esim-compatibility.jpg"
+                      alt={t('esim_compatibility_alt')}
+                      className="rounded-xl w-full shadow-lg border border-white/20 object-contain"
+                    />
+                  </picture>
                 </div>
               </div>
             </div>

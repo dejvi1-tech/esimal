@@ -36,12 +36,15 @@ const Header = () => {
               }}
             >
               <div className="logo-container">
-                <img
-                  src="/images/new-airplane-logo.png"
-                  alt="e-SimFly Logo"
-                  className="h-14 w-14 object-contain rounded-2xl"
-                  style={{ minWidth: 56 }}
-                />
+                <picture>
+                  <source srcSet="/optimized/images/new-airplane-logo.webp" type="image/webp" />
+                  <img
+                    src="/optimized/images/new-airplane-logo.png"
+                    alt="e-SimFly Logo"
+                    className="h-14 w-14 object-contain rounded-2xl"
+                    style={{ minWidth: 56 }}
+                  />
+                </picture>
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>

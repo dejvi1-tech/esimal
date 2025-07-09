@@ -376,7 +376,22 @@ const CheckoutPage: React.FC = () => {
               </form>
             </div>
             {/* Right: Order Summary */}
-            <div className="w-full md:w-96 bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-6 flex flex-col justify-center items-center" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
+            <div className="w-full md:w-96 flex flex-col gap-6">
+              {/* Hero Image */}
+              <div className="bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-4 flex justify-center items-center" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
+                <picture>
+                  <source srcSet="/optimized/pandahero4.webp" type="image/webp" />
+                  <img
+                    src="/optimized/pandahero4.jpg"
+                    alt="e-SimFly Travel Experience"
+                    className="w-full h-48 md:h-56 object-cover rounded-xl shadow-lg"
+                    style={{ maxWidth: '100%', maxHeight: '224px' }}
+                  />
+                </picture>
+              </div>
+              
+              {/* Order Summary */}
+              <div className="bg-white/90 border-2 border-blue-100 rounded-2xl shadow-2xl p-6 flex flex-col justify-center items-center" style={{boxShadow: '0 8px 32px rgba(80,80,180,0.08)'}}>
               <h3 className="text-xl font-bold mb-4 text-gray-900 border-b-2 border-blue-100 pb-3 w-full text-center">Përmbledhje Porosie</h3>
               
               {/* Package Summary */}
@@ -397,6 +412,7 @@ const CheckoutPage: React.FC = () => {
                 <span className="font-bold text-xl text-gray-900 mb-2">Totali</span>
                 <span className="font-bold text-3xl text-blue-600">€{typeof total === 'number' && !isNaN(total) ? total.toFixed(2) : '0.00'}</span>
               </div>
+            </div>
             </div>
           </div>
         </div>

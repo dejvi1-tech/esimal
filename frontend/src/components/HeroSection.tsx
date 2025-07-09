@@ -20,21 +20,24 @@ const HeroSection = () => {
   return (
     <section className="w-full flex flex-col items-center justify-center px-0 md:px-0 mt-8">
       {/* Panda Hero Image - full width, centered */}
-      <img
-        src="/pandahero1.png"
-        alt="Panda Hero"
-        className=" mx-auto mb-6"
-        style={{
-          display: 'block',
-          maxWidth: '900px',
-          width: '100%',
-          height: '400px',
-          objectFit: 'cover',
-          opacity: 0.7,
-          paddingTop: '15px', // or '2rem', '40px', etc.
-          
-        }}
-      />
+      <picture>
+        <source srcSet="/optimized/pandahero1.webp" type="image/webp" />
+        <img
+          src="/optimized/pandahero1.png"
+          alt="Panda Hero"
+          className=" mx-auto mb-6"
+          style={{
+            display: 'block',
+            maxWidth: '900px',
+            width: '100%',
+            height: '400px',
+            objectFit: 'cover',
+            opacity: 0.7,
+            paddingTop: '15px', // or '2rem', '40px', etc.
+            
+          }}
+        />
+      </picture>
       {/* Centered: Heading + Button, with search and logo below image */}
       <div className="flex flex-col items-center justify-center w-full px-4 py-2 gap-4">
         
