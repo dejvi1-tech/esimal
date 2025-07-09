@@ -25,13 +25,7 @@ const CheckoutSuccessPage: React.FC = () => {
             href="/"
             className="btn-glass bg-accent text-black w-full py-3 rounded-xl text-center"
           >
-            Kthehu në Ballina
-          </a>
-          <a
-            href="/dashboard"
-            className="btn-glass bg-white/20 text-white w-full py-3 rounded-xl text-center"
-          >
-            Shiko Porositë
+            Kthehu te kryefaqa
           </a>
         </div>
       </div>

@@ -15,7 +15,7 @@ const translations: Translations = {
   hero_description: { al: "Merr lidhjen e të dhënave menjëherë në 200+ vende me planet tona premium eSIM. Pa karta SIM fizike, pa tarifa roaming, pa telashe. Vetëm lidhje e qetë.", en: "Get instant data connectivity in 200+ countries with our premium eSIM plans. No physical SIM cards, no roaming fees, no hassle. Just seamless connection." },
   hero_cta_main: { al: "SHIKO PAKETAT", en: "VIEW PACKAGES" },
   hero_cta_secondary: { al: "Si Funksionon", en: "How It Works" },
-  hero_main_title: { al: "Lidhu menjëherë me 4G/5G, pa kartë – vetëm me e-SimFly!", en: "Connect instantly with 4G/5G, no card needed – only with e-SimFly!" },
+  hero_main_title: { al: "Sekreti i udhëtimit? Vetëm një: eSimFly. Pa ndërrime, pa stres, vetëm sinjal!", en: "Travel hack? Just one: eSimFly. No swapping, no stress, just signal!" },
   hero_activate_package: { al: "Aktivizo Paketën", en: "Activate Package" },
 
   // Navigation
