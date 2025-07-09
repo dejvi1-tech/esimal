@@ -25,34 +25,24 @@ const Header = () => {
         <div className="navbar-glassmorphism-fixed">
           <div className="flex items-center justify-between h-[4.5rem] gap-x-10">
             {/* Logo */}
-            <Link
-              to="/"
-              className="flex items-center space-x-3 group cursor-pointer"
-              onClick={e => {
-                if (location.pathname === "/") {
-                  e.preventDefault();
-                  window.scrollTo({ top: 0, behavior: 'auto' });
-                }
-              }}
-            >
-              <div className="logo-container">
-                <picture>
-                  <source srcSet="/optimized/images/new-airplane-logo.webp" type="image/webp" />
-                  <img
-                    src="/optimized/images/new-airplane-logo.png"
-                    alt="e-SimFly Logo"
-                    className="h-14 w-14 object-contain rounded-2xl"
-                    style={{ minWidth: 56 }}
-                  />
-                </picture>
+            <div className="flex items-center space-x-3 group cursor-pointer">
+              {/* Panda Logo */}
+              <div className="flex items-center justify-center bg-gradient-to-br from-purple-700 via-purple-500 to-indigo-600 shadow-lg rounded-2xl p-1 mr-2" style={{ height: 64, width: 64, minWidth: 64 }}>
+                <img
+                  src="/pandalogo.png"
+                  alt="Panda Logo"
+                  className="h-14 w-14 object-contain rounded-xl drop-shadow-md"
+                  style={{ background: 'rgba(80, 0, 120, 0.15)' }}
+                />
               </div>
+              {/* Brand Name and Subtitle */}
               <div className="flex flex-col">
                 <span className="text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>
                   e-<span className="font-black">SimFly</span>
                 </span>
                 <span className="text-xs text-gray-200 font-medium font-orbitron">Global eSIM Solutions</span>
               </div>
-            </Link>
+            </div>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
