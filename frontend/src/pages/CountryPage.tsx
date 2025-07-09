@@ -6,7 +6,7 @@ import { formatDataAmount } from '@/utils/formatDataAmount';
 import { countrySlug, decodeSlug, capitalize } from '../lib/utils';
 import { supabase } from '../lib/supabaseClient';
 
-const planeBeachImage = '/optimized/panda.webp';
+const planeBeachImage = '/optimized/pandahero1.webp';
 
 interface Package {
   id: string;
@@ -135,15 +135,12 @@ const CountryPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
         {/* Left: Photo */}
         <div className="flex justify-center items-start w-full h-full mt-0 md:-mt-8">
-          <picture>
-            <source srcSet="/optimized/panda.webp" type="image/webp" />
-            <img
-              src="/optimized/panda.png"
-              alt="e-SimFly airplane on beach"
-              className="rounded-2xl shadow-lg w-full max-w-lg md:max-w-xl aspect-square object-cover object-center border border-white/10"
-              style={{ minHeight: '300px', maxHeight: '500px' }}
-            />
-          </picture>
+          <img
+            src={planeBeachImage}
+            alt="e-SimFly airplane on beach"
+            className="rounded-2xl shadow-lg w-full max-w-lg md:max-w-xl aspect-square object-cover object-center border border-white/10"
+            style={{ minHeight: '300px', maxHeight: '500px' }}
+          />
         </div>
         {/* Right: Plan Cards and Info */}
         <div>
