@@ -8,6 +8,174 @@ import { supabase } from '../lib/supabaseClient';
 
 const planeBeachImage = '/pandahero.png';
 
+// Function to get country code from country name
+const getCountryCode = (countryName: string): string => {
+  const countryMappings: { [key: string]: string } = {
+    'United States': 'us',
+    'United Kingdom': 'gb',
+    'Germany': 'de',
+    'France': 'fr',
+    'Italy': 'it',
+    'Spain': 'es',
+    'Netherlands': 'nl',
+    'Belgium': 'be',
+    'Switzerland': 'ch',
+    'Austria': 'at',
+    'Denmark': 'dk',
+    'Norway': 'no',
+    'Sweden': 'se',
+    'Finland': 'fi',
+    'Poland': 'pl',
+    'Czech Republic': 'cz',
+    'Hungary': 'hu',
+    'Romania': 'ro',
+    'Bulgaria': 'bg',
+    'Croatia': 'hr',
+    'Slovenia': 'si',
+    'Slovakia': 'sk',
+    'Lithuania': 'lt',
+    'Latvia': 'lv',
+    'Estonia': 'ee',
+    'Ireland': 'ie',
+    'Portugal': 'pt',
+    'Greece': 'gr',
+    'Cyprus': 'cy',
+    'Malta': 'mt',
+    'Luxembourg': 'lu',
+    'Iceland': 'is',
+    'Albania': 'al',
+    'Bosnia and Herzegovina': 'ba',
+    'Serbia': 'rs',
+    'Montenegro': 'me',
+    'North Macedonia': 'mk',
+    'Kosovo': 'xk',
+    'Moldova': 'md',
+    'Ukraine': 'ua',
+    'Belarus': 'by',
+    'Russia': 'ru',
+    'Turkey': 'tr',
+    'Dubai': 'ae',
+    'United Arab Emirates': 'ae',
+    'Saudi Arabia': 'sa',
+    'Qatar': 'qa',
+    'Kuwait': 'kw',
+    'Bahrain': 'bh',
+    'Oman': 'om',
+    'Jordan': 'jo',
+    'Lebanon': 'lb',
+    'Israel': 'il',
+    'Egypt': 'eg',
+    'Morocco': 'ma',
+    'Tunisia': 'tn',
+    'Algeria': 'dz',
+    'Libya': 'ly',
+    'Sudan': 'sd',
+    'South Africa': 'za',
+    'Nigeria': 'ng',
+    'Kenya': 'ke',
+    'Ghana': 'gh',
+    'Ethiopia': 'et',
+    'Uganda': 'ug',
+    'Tanzania': 'tz',
+    'Rwanda': 'rw',
+    'Burundi': 'bi',
+    'Cameroon': 'cm',
+    'Chad': 'td',
+    'Niger': 'ne',
+    'Mali': 'ml',
+    'Burkina Faso': 'bf',
+    'Senegal': 'sn',
+    'Guinea': 'gn',
+    'Sierra Leone': 'sl',
+    'Liberia': 'lr',
+    'Ivory Coast': 'ci',
+    'Gambia': 'gm',
+    'Guinea-Bissau': 'gw',
+    'Cape Verde': 'cv',
+    'Mauritania': 'mr',
+    'Mauritius': 'mu',
+    'Seychelles': 'sc',
+    'Comoros': 'km',
+    'Madagascar': 'mg',
+    'Malawi': 'mw',
+    'Zambia': 'zm',
+    'Zimbabwe': 'zw',
+    'Botswana': 'bw',
+    'Namibia': 'na',
+    'Lesotho': 'ls',
+    'Eswatini': 'sz',
+    'Mozambique': 'mz',
+    'Angola': 'ao',
+    'Democratic Republic of the Congo': 'cd',
+    'Republic of the Congo': 'cg',
+    'Central African Republic': 'cf',
+    'Gabon': 'ga',
+    'Equatorial Guinea': 'gq',
+    'São Tomé and Príncipe': 'st',
+    'China': 'cn',
+    'Japan': 'jp',
+    'South Korea': 'kr',
+    'North Korea': 'kp',
+    'Taiwan': 'tw',
+    'Hong Kong': 'hk',
+    'Macau': 'mo',
+    'Mongolia': 'mn',
+    'Vietnam': 'vn',
+    'Laos': 'la',
+    'Cambodia': 'kh',
+    'Thailand': 'th',
+    'Myanmar': 'mm',
+    'Malaysia': 'my',
+    'Singapore': 'sg',
+    'Indonesia': 'id',
+    'Philippines': 'ph',
+    'Brunei': 'bn',
+    'East Timor': 'tl',
+    'Papua New Guinea': 'pg',
+    'Australia': 'au',
+    'New Zealand': 'nz',
+    'Fiji': 'fj',
+    'Vanuatu': 'vu',
+    'New Caledonia': 'nc',
+    'Solomon Islands': 'sb',
+    'Kiribati': 'ki',
+    'Tuvalu': 'tv',
+    'Nauru': 'nr',
+    'Palau': 'pw',
+    'Micronesia': 'fm',
+    'Marshall Islands': 'mh',
+    'Samoa': 'ws',
+    'Tonga': 'to',
+    'Cook Islands': 'ck',
+    'Niue': 'nu',
+    'Tokelau': 'tk',
+    'American Samoa': 'as',
+    'Guam': 'gu',
+    'Northern Mariana Islands': 'mp',
+    'Canada': 'ca',
+    'Mexico': 'mx',
+    'Brazil': 'br',
+    'Argentina': 'ar',
+    'Chile': 'cl',
+    'Peru': 'pe',
+    'Colombia': 'co',
+    'Venezuela': 've',
+    'Ecuador': 'ec',
+    'Bolivia': 'bo',
+    'Paraguay': 'py',
+    'Uruguay': 'uy',
+    'Guyana': 'gy',
+    'Suriname': 'sr',
+    'French Guiana': 'gf',
+    'Falkland Islands': 'fk',
+    'South Georgia': 'gs',
+    'Antarctica': 'aq',
+    'Europe': 'eu'
+  };
+  
+  return countryMappings[countryName] || 'un';
+};
+
 interface Package {
   id: string;
   name: string;
@@ -127,14 +295,27 @@ const CountryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="flex flex-col items-center mb-8 mt-12">
-        {countryFlag && <img src={countryFlag} alt={countryName} className="w-20 h-14 rounded shadow mb-4" />}
-        <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-4">{countryName}</h1>
-      </div>
       {/* Two-column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-        {/* Left: Photo */}
-        <div className="flex justify-center items-start w-full h-full mt-0 md:-mt-8">
+        {/* Left: Photo and Title */}
+        <div className="flex flex-col items-start w-full h-full mt-0 md:-mt-8">
+          {/* Country Title with Flag */}
+          <div className="flex items-center mb-6">
+            <img 
+              src={`https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
+              alt={`${countryName} flag`}
+              className="w-6 h-6 rounded-full object-cover mr-3"
+              style={{
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                objectFit: 'cover'
+              }}
+            />
+            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200">{countryName}</h1>
+          </div>
+          
+          {/* Panda Image */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-lg md:max-w-xl border border-gray-100">
             <picture>
               <source srcSet="/pandahero.webp" type="image/webp" />
