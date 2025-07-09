@@ -306,8 +306,8 @@ const CountryPage: React.FC = () => {
               <img
                 src="/pandahero.png"
                 alt="e-SimFly panda hero"
-                className="w-full object-contain"
-                style={{ objectFit: 'contain', maxHeight: '100%' }}
+                className="w-full h-full object-cover"
+                style={{ objectFit: 'cover', height: '100%', width: '100%' }}
               />
             </picture>
           </div>
