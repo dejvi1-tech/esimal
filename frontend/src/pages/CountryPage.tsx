@@ -300,12 +300,12 @@ const CountryPage: React.FC = () => {
         {/* Left: Photo */}
         <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
           {/* Panda Image */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-lg md:max-w-xl border border-gray-100 flex items-center justify-center" style={{ height: '480px', paddingTop: '0px' }}>
+          <div className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden" style={{ aspectRatio: '3/4', minHeight: '420px', maxHeight: '600px' }}>
             <picture>
-              <source srcSet="/pandahero.webp" type="image/webp" />
+              <source srcSet="/heropanda7.webp" type="image/webp" />
               <img
-                src="/pandahero.png"
-                alt="e-SimFly panda hero"
+                src="/heropanda7.png"
+                alt="e-SimFly Hero Panda"
                 className="w-full h-full object-cover"
                 style={{ objectFit: 'cover', height: '100%', width: '100%' }}
               />
