@@ -40,12 +40,16 @@ const HeroSection = () => {
         <img
           src="/pandahero9.png"
           alt="Panda Hero"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            display: 'block',
-            background: '#4B0082',
+        className=" mx-auto mb-6"
+        style={{
+          display: 'block',
+          maxWidth: '950px',
+          width: '100%',
+          height: '450px',
+          objectFit: 'cover',
+          opacity: 0.8,
+          paddingTop: '5px', // or '2rem', '40px', etc.,
+          paddingBottom: '5px',
           }}
           onLoad={handleImageLoad}
           onError={handleImageError}
