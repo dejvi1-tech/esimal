@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { europeanCountries } from '@/data/countries';
 import { formatDataAmount } from '@/utils/formatDataAmount';
-import { countrySlug, decodeSlug, capitalize } from '../lib/utils';
-import { supabase } from '../lib/supabaseClient';
+import { decodeSlug } from '../lib/utils';
 
-const planeBeachImage = '/pandahero.png';
 
 // Function to get country code from country name
 const getCountryCode = (countryName: string): string => {
@@ -191,7 +188,7 @@ const SimplePlanCard: React.FC<{
   selected: boolean;
   onSelect: () => void;
 }> = ({ pkg, selected, onSelect }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   return (
     <div
       className={`flex flex-col justify-between p-4 bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border rounded-xl shadow-lg transition-all cursor-pointer h-full min-w-0 ${selected ? 'border-purple-500 ring-2 ring-purple-500/30' : 'border-white/20 hover:border-purple-500/50'}`}
@@ -241,7 +238,7 @@ const CountryPage: React.FC = () => {
   const [isError, setIsError] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [countryName, setCountryName] = useState<string>('');
-  const [countryFlag, setCountryFlag] = useState<string>('');
+  const [, setCountryFlag] = useState<string>('');
 
   useEffect(() => {
     if (!slug) return;
@@ -300,11 +297,11 @@ const CountryPage: React.FC = () => {
         {/* Left: Photo */}
         <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
           {/* Panda Image */}
-          <div className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-48 max-h-56 md:h-auto" style={{ aspectRatio: '3/4', minHeight: '0', maxHeight: 'none', minHeight: '420px', maxHeight: '600px' }}>
+          <div className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-48 max-h-56 md:h-auto" style={{ aspectRatio: '3/4', minHeight: '420px', maxHeight: '600px' }}>
             <picture>
-              <source srcSet="/heropanda7.webp" type="image/webp" />
+              <source srcSet="/panda.webp" type="image/webp" />
               <img
-                src="/heropanda7.png"
+                src="/panda.png"
                 alt="e-SimFly Hero Panda"
                 className="w-full h-full object-cover"
                 style={{ objectFit: 'cover', height: '100%', width: '100%' }}
