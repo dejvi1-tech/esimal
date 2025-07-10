@@ -299,7 +299,7 @@ const CountryPage: React.FC = () => {
           {/* Panda Image */}
           <div className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-48 max-h-56 md:h-auto" style={{ aspectRatio: '3/4', minHeight: '420px', maxHeight: '600px' }}>
             <picture>
-              <source srcSet="/panda.webp" type="image/webp" />
+              <source srcSet="/panda.png" type="image/webp" />
               <img
                 src="/panda.png"
                 alt="e-SimFly Hero Panda"
