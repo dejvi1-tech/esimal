@@ -70,7 +70,10 @@ async function validatePackageExists(packageId: string, context: string = 'unkno
  * Handle Stripe webhook events with idempotency protection
  */
 export const handleStripeWebhook = (req: Request, res: Response, next: NextFunction) => {
-  console.log('[EMAIL DEBUG] handleStripeWebhook called. Event:', req.body);
+  console.log('[EMAIL DEBUG] handleStripeWebhook called. Event type:', typeof req.body);
+  console.log('[EMAIL DEBUG] req.body is Buffer:', Buffer.isBuffer(req.body));
+  console.log('[EMAIL DEBUG] req.body length:', req.body?.length);
+  
   (async () => {
     const sig = req.headers['stripe-signature'] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -80,12 +83,26 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       return res.status(500).json({ error: 'Webhook secret not configured' });
     }
 
+    if (!sig) {
+      logger.error('No stripe-signature header found');
+      return res.status(400).json({ error: 'No signature provided' });
+    }
+
+    // Ensure req.body is a Buffer for Stripe verification
+    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || '', 'utf8');
+
     let event: any;
 
     try {
-      event = StripeService.constructWebhookEvent(req.body, sig, webhookSecret);
+      event = StripeService.constructWebhookEvent(rawBody, sig, webhookSecret);
+      console.log('[EMAIL DEBUG] Webhook signature verification successful');
     } catch (err: any) {
       logger.error('Webhook signature verification failed:', err.message);
+      console.log('[EMAIL DEBUG] Webhook signature verification failed:', err.message);
+      console.log('[EMAIL DEBUG] Raw body type:', typeof rawBody);
+      console.log('[EMAIL DEBUG] Raw body length:', rawBody.length);
+      console.log('[EMAIL DEBUG] Signature:', sig);
+      console.log('[EMAIL DEBUG] Webhook secret configured:', !!webhookSecret);
       return res.status(400).json({ error: 'Invalid signature' });
     }
 

@@ -133,7 +133,7 @@ app.use((req, res, next) => {
   return csrfProtection(req, res, next);
 });
 
-// Rate limiting for public API
+// Rate limiting for public API (exclude webhook route)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -141,7 +141,15 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
-app.use('/api/', limiter);
+
+// Apply rate limiting to API routes but exclude webhook
+app.use('/api/', (req, res, next) => {
+  // Skip rate limiting for webhook route
+  if (req.path === '/webhooks/stripe') {
+    return next();
+  }
+  return limiter(req, res, next);
+});
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
