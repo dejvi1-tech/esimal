@@ -110,30 +110,7 @@ app.use((req, res, next) => {
 });
 
 // Stripe webhook route FIRST, with raw body parser
-app.post('/api/webhooks/stripe', (req, res, next) => {
-  // Custom raw body parser for Stripe webhooks
-  let data = '';
-  
-  req.setEncoding('utf8');
-  
-  req.on('data', (chunk) => {
-    data += chunk;
-  });
-  
-  req.on('end', () => {
-    // Store the raw body as a Buffer
-    req.body = Buffer.from(data, 'utf8');
-    console.log('[WEBHOOK DEBUG] Raw body captured, length:', req.body.length);
-    console.log('[WEBHOOK DEBUG] Raw body is Buffer:', Buffer.isBuffer(req.body));
-    
-    handleStripeWebhook(req, res, next);
-  });
-  
-  req.on('error', (err) => {
-    console.error('[WEBHOOK DEBUG] Error reading request body:', err);
-    res.status(400).json({ error: 'Failed to read request body' });
-  });
-});
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
 
 // THEN your other middleware
 app.use(express.json());
@@ -156,7 +133,7 @@ app.use((req, res, next) => {
   return csrfProtection(req, res, next);
 });
 
-// Rate limiting for public API (exclude webhook route)
+// Rate limiting for public API
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -164,15 +141,7 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
-
-// Apply rate limiting to API routes but exclude webhook
-app.use('/api/', (req, res, next) => {
-  // Skip rate limiting for webhook route
-  if (req.path === '/webhooks/stripe') {
-    return next();
-  }
-  return limiter(req, res, next);
-});
+app.use('/api/', limiter);
 
 // Logging
 if (process.env.NODE_ENV === 'development') {

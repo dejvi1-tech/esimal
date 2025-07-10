@@ -70,10 +70,7 @@ async function validatePackageExists(packageId: string, context: string = 'unkno
  * Handle Stripe webhook events with idempotency protection
  */
 export const handleStripeWebhook = (req: Request, res: Response, next: NextFunction) => {
-  console.log('[EMAIL DEBUG] handleStripeWebhook called. Event type:', typeof req.body);
-  console.log('[EMAIL DEBUG] req.body is Buffer:', Buffer.isBuffer(req.body));
-  console.log('[EMAIL DEBUG] req.body length:', req.body?.length);
-  
+  console.log('[EMAIL DEBUG] handleStripeWebhook called. Event:', req.body);
   (async () => {
     const sig = req.headers['stripe-signature'] as string;
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -83,47 +80,12 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       return res.status(500).json({ error: 'Webhook secret not configured' });
     }
 
-    if (!sig) {
-      logger.error('No stripe-signature header found');
-      return res.status(400).json({ error: 'No signature provided' });
-    }
-
-    // req.body should be a Buffer from our custom middleware
-    let rawBody = req.body;
-    
-    if (!Buffer.isBuffer(rawBody)) {
-      console.log('[EMAIL DEBUG] WARNING: req.body is not a Buffer!');
-      console.log('[EMAIL DEBUG] req.body type:', typeof req.body);
-      console.log('[EMAIL DEBUG] req.body:', req.body);
-      
-      // Fallback: try to convert to Buffer
-      if (typeof req.body === 'string') {
-        rawBody = Buffer.from(req.body, 'utf8');
-      } else if (req.body && typeof req.body === 'object') {
-        rawBody = Buffer.from(JSON.stringify(req.body), 'utf8');
-      } else {
-        rawBody = Buffer.from('', 'utf8');
-      }
-    }
-    
-    console.log('[EMAIL DEBUG] Final rawBody is Buffer:', Buffer.isBuffer(rawBody));
-    console.log('[EMAIL DEBUG] Final rawBody length:', rawBody.length);
-    console.log('[EMAIL DEBUG] Raw body type:', typeof rawBody);
-    console.log('[EMAIL DEBUG] Raw body content (first 100 chars):', rawBody.toString('utf8').substring(0, 100));
-
     let event: any;
 
     try {
-      event = StripeService.constructWebhookEvent(rawBody, sig, webhookSecret);
-      console.log('[EMAIL DEBUG] Webhook signature verification successful');
+      event = StripeService.constructWebhookEvent(req.body, sig, webhookSecret);
     } catch (err: any) {
       logger.error('Webhook signature verification failed:', err.message);
-      console.log('[EMAIL DEBUG] Webhook signature verification failed:', err.message);
-      console.log('[EMAIL DEBUG] Raw body type:', typeof rawBody);
-      console.log('[EMAIL DEBUG] Raw body length:', rawBody.length);
-      console.log('[EMAIL DEBUG] Signature:', sig);
-      console.log('[EMAIL DEBUG] Webhook secret configured:', !!webhookSecret);
-      console.log('[EMAIL DEBUG] Raw body content (first 200 chars):', rawBody.toString('utf8').substring(0, 200));
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
