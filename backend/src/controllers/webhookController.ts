@@ -89,7 +89,7 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
     }
 
     // req.body should be a Buffer from our custom middleware
-    const rawBody = req.body;
+    let rawBody = req.body;
     
     if (!Buffer.isBuffer(rawBody)) {
       console.log('[EMAIL DEBUG] WARNING: req.body is not a Buffer!');
