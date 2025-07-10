@@ -37,23 +37,26 @@ const HeroSection = () => {
         background: '#4B0082',
         borderRadius: '16px',
       }}>
-        <img
-          src="/pandahero9.png"
-          alt="Panda Hero"
-        className=" mx-auto mb-6"
-        style={{
-          display: 'block',
-          maxWidth: '950px',
-          width: '100%',
-          height: '450px',
-          objectFit: 'cover',
-          opacity: 0.8,
-          paddingTop: '5px', // or '2rem', '40px', etc.,
-          paddingBottom: '5px',
-          }}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+        <picture>
+          <source srcSet="/pandahero9.webp" type="image/webp" />
+          <img
+            src="/pandahero9.webp"
+            alt="Panda Hero"
+            className=" mx-auto mb-6"
+            style={{
+              display: 'block',
+              maxWidth: '950px',
+              width: '100%',
+              height: '450px',
+              objectFit: 'cover',
+              opacity: 0.8,
+              paddingTop: '5px',
+              paddingBottom: '5px',
+            }}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </picture>
       </div>
       {/* Centered: Heading + Button, with search and logo below image */}
       <div className="flex flex-col items-center justify-center w-full px-4 py-2 gap-4">
