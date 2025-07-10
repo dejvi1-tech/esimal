@@ -1,0 +1,10 @@
+# This is a placeholder for a fallback background image
+# The actual JPG file should be created as a gradient background
+# with purple tones (#4B0082 to #7C3AED to #A855F7)
+# 
+# This fallback image should be used in case the SVG background
+# doesn't load properly or for older browsers that don't support SVG
+#
+# Recommended dimensions: 1920x1080 or 1200x800
+# Format: JPG for better compatibility
+# Colors: Purple gradient matching the design 
