@@ -298,7 +298,7 @@ const CountryPage: React.FC = () => {
         <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
           {/* Panda Image */}
           <div
-            className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-32 md:h-auto max-h-40 md:max-h-56"
+            className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-32 md:h-auto max-h-40 md:max-h-56 hidden sm:flex"
             style={{ aspectRatio: '3/4', minHeight: '120px', maxHeight: '600px' }}
           >
             <picture>
@@ -317,7 +317,7 @@ const CountryPage: React.FC = () => {
           {/* Country Title with Flag - positioned above packages */}
           <div className="flex items-center mb-6" style={{ marginTop: '32px' }}>
             <img 
-              src={`https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
+              src={countryName === 'Albania' ? 'https://flagcdn.com/w40/al.png' : `https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
               alt={`${countryName} flag`}
               className="w-6 h-6 rounded-full object-cover"
               style={{
