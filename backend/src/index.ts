@@ -110,7 +110,30 @@ app.use((req, res, next) => {
 });
 
 // Stripe webhook route FIRST, with raw body parser
-app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), handleStripeWebhook);
+app.post('/api/webhooks/stripe', (req, res, next) => {
+  // Custom raw body parser for Stripe webhooks
+  let data = '';
+  
+  req.setEncoding('utf8');
+  
+  req.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  req.on('end', () => {
+    // Store the raw body as a Buffer
+    req.body = Buffer.from(data, 'utf8');
+    console.log('[WEBHOOK DEBUG] Raw body captured, length:', req.body.length);
+    console.log('[WEBHOOK DEBUG] Raw body is Buffer:', Buffer.isBuffer(req.body));
+    
+    handleStripeWebhook(req, res, next);
+  });
+  
+  req.on('error', (err) => {
+    console.error('[WEBHOOK DEBUG] Error reading request body:', err);
+    res.status(400).json({ error: 'Failed to read request body' });
+  });
+});
 
 // THEN your other middleware
 app.use(express.json());

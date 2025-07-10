@@ -88,8 +88,28 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       return res.status(400).json({ error: 'No signature provided' });
     }
 
-    // Ensure req.body is a Buffer for Stripe verification
-    const rawBody = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body || '', 'utf8');
+    // req.body should be a Buffer from our custom middleware
+    const rawBody = req.body;
+    
+    if (!Buffer.isBuffer(rawBody)) {
+      console.log('[EMAIL DEBUG] WARNING: req.body is not a Buffer!');
+      console.log('[EMAIL DEBUG] req.body type:', typeof req.body);
+      console.log('[EMAIL DEBUG] req.body:', req.body);
+      
+      // Fallback: try to convert to Buffer
+      if (typeof req.body === 'string') {
+        rawBody = Buffer.from(req.body, 'utf8');
+      } else if (req.body && typeof req.body === 'object') {
+        rawBody = Buffer.from(JSON.stringify(req.body), 'utf8');
+      } else {
+        rawBody = Buffer.from('', 'utf8');
+      }
+    }
+    
+    console.log('[EMAIL DEBUG] Final rawBody is Buffer:', Buffer.isBuffer(rawBody));
+    console.log('[EMAIL DEBUG] Final rawBody length:', rawBody.length);
+    console.log('[EMAIL DEBUG] Raw body type:', typeof rawBody);
+    console.log('[EMAIL DEBUG] Raw body content (first 100 chars):', rawBody.toString('utf8').substring(0, 100));
 
     let event: any;
 
@@ -103,6 +123,7 @@ export const handleStripeWebhook = (req: Request, res: Response, next: NextFunct
       console.log('[EMAIL DEBUG] Raw body length:', rawBody.length);
       console.log('[EMAIL DEBUG] Signature:', sig);
       console.log('[EMAIL DEBUG] Webhook secret configured:', !!webhookSecret);
+      console.log('[EMAIL DEBUG] Raw body content (first 200 chars):', rawBody.toString('utf8').substring(0, 200));
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
