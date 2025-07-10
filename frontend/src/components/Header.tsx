@@ -27,12 +27,15 @@ const Header = () => {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-3 group cursor-pointer">
               <div className="flex items-center justify-center bg-gradient-to-br from-purple-700 via-purple-500 to-indigo-600 shadow-lg rounded-2xl p-1 mr-2" style={{ height: 64, width: 64, minWidth: 64 }}>
-                <img
-                  src="/esimflylogo.png"
-                  alt="e-SimFly Logo"
-                  className="h-14 w-14 object-contain rounded-xl drop-shadow-md"
-                  style={{ background: 'rgba(80, 0, 120, 0.15)', objectFit: 'contain', objectPosition: 'center', transform: 'scale(3)'}}
-                />
+                <picture>
+                  <source srcSet="/esimflylogo.webp" type="image/webp" />
+                  <img
+                    src="/esimflylogo.webp"
+                    alt="e-SimFly Logo"
+                    className="h-14 w-14 object-contain rounded-xl drop-shadow-md"
+                    style={{ background: 'rgba(80, 0, 120, 0.15)', objectFit: 'contain', objectPosition: 'center', transform: 'scale(3)'}}
+                  />
+                </picture>
               </div>
               {/* Brand Name and Subtitle */}
               <div className="flex flex-col">
@@ -94,12 +97,15 @@ const Header = () => {
                       }
                     }}
                   >
-                    <img
-                      src="/esimflylogo.png"
-                      alt="e-SimFly Logo"
-                      className="h-14 w-14 object-contain"
-                      style={{ minWidth: 56 }}
-                    />
+                    <picture>
+                      <source srcSet="/esimflylogo.webp" type="image/webp" />
+                      <img
+                        src="/esimflylogo.webp"
+                        alt="e-SimFly Logo"
+                        className="h-14 w-14 object-contain"
+                        style={{ minWidth: 56 }}
+                      />
+                    </picture>
                     <div className="flex flex-col">
                       <span className="text-xl font-extrabold tracking-tight text-white">
                         e-<span className="font-black">SimFly</span>
