@@ -7,26 +7,16 @@ import {
   Globe, 
   Shield, 
   Zap, 
-  CheckCircle, 
   ArrowRight,
-  Play,
-  Star,
   Users,
   Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
-const phoneImages = [
-  // Replace these URLs with your actual assets if available
-  '/images/step1-phone.png', // Plan selection
-  '/images/step2-qr.png',    // QR code
-  '/images/step3-connected.png' // Connected/beach
-];
 
 const HowItWorksPage = () => {
-  const { t } = useLanguage();
+  useLanguage();
 
   const processSteps = [
     {
@@ -75,35 +65,7 @@ const HowItWorksPage = () => {
     }
   ];
 
-  const compatibleDevices = [
-    { name: "iPhone 14 Pro", brand: "Apple", year: "2022+" },
-    { name: "Samsung Galaxy S23", brand: "Samsung", year: "2023+" },
-    { name: "Google Pixel 7", brand: "Google", year: "2022+" },
-    { name: "iPad Pro", brand: "Apple", year: "2021+" },
-    { name: "MacBook Pro", brand: "Apple", year: "2020+" },
-    { name: "Surface Pro", brand: "Microsoft", year: "2021+" }
-  ];
 
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "Business Traveler",
-      content: "e-SimFly made my international trips so much easier. No more hunting for local SIM cards!",
-      rating: 5
-    },
-    {
-      name: "Michael Chen",
-      role: "Digital Nomad", 
-      content: "The instant activation and global coverage are game-changers for my remote work lifestyle.",
-      rating: 5
-    },
-    {
-      name: "Emma Rodriguez",
-      role: "Tourist",
-      content: "Perfect for my European vacation. Connected immediately in every country I visited.",
-      rating: 5
-    }
-  ];
 
   return (
     <>

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { europeanCountries } from '../data/countries';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { countrySlug } from '../lib/utils';
 import { getAdminHeaders } from '../utils/adminHeaders';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -56,7 +55,6 @@ interface RoamifyPackage {
   dataAmount?: number;
   dataUnit?: string;
   day?: number;
-  days?: number;
   base_price?: number;
   sale_price?: number;
   operator?: string;
@@ -65,25 +63,25 @@ interface RoamifyPackage {
   [key: string]: any; // For any additional fields from Roamify API
 }
 
+interface DuplicateAnalysis {
+  totalPackages: number;
+  duplicateIds: { [id: string]: RoamifyPackage[] };
+  duplicateCombinations: { [key: string]: RoamifyPackage[] };
+  hasDuplicates: boolean;
+}
+
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [myPackages, setMyPackages] = useState<Package[]>([]);
-  const [mainPackages, setMainPackages] = useState<MainPackage[]>([]);
   const [roamifyPackages, setRoamifyPackages] = useState<RoamifyPackage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mainLoading, setMainLoading] = useState(false);
   const [roamifyLoading, setRoamifyLoading] = useState(false);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
-  const [country, setCountry] = useState<string>('');
-  const [allCountries, setAllCountries] = useState<string[]>([]);
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [pageSize] = useState(50); // Packages per page
   
   const [selectedRoamifyCountry, setSelectedRoamifyCountry] = useState('');
   const roamifyCountries = Array.from(new Set(roamifyPackages.map(pkg => pkg.country || pkg.country_name).filter(Boolean))).sort();
@@ -104,7 +102,7 @@ const AdminPanel: React.FC = () => {
   const [syncing, setSyncing] = useState(false);
   
   // Add duplicate analysis state
-  const [duplicateAnalysis, setDuplicateAnalysis] = useState({
+  const [duplicateAnalysis, setDuplicateAnalysis] = useState<DuplicateAnalysis>({
     totalPackages: 0,
     duplicateIds: {},
     duplicateCombinations: {},
@@ -149,7 +147,7 @@ const AdminPanel: React.FC = () => {
 
   useEffect(() => {
     fetchAllData();
-  }, [country, currentPage]);
+  }, [currentPage]);
 
   const fetchAllCountries = async () => {
     try {
@@ -160,25 +158,15 @@ const AdminPanel: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.status === 'success' && Array.isArray(data.data)) {
-          setAllCountries(data.data);
           console.log(`Loaded ${data.data.length} countries from database`);
         } else {
           console.error('Invalid response format from package-countries endpoint');
-          // Fallback to static list
-          const countryNames = europeanCountries.map(country => country.name.en);
-          setAllCountries(countryNames);
         }
       } else {
         console.error('Failed to fetch countries from API');
-        // Fallback to static list
-        const countryNames = europeanCountries.map(country => country.name.en);
-        setAllCountries(countryNames);
       }
     } catch (err) {
       console.error('Error fetching countries:', err);
-      // Fallback to static list
-      const countryNames = europeanCountries.map(country => country.name.en);
-      setAllCountries(countryNames);
     }
   };
 
@@ -187,7 +175,6 @@ const AdminPanel: React.FC = () => {
       setLoading(true);
       await Promise.all([
         fetchMyPackages(),
-        fetchMainPackages(),
         fetchRoamifyPackages(1, 50000), // Fetch all packages in single request
         fetchAllCountries()
       ]);
@@ -211,7 +198,6 @@ const AdminPanel: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         setMyPackages(data.data || data);
-        setTotalPages(1);
       } else {
         const text = await response.text();
         console.error('Failed to fetch my packages:', response.status, text);
@@ -222,32 +208,6 @@ const AdminPanel: React.FC = () => {
       setError('Failed to fetch my packages');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchMainPackages = async () => {
-    try {
-      setMainLoading(true);
-      const headers = await getAdminHeaders('GET');
-      const response = await fetch('/api/admin/packages', {
-        headers,
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMainPackages(data.data || data);
-        setTotalPages(1);
-      } else {
-        const text = await response.text();
-        console.error('Failed to fetch main packages:', response.status, text);
-        setError('Failed to fetch main packages');
-      }
-    } catch (err) {
-      console.error('Error fetching main packages:', err);
-      setError('Failed to fetch main packages');
-    } finally {
-      setMainLoading(false);
     }
   };
 
@@ -305,8 +265,6 @@ const AdminPanel: React.FC = () => {
           console.log('Setting totalPages to:', paginationInfo.totalPages);
           console.log('Setting currentPage to:', paginationInfo.page);
           setCurrentPage(paginationInfo.page);
-          setTotalPages(paginationInfo.totalPages);
-          setTotalCount(paginationInfo.totalCount);
         } else {
           console.log('No pagination info available');
         }
@@ -361,7 +319,7 @@ const AdminPanel: React.FC = () => {
   };
 
   // Function to analyze packages for duplicates
-  const analyzePackagesForDuplicates = (packages: RoamifyPackage[]) => {
+  const analyzePackagesForDuplicates = (packages: RoamifyPackage[]): DuplicateAnalysis => {
     // Defensive check to ensure packages is an array
     if (!Array.isArray(packages)) {
       console.error('analyzePackagesForDuplicates received non-array:', packages);
@@ -493,41 +451,6 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const handleSaveToMyPackages = async (pkg: MainPackage) => {
-    setUpdating(pkg.id);
-    try {
-      const packageData = {
-        name: pkg.name,
-        country_name: pkg.country_name || pkg.country || '',
-        country_code: pkg.country_code || '',
-        data_amount: pkg.data_amount || 0,
-        days: pkg.days || 0,
-        base_price: pkg.base_price || pkg.price || 0,
-        sale_price: pkg.base_price || pkg.price || 0,
-        profit: 0
-      };
-      const headers = await getAdminHeaders('POST');
-      const response = await fetch('/api/admin/save-package', {
-        method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(packageData)
-      });
-
-      if (response.ok) {
-        await fetchMyPackages();
-        setError(''); // Clear any previous errors
-      } else {
-        const errorData = await response.json();
-        setError(`Failed to save package: ${errorData.error || 'Unknown error'}`);
-      }
-    } catch (err) {
-      console.error('Error saving to my packages:', err);
-      setError('Failed to save package');
-    } finally {
-      setUpdating(null);
-    }
-  };
 
   const handleSaveRoamifyPackage = async (pkg: RoamifyPackage) => {
     setUpdating(pkg.id || pkg.packageId || '');
@@ -741,42 +664,9 @@ const AdminPanel: React.FC = () => {
     );
   };
 
-  const handleCountrySelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCountry(e.target.value);
-    setCurrentPage(1);
-  };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchRoamifyPackages(page, pageSize);
-  };
 
   // Generate page numbers for pagination
-  const getPageNumbers = () => {
-    const pages = [];
-    const maxVisiblePages = 5;
-    
-    if (totalPages <= maxVisiblePages) {
-      // Show all pages if total is small
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Show pages around current page
-      let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-      let end = Math.min(totalPages, start + maxVisiblePages - 1);
-      
-      if (end - start + 1 < maxVisiblePages) {
-        start = Math.max(1, end - maxVisiblePages + 1);
-      }
-      
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-    }
-    
-    return pages;
-  };
 
   const handleRemoveDuplicates = async () => {
     if (!duplicateAnalysis.hasDuplicates) {
@@ -837,18 +727,8 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  function validateMyPackageForm(form: any) {
-    const errors: {[key: string]: string} = {};
-    if (!form.name) errors.name = 'Name is required';
-    if (!form.country_name) errors.country_name = 'Country name is required';
-    if (!form.data_amount) errors.data_amount = 'Data amount is required';
-    return errors;
-  }
 
   // Helper to build canonical country URL
-  function buildCountryUrl(name: string) {
-    return `/country/${countrySlug(name)}`;
-  }
 
   return (
     <div className="min-h-screen bg-[#4B0082] text-white">
@@ -1160,7 +1040,7 @@ const AdminPanel: React.FC = () => {
                               {Object.entries(duplicateAnalysis.duplicateIds).map(([id, packages]) => (
                                 <div key={id} className="bg-red-50 p-2 rounded border-l-4 border-red-400">
                                   <div className="font-medium text-red-800">ID: {id} (appears {packages.length} times)</div>
-                                  {packages.map((pkg, index) => (
+                                  {packages.map((pkg: RoamifyPackage, index: number) => (
                                     <div key={index} className="text-sm text-red-700 ml-4">
                                       {index + 1}. {pkg.description || pkg.packageName || pkg.name || pkg.package} - {pkg.country || pkg.country_name} - {pkg.data_amount || pkg.dataAmount || pkg.data} - {pkg.days || pkg.day} days - ${pkg.base_price || pkg.price}
                                     </div>
@@ -1178,7 +1058,7 @@ const AdminPanel: React.FC = () => {
                               {Object.entries(duplicateAnalysis.duplicateCombinations).map(([key, packages]) => (
                                 <div key={key} className="bg-orange-50 p-2 rounded border-l-4 border-orange-400">
                                   <div className="font-medium text-orange-800">Combination: {key} (appears {packages.length} times)</div>
-                                  {packages.map((pkg, index) => (
+                                  {packages.map((pkg: RoamifyPackage, index: number) => (
                                     <div key={index} className="text-sm text-orange-700 ml-4">
                                       {index + 1}. ID: {pkg.id || pkg.packageId} - {pkg.description || pkg.packageName || pkg.name || pkg.package}
                                     </div>
@@ -1324,9 +1204,10 @@ const AdminPanel: React.FC = () => {
                     </thead>
                   <tbody>
                     {filteredRoamifyPackages.map((pkg) => {
-                      const isDuplicateId = duplicateAnalysis.duplicateIds[pkg.id || pkg.packageId || ''];
+                      const packageId = pkg.id || pkg.packageId || '';
+                      const isDuplicateId = packageId ? duplicateAnalysis.duplicateIds[packageId] : undefined;
                       const combinationKey = `${pkg.country || pkg.country_name || 'unknown'}|${pkg.data || pkg.dataAmount || 'unknown'}|${pkg.days || pkg.day || 'unknown'}|${pkg.price || pkg.base_price || 'unknown'}`;
-                      const isDuplicateCombo = duplicateAnalysis.duplicateCombinations[combinationKey];
+                      const isDuplicateCombo = combinationKey ? duplicateAnalysis.duplicateCombinations[combinationKey] : undefined;
                       
                       return (
                         <tr 
