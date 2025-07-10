@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, X } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Link, useLocation } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { language, toggleLanguage, t } = useLanguage();
+  const { t } = useLanguage();
   const location = useLocation();
 
   const navigationItems = [
@@ -25,14 +25,13 @@ const Header = () => {
         <div className="navbar-glassmorphism-fixed">
           <div className="flex items-center justify-between h-[4.5rem] gap-x-10">
             {/* Logo */}
-            <div className="flex items-center space-x-3 group cursor-pointer">
-              {/* Panda Logo */}
+            <Link to="/" className="flex items-center space-x-3 group cursor-pointer">
               <div className="flex items-center justify-center bg-gradient-to-br from-purple-700 via-purple-500 to-indigo-600 shadow-lg rounded-2xl p-1 mr-2" style={{ height: 64, width: 64, minWidth: 64 }}>
                 <img
-                  src="/pandalogo.png"
-                  alt="Panda Logo"
+                  src="/esimflylogo.png"
+                  alt="e-SimFly Logo"
                   className="h-14 w-14 object-contain rounded-xl drop-shadow-md"
-                  style={{ background: 'rgba(80, 0, 120, 0.15)' }}
+                  style={{ background: 'rgba(80, 0, 120, 0.15)', objectFit: 'contain', objectPosition: 'center', transform: 'scale(3)'}}
                 />
               </div>
               {/* Brand Name and Subtitle */}
@@ -42,7 +41,7 @@ const Header = () => {
                 </span>
                 <span className="text-xs text-gray-200 font-medium font-orbitron">Global eSIM Solutions</span>
               </div>
-            </div>
+            </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-1">
@@ -96,7 +95,7 @@ const Header = () => {
                     }}
                   >
                     <img
-                      src="/logo.png"
+                      src="/esimflylogo.png"
                       alt="e-SimFly Logo"
                       className="h-14 w-14 object-contain"
                       style={{ minWidth: 56 }}
