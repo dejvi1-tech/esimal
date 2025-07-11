@@ -14,7 +14,7 @@ const Footer = () => {
     {
       title: "Produkti",
       links: [
-        { name: "Planet eSIM", href: "#" },
+        { name: "Planet eSIM", href: "https://esimfly.al/packages" },
         { name: "Harta e Mbulimit", href: "#" },
         { name: "Çmimet", href: "#" },
         { name: "Përputhshmëria e Pajisjeve", href: "#" }

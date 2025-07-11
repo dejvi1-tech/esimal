@@ -357,6 +357,25 @@ const translations: Translations = {
   how_to_use_step4_desc: { al: "Aktivizoni të dhënat mobile për planin eSIM dhe gëzoni internetin e shpejtë kudo që të jeni.", en: "Turn on mobile data for your eSIM plan and enjoy high-speed internet wherever you are." },
   how_to_use_compatible_title: { al: "Pajisje të Përshtatshme", en: "Compatible Devices" },
   how_to_use_compatible_desc: { al: "eSIM funksionon me shumicën e pajisjeve moderne të Apple, Samsung, Google dhe të tjera.", en: "eSIM works with most modern Apple, Samsung, Google and other devices." },
+
+  // How It Works Section
+  how_it_works_title: { al: "Si të lidheni me eSIM në iPhone dhe Android", en: "How to Connect to eSIM on iPhone and Android" },
+  how_it_works_subtitle: { al: "Ndiqni këto hapa të thjeshtë për të aktivizuar eSIM-in tuaj në çdo pajisje", en: "Follow these simple steps to activate your eSIM on any device" },
+  how_it_works_image_alt: { al: "Udhëzues për aktivizimin e eSIM", en: "eSIM activation guide" },
+  how_it_works_tip_title: { al: "💡 Këshillë e Shpejtë", en: "💡 Quick Tip" },
+  how_it_works_tip_description: { al: "Sigurohuni që pajisja juaj të mbështetë eSIM-in para blerjes. Shumica e iPhone-ve të rinj dhe Android-eve të fundit e mbështesin këtë teknologji.", en: "Make sure your device supports eSIM before purchasing. Most newer iPhones and recent Android devices support this technology." },
+  
+  // iPhone Steps
+  how_it_works_iphone_step_1: { al: "Hapni <strong>Settings</strong> në iPhone-in tuaj", en: "Open <strong>Settings</strong> on your iPhone" },
+  how_it_works_iphone_step_2: { al: "Zgjidhni <strong>Mobile Data</strong> ose <strong>Cellular</strong>", en: "Select <strong>Mobile Data</strong> or <strong>Cellular</strong>" },
+  how_it_works_iphone_step_3: { al: "Shtoni një <strong>eSIM</strong>", en: "Add an <strong>eSIM</strong>" },
+  how_it_works_iphone_step_4: { al: "Skanoni <strong>QR Code</strong> nga operatori", en: "Scan the <strong>QR Code</strong> from the carrier" },
+  
+  // Android Steps
+  how_it_works_android_step_1: { al: "Hapni <strong>Settings</strong> në Android-in tuaj", en: "Open <strong>Settings</strong> on your Android" },
+  how_it_works_android_step_2: { al: "Zgjidhni <strong>SIM card manager</strong> ose <strong>SIMs</strong>", en: "Select <strong>SIM card manager</strong> or <strong>SIMs</strong>" },
+  how_it_works_android_step_3: { al: "Klikoni <strong>Add mobile plan</strong>", en: "Click <strong>Add mobile plan</strong>" },
+  how_it_works_android_step_4: { al: "Skanoni <strong>QR Code</strong> nga operatori", en: "Scan the <strong>QR Code</strong> from the carrier" },
 };
 
 interface LanguageContextType {
