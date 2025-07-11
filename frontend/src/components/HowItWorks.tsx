@@ -1,24 +1,25 @@
 import { Smartphone } from "lucide-react";
 
+// Move static data outside the component for better performance
+const iphoneSteps = [
+  "Hapni Settings në iPhone-in tuaj",
+  "Zgjidhni Mobile Data ose Cellular",
+  "Shtoni një eSIM",
+  "Skanoni QR Code nga operatori"
+];
+
+const androidSteps = [
+  "Hapni Settings në Android-in tuaj",
+  "Zgjidhni SIM card manager ose SIMs",
+  "Klikoni Add mobile plan",
+  "Skanoni QR Code nga operatori"
+];
+
+// Deep purple glassmorphism card style
+const glassClass =
+  "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 bg-opacity-80 border border-purple-700 rounded-2xl p-8 shadow-xl backdrop-blur text-white";
+
 const HowItWorks = () => {
-  const iphoneSteps = [
-    "Hapni Settings në iPhone-in tuaj",
-    "Zgjidhni Mobile Data ose Cellular",
-    "Shtoni një eSIM",
-    "Skanoni QR Code nga operatori"
-  ];
-
-  const androidSteps = [
-    "Hapni Settings në Android-in tuaj",
-    "Zgjidhni SIM card manager ose SIMs",
-    "Klikoni Add mobile plan",
-    "Skanoni QR Code nga operatori"
-  ];
-
-  // Deep purple glassmorphism card style
-  const glassClass =
-    "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 bg-opacity-80 border border-purple-700 rounded-2xl p-8 shadow-xl backdrop-blur text-white";
-
   return (
     <section className="max-w-5xl mx-auto px-4 py-16">
       <div className="text-center mb-10">
@@ -35,6 +36,9 @@ const HowItWorks = () => {
           src="/esim-udhezues.png"
           alt="eSIM udhëzues"
           className="w-full max-w-2xl rounded-2xl shadow-lg border-2 border-purple-200"
+          loading="lazy"
+          width={600}
+          height={300}
         />
       </div>
 

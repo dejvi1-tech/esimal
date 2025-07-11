@@ -51,22 +51,9 @@ const Footer = () => {
         <div className="grid lg:grid-cols-5 md:grid-cols-2 gap-8">
           {/* Brand Section */}
           <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-xl">
-                <Smartphone className="w-6 h-6 text-white" />
-              </div>
-              <Link
-                to="/"
-                className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent cursor-pointer"
-                onClick={e => {
-                  if (window.location.pathname === "/") {
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'auto' });
-                  }
-                }}
-              >
-                e-SimFly
-              </Link>
+            <div className="flex items-center mb-4">
+              <img src="/esimflylogo.webp" alt="e-SimFly Logo" width={40} height={40} className="mr-2 inline-block align-middle" />
+              <span className="text-2xl font-bold text-white align-middle">e-SimFly</span>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               Duke lidhur udhëtarët në mbarë botën me zgjidhje eSIM të besueshme dhe të përballueshme. 
