@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </main>
       {!hideFooter && <Footer />}
-      <WhatsAppSupport phoneNumber="+1234567890" /> {/* Replace with actual WhatsApp number */}
+      <WhatsAppSupport phoneNumber="355698365533" />
     </div>
   );
 };

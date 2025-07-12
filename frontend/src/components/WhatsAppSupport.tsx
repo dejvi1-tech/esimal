@@ -3,12 +3,12 @@ import { MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface WhatsAppSupportProps {
-  phoneNumber: string;
+  phoneNumber?: string;
   defaultMessage?: string;
 }
 
 const WhatsAppSupport: React.FC<WhatsAppSupportProps> = ({ 
-  phoneNumber,
+  phoneNumber = '355698365533', // Updated default WhatsApp number, no plus sign
   defaultMessage = "Hello! I need help with eSIM."
 }) => {
   const { t, language } = useLanguage();

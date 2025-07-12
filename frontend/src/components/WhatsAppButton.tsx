@@ -6,7 +6,7 @@ const WhatsAppButton: React.FC = () => {
   const { t } = useLanguage();
 
   const handleWhatsAppClick = () => {
-    const phoneNumber = '+1234567890'; // Replace with actual WhatsApp number
+    const phoneNumber = '355698365533'; // Updated WhatsApp number, no plus sign
     const message = encodeURIComponent(t('whatsapp_message'));
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
     window.open(whatsappUrl, '_blank');
