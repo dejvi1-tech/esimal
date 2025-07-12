@@ -38,7 +38,7 @@ const Footer = () => {
       links: [
         { icon: Facebook, href: "#", name: "Facebook" },
         { icon: Twitter, href: "#", name: "Twitter" },
-        { icon: Instagram, href: "#", name: "Instagram" },
+        { icon: Instagram, href: "https://www.instagram.com/esimfly.al?igsh=MXBpNW1nZGdoYTB0MA==", name: "Instagram" },
         { icon: Linkedin, href: "#", name: "LinkedIn" }
       ]
     }
