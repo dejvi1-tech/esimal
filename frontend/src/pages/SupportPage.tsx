@@ -4,7 +4,7 @@ import { MessageCircle } from 'lucide-react';
 
 const SupportPage = () => {
   // WhatsApp info
-  const phoneNumber = '355692222222'; // Replace with your actual WhatsApp number
+  const phoneNumber = '355698365533'; // Updated WhatsApp number
   const message = encodeURIComponent("Përshëndetje! Kam nevojë për ndihmë me eSIM.");
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
