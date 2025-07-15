@@ -310,9 +310,9 @@ const CountryPage: React.FC = () => {
                   />
                 </picture>
               </div>
-              {/* Brand Name - Hidden on mobile */}
-              <div className="hidden sm:flex flex-col">
-                <span className="text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>
+              {/* Brand Name - Now visible on all devices */}
+              <div className="flex flex-col">
+                <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>
                   e-<span className="font-black">SimFly</span>
                 </span>
                 <span className="text-xs text-gray-200 font-medium font-orbitron">Global eSIM Solutions</span>

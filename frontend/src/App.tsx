@@ -10,6 +10,7 @@ import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
 // Import scroll restoration utilities
 import './utils/scrollRestoration';
+import { Analytics } from '@vercel/analytics/react';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('./pages/HomePage'));
@@ -46,6 +47,7 @@ function generateFullCountryPath(code: string | undefined): string {
 function App() {
   return (
     <>
+      <Analytics />
       <Toaster position="top-right" richColors />
       <HelmetProvider>
         <LanguageProvider>
