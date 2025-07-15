@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { formatDataAmount } from '@/utils/formatDataAmount';
 import { decodeSlug } from '../lib/utils';
+import { Link } from 'react-router-dom';
 
 
 // Function to get country code from country name
@@ -291,81 +292,124 @@ const CountryPage: React.FC = () => {
   if (packages.length === 0) return <EmptyState message={`No offers for \"${slug}\"`} />;
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Two-column layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
-        {/* Left: Photo */}
-        <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
-          {/* Panda Image */}
-          <div
-            className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-32 md:h-auto max-h-40 md:max-h-56 hidden sm:flex"
-            style={{ aspectRatio: '3/4', minHeight: '120px', maxHeight: '600px' }}
-          >
-            <picture>
-              <source srcSet="/panda.webp" type="image/webp" />
-              <img
-                src="/panda.webp"
-                alt="e-SimFly Hero Panda"
-                className="w-full h-full object-cover"
-                style={{ objectFit: 'cover', height: '100%', width: '100%' }}
-              />
-            </picture>
+    <>
+      {/* Logo Navigation Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#4B0082]/95 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo and Brand */}
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="flex items-center justify-center bg-gradient-to-br from-purple-700 via-purple-500 to-indigo-600 shadow-lg rounded-2xl p-1" style={{ height: 60, width: 60, minWidth: 60 }}>
+                <picture>
+                  <source srcSet="/esimflylogo.webp" type="image/webp" />
+                  <img
+                    src="/esimflylogo.webp"
+                    alt="e-SimFly Logo"
+                    className="h-[52px] w-[52px] object-contain rounded-xl drop-shadow-md"
+                    style={{ background: 'rgba(80, 0, 120, 0.15)', objectFit: 'contain', objectPosition: 'center', transform: 'scale(3)' }}
+                  />
+                </picture>
+              </div>
+              {/* Brand Name - Hidden on mobile */}
+              <div className="hidden sm:flex flex-col">
+                <span className="text-2xl font-extrabold tracking-tight text-white font-orbitron" style={{ letterSpacing: '0.01em' }}>
+                  e-<span className="font-black">SimFly</span>
+                </span>
+                <span className="text-xs text-gray-200 font-medium font-orbitron">Global eSIM Solutions</span>
+              </div>
+            </Link>
+
+            {/* Back to Home Button */}
+            <Link 
+              to="/" 
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 text-sm font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+              <span className="hidden sm:inline">{t('back_to_home') || 'Home'}</span>
+            </Link>
           </div>
         </div>
-        {/* Right: Plan Cards and Info */}
-        <div>
-          {/* Country Title with Flag - positioned above packages */}
-          <div className="flex items-center mb-6" style={{ marginTop: '32px' }}>
-            <img 
-              src={countryName === 'Albania' ? 'https://flagcdn.com/w40/al.png' : `https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
-              alt={`${countryName} flag`}
-              className="w-6 h-6 rounded-full object-cover"
-              style={{
-                borderRadius: '50%',
-                width: '24px',
-                height: '24px',
-                objectFit: 'cover'
-              }}
-            />
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 ml-2">{countryName}</h1>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            {packages.map(pkg => (
-              <SimplePlanCard
-                key={pkg.id}
-                pkg={pkg}
-                selected={selectedId === pkg.id}
-                onSelect={() => setSelectedId(pkg.id)}
-              />
-            ))}
-          </div>
-          {/* Buy Button above info text */}
-          <div className="max-w-xl mx-auto">
-            <button
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white text-lg font-bold py-3 rounded-full shadow-lg transition-all duration-200 mb-5 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ letterSpacing: '0.03em' }}
-              onClick={() => {
-                if (selectedId) {
-                  navigate(`/checkout?country=${slug}&package=${selectedId}`);
-                }
-              }}
-              disabled={!selectedId}
+      </header>
+
+      {/* Main Content - Add padding-top to account for fixed header */}
+      <div className="container mx-auto px-4 py-12 pt-32">
+        {/* Two-column layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-start">
+          {/* Left: Photo */}
+          <div className="flex flex-col items-start w-full h-full mt-0 md:mt-16">
+            {/* Panda Image */}
+            <div
+              className="bg-white/90 rounded-3xl shadow-2xl border border-gray-100 max-w-lg md:max-w-xl w-full mx-auto flex items-center justify-center overflow-hidden h-32 md:h-auto max-h-40 md:max-h-56 hidden sm:flex"
+              style={{ aspectRatio: '3/4', minHeight: '120px', maxHeight: '600px' }}
             >
-              {t('buy_now')}
-            </button>
-            <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-xl p-5 text-gray-800 dark:text-gray-200 text-base shadow-lg">
-              <ul className="list-disc pl-5 space-y-2">
-                <li>Mos u shqetëso nëse ke ndonjë problem me aktivizimin – ose e rregullojmë menjëherë, ose të kthejmë paratë. Pa stres, rimbursim i plotë! 😊</li>
-                <li>Zgjidh planin që të shkon më shumë dhe aktivizoje kur të duash – nuk ka afat skadimi, ai të pret derisa të jesh gati.</li>
-                <li>Pagesa është super e lehtë dhe e sigurt – përdorim vetëm platformat më të besueshme, kështu që je gjithmonë i mbrojtur.</li>
-                <li>Dhe po, jemi këtu për ty 24/7! Na shkruaj kur të kesh pyetje apo ndonjë problem – përgjigjemi shpejt dhe me kënaqësi.</li>
-              </ul>
+              <picture>
+                <source srcSet="/panda.webp" type="image/webp" />
+                <img
+                  src="/panda.webp"
+                  alt="e-SimFly Hero Panda"
+                  className="w-full h-full object-cover"
+                  style={{ objectFit: 'cover', height: '100%', width: '100%' }}
+                />
+              </picture>
+            </div>
+          </div>
+          {/* Right: Plan Cards and Info */}
+          <div>
+            {/* Country Title with Flag - positioned above packages */}
+            <div className="flex items-center mb-6" style={{ marginTop: '32px' }}>
+              <img 
+                src={countryName === 'Albania' ? 'https://flagcdn.com/w40/al.png' : `https://hatscripts.github.io/circle-flags/flags/${getCountryCode(countryName)}.svg`}
+                alt={`${countryName} flag`}
+                className="w-6 h-6 rounded-full object-cover"
+                style={{
+                  borderRadius: '50%',
+                  width: '24px',
+                  height: '24px',
+                  objectFit: 'cover'
+                }}
+              />
+              <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 ml-2">{countryName}</h1>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {packages.map(pkg => (
+                <SimplePlanCard
+                  key={pkg.id}
+                  pkg={pkg}
+                  selected={selectedId === pkg.id}
+                  onSelect={() => setSelectedId(pkg.id)}
+                />
+              ))}
+            </div>
+            {/* Buy Button above info text */}
+            <div className="max-w-xl mx-auto">
+              <button
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white text-lg font-bold py-3 rounded-full shadow-lg transition-all duration-200 mb-5 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ letterSpacing: '0.03em' }}
+                onClick={() => {
+                  if (selectedId) {
+                    navigate(`/checkout?country=${slug}&package=${selectedId}`);
+                  }
+                }}
+                disabled={!selectedId}
+              >
+                {t('buy_now')}
+              </button>
+              <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-xl p-5 text-gray-800 dark:text-gray-200 text-base shadow-lg">
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Mos u shqetëso nëse ke ndonjë problem me aktivizimin – ose e rregullojmë menjëherë, ose të kthejmë paratë. Pa stres, rimbursim i plotë! 😊</li>
+                  <li>Zgjidh planin që të shkon më shumë dhe aktivizoje kur të duash – nuk ka afat skadimi, ai të pret derisa të jesh gati.</li>
+                  <li>Pagesa është super e lehtë dhe e sigurt – përdorim vetëm platformat më të besueshme, kështu që je gjithmonë i mbrojtur.</li>
+                  <li>Dhe po, jemi këtu për ty 24/7! Na shkruaj kur të kesh pyetje apo ndonjë problem – përgjigjemi shpejt dhe me kënaqësi.</li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
