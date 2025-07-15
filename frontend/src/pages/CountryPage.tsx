@@ -297,8 +297,8 @@ const CountryPage: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-50 w-full bg-[#4B0082]/95 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-20">
-            {/* Logo and Brand */}
-            <Link to="/" className="flex items-center space-x-3 group">
+            {/* Logo and Brand - Clickable to go home */}
+            <Link to="/" className="flex items-center space-x-3 group hover:opacity-90 transition-opacity">
               <div className="flex items-center justify-center bg-gradient-to-br from-purple-700 via-purple-500 to-indigo-600 shadow-lg rounded-2xl p-1" style={{ height: 60, width: 60, minWidth: 60 }}>
                 <picture>
                   <source srcSet="/esimflylogo.webp" type="image/webp" />
@@ -319,16 +319,8 @@ const CountryPage: React.FC = () => {
               </div>
             </Link>
 
-            {/* Back to Home Button */}
-            <Link 
-              to="/" 
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all duration-200 text-sm font-medium"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span className="hidden sm:inline">{t('back_to_home') || 'Home'}</span>
-            </Link>
+            {/* Empty space for balance */}
+            <div></div>
           </div>
         </div>
       </header>
