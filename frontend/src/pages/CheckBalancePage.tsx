@@ -12,6 +12,24 @@ const CheckBalancePage: React.FC = () => {
 
   const esimNumberSchema = z.object({ esimNumber: z.string().min(8, 'Please enter a valid eSIM number') });
 
+  // Helper function to format GB values with appropriate decimal places
+  const formatGB = (value: number | undefined | null): string => {
+    if (value === undefined || value === null) return '0';
+    
+    // If the value is very small (less than 0.01 GB), show 3 decimal places
+    if (value < 0.01 && value > 0) {
+      return value.toFixed(3);
+    }
+    // For values less than 1 GB, show 2 decimal places
+    else if (value < 1) {
+      return value.toFixed(2);
+    }
+    // For larger values, show 1 decimal place
+    else {
+      return value.toFixed(1);
+    }
+  };
+
   const handleCheckBalance = async (e: React.FormEvent) => {
     e.preventDefault();
     // Zod validation
@@ -133,10 +151,10 @@ const CheckBalancePage: React.FC = () => {
             {/* Usage Information */}
             <div className="mb-4 space-y-2">
               <div className="text-sm text-gray-200">
-                Usage: <span className="font-semibold text-white">{usage.dataUsed || 0} GB</span> / <span className="font-semibold text-white">{usage.dataLimit || '?'} GB</span>
+                Usage: <span className="font-semibold text-white">{formatGB(usage.dataUsed)} GB</span> / <span className="font-semibold text-white">{formatGB(usage.dataLimit)} GB</span>
               </div>
               <div className="text-sm text-gray-200">
-                Remaining: <span className="font-semibold text-white">{usage.dataRemaining || 0} GB</span>
+                Remaining: <span className="font-semibold text-white">{formatGB(usage.dataRemaining)} GB</span>
               </div>
             </div>
             
