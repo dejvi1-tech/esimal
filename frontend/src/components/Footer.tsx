@@ -16,6 +16,7 @@ const Footer = () => {
       links: [
         { name: "Planet eSIM", href: "https://esimfly.al/packages" },
         { name: "Si lidhemi?", href: "https://esimfly.al/how-it-works" },
+        { name: "Lista Celulareve Esim", href: "/esim-devices", target: "_blank", rel: "noopener noreferrer" }
         
       ]
     },

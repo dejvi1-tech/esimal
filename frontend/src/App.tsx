@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { getCountryNameByCode, countrySlug } from './lib/utils';
 import PrivacyPage from './pages/PrivacyPage';
 import TermsPage from './pages/TermsPage';
+import ESimDeviceListPage from './pages/ESimDeviceListPage';
 // Import scroll restoration utilities
 import './utils/scrollRestoration';
 import { Analytics } from '@vercel/analytics/react';
@@ -94,6 +95,7 @@ function App() {
                         <Route path="ios26-demo" element={<IOS26Demo />} />
                         <Route path="privacy" element={<PrivacyPage />} />
                         <Route path="terms" element={<TermsPage />} />
+                        <Route path="esim-devices" element={<ESimDeviceListPage />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
                     </Suspense>
