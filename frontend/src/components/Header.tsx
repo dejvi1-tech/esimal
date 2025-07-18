@@ -19,6 +19,10 @@ const Header = () => {
     { name: t('support'), href: '/support' }
   ];
 
+  const handleShikoPaketatClick = () => {
+    window.location.href = 'https://esimfly.al/packages';
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full">
       <div className="w-full px-4">
@@ -73,6 +77,7 @@ const Header = () => {
               <Button 
                 className="btn-glass bg-accent text-accent-foreground font-semibold"
                 size="sm"
+                onClick={handleShikoPaketatClick}
               >
                 {t('hero_cta_main')}
               </Button>
@@ -136,6 +141,7 @@ const Header = () => {
                   <Button 
                     className="w-full btn-glass bg-accent text-accent-foreground font-semibold"
                     size="sm"
+                    onClick={handleShikoPaketatClick}
                   >
                     {t('hero_cta_main')}
                   </Button>
