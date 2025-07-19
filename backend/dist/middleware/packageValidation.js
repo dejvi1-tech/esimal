@@ -351,11 +351,34 @@ function validateCancelOrder(req, res, next) {
  */
 const validateSavePackage = (req, res, next) => {
     try {
-        zodSchemas_1.savePackageSchema.parse(req.body);
+        console.log('🔍 Save Package Request Body:', JSON.stringify(req.body, null, 2));
+        console.log('🔍 Request Body Types:', {
+            data_amount: typeof req.body.data_amount,
+            days: typeof req.body.days,
+            base_price: typeof req.body.base_price,
+            sale_price: typeof req.body.sale_price
+        });
+        const result = zodSchemas_1.savePackageSchema.safeParse(req.body);
+        if (!result.success) {
+            console.error('❌ Validation failed:', JSON.stringify(result.error.format(), null, 2));
+            res.status(400).json({
+                error: 'Invalid save package input',
+                details: result.error.format(),
+                issues: result.error.issues,
+                receivedData: req.body
+            });
+            return;
+        }
+        console.log('✅ Validation passed');
         next();
     }
     catch (err) {
-        res.status(400).json({ error: 'Invalid save package input', details: err.errors });
+        console.error('❌ Unexpected error in validateSavePackage:', err);
+        res.status(400).json({
+            error: 'Invalid save package input',
+            details: err.message || err,
+            receivedData: req.body
+        });
         return;
     }
 };

@@ -529,6 +529,14 @@ const AdminPanel: React.FC = () => {
         }
       };
 
+      console.log('📤 Sending package data to save-package:', packageData);
+      console.log('📤 Data types:', {
+        data_amount: typeof packageData.data_amount,
+        days: typeof packageData.days,
+        base_price: typeof packageData.base_price,
+        sale_price: typeof packageData.sale_price
+      });
+
       const headers = await getAdminHeaders('POST');
       const response = await fetch('/api/admin/save-package', {
         method: 'POST',
@@ -543,6 +551,7 @@ const AdminPanel: React.FC = () => {
         toast.success('Package saved successfully! Use "Save as Most Popular" to show in Most Popular section.', { style: { color: 'black' } });
       } else {
         const errorData = await response.json();
+        console.error('❌ Save package error response:', errorData);
         const errorMessage = `Failed to save package: ${errorData.error || 'Unknown error'}`;
         toast.error(errorMessage, { style: { color: 'black' } });
         setError(errorMessage);
