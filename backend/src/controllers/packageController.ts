@@ -1271,10 +1271,15 @@ function generateGreeceStyleSlug(countryCode: string, days: number, dataAmount: 
     'CL': 'chile',
     'CO': 'colombia',
     'MX': 'mexico',
-    'EU': 'europe'
+    'EU': 'europe',
+    'EUS': 'europe-sprint'
   };
 
-  const countryName = countryMapping[countryCode.toUpperCase()] || countryCode.toLowerCase();
+  // Special case: Europe Sprint (EUS)
+  let countryName = countryMapping[countryCode.toUpperCase()] || countryCode.toLowerCase();
+  if (countryCode.toUpperCase() === 'EUS') {
+    countryName = 'europe-sprint';
+  }
   const dataAmountInt = Math.floor(dataAmount);
   
   // Generate Greece-style slug: esim-country-30days-1gb-all
