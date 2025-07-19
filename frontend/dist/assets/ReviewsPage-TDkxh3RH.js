@@ -1,1 +1,0 @@
-import{j as s}from"./ui-B6UisXh3.js";import{T as t}from"./TestimonialsSection-Cc7FfR2B.js";import"./router-DECodpxX.js";import"./vendor-DEQ385Nk.js";import"./index-C7QPt96S.js";import"./three-CdCYxwFx.js";import"./supabase-Bj79fh9f.js";import"./utils-BpqZfnrR.js";const i=()=>s.jsx("div",{className:"pt-16",children:s.jsx(t,{})});export{i as default};

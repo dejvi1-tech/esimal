@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import CoverageModal from '@/components/CoverageModal';
 import { europeCoverage } from '@/data/coverageData';
+import { europeSprintCoverageData } from '@/data/europeSprintCoverage';
 import { formatDataAmount } from '@/utils/formatDataAmount';
 
 interface MostPopularPackage {
@@ -34,6 +35,7 @@ const HomePage = () => {
   const [mostPopularPackages, setMostPopularPackages] = useState<MostPopularPackage[]>([]);
   const [loadingMostPopular, setLoadingMostPopular] = useState(true);
   const [isCoverageModalOpen, setIsCoverageModalOpen] = useState(false);
+  const [selectedPackageForCoverage, setSelectedPackageForCoverage] = useState<MostPopularPackage | null>(null);
 
   // Operator logos - place your logo files in public/static/operators/
   const logos = [
@@ -66,21 +68,28 @@ const HomePage = () => {
     fetchMostPopularPackages();
   }, []);
 
-  const handleOpenCoverageModal = () => {
+  const handleOpenCoverageModal = (pkg?: MostPopularPackage) => {
+    setSelectedPackageForCoverage(pkg || null);
     setIsCoverageModalOpen(true);
   };
 
   const handleCloseCoverageModal = () => {
     setIsCoverageModalOpen(false);
+    setSelectedPackageForCoverage(null);
   };
 
-  // Prepare coverage data for the modal
-  const coverageData = {
-    countries: europeCoverage.map(c => c.country),
-    regions: ['Europe', 'North America'],
-    data: 'Unlimited',
-    validity: '30 Days',
-    speed: '5G/LTE'
+  // Prepare coverage data for the modal based on selected package
+  const getCoverageData = () => {
+    if (selectedPackageForCoverage?.country_code === 'EUS') {
+      return europeSprintCoverageData;
+    }
+    return {
+      countries: europeCoverage.map(c => c.country),
+      regions: ['Europe', 'North America'],
+      data: 'Unlimited',
+      validity: '30 Days',
+      speed: '5G/LTE'
+    };
   };
 
   return (
@@ -150,7 +159,7 @@ const HomePage = () => {
                           </div>
                         </div>
                         <h3 className="text-2xl font-bold text-white">
-                          {pkg.country_code === 'EUS' ? 'Europe & United States' : pkg.country_name || t('europe')}
+                          {pkg.country_name || t('europe')}
                         </h3>
                       </div>
                       <ul className="space-y-3 text-left">
@@ -214,11 +223,20 @@ const HomePage = () => {
                             </svg>
                           </div>
                           <button 
-                            onClick={handleOpenCoverageModal}
+                            onClick={() => handleOpenCoverageModal(pkg)}
                             className="text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg bg-white/10 p-2"
                           >
-                            <span className="text-white font-medium">{t('coverage_39_countries')}</span>
-                            <span className="block text-gray-300 text-xs">{t('albania_usa_included')}</span>
+                            {pkg.country_code === 'EUS' ? (
+                              <>
+                                <span className="text-white font-medium">Mbulim 31 Vende</span>
+                                <span className="block text-gray-300 text-xs">Shqipëria dhe SHBA përfshirë!</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-white font-medium">{t('coverage_39_countries')}</span>
+                                <span className="block text-gray-300 text-xs">{t('albania_usa_included')}</span>
+                              </>
+                            )}
                           </button>
                         </li>
                       </ul>
@@ -294,7 +312,7 @@ const HomePage = () => {
       <CoverageModal 
         isOpen={isCoverageModalOpen} 
         onClose={handleCloseCoverageModal}
-        coverage={coverageData}
+        coverage={getCoverageData()}
       />
     </div>
   );
