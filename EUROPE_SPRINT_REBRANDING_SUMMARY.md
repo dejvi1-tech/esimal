@@ -17,7 +17,7 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 
 #### A. Coverage Data (`frontend/src/data/europeSprintCoverage.ts`) - NEW FILE
 - Created dedicated coverage data for Europe Sprint
-- **31 Countries Added:**
+- **32 Countries Added:**
   - 🇦🇹 Austria, 🇧🇪 Belgium, 🇧🇬 Bulgaria, 🇭🇷 Croatia, 🇨🇾 Cyprus, 🇨🇿 Czech Republic, 🇩🇰 Denmark, 🇪🇪 Estonia, 🇫🇮 Finland, 🇫🇷 France, 🇩🇪 Germany, 🇬🇷 Greece, 🇭🇺 Hungary, 🇮🇸 Iceland, 🇮🇪 Ireland, 🇮🇹 Italy, 🇱🇻 Latvia, 🇱🇮 Liechtenstein, 🇱🇹 Lithuania, 🇱🇺 Luxembourg, 🇲🇹 Malta, 🇳🇱 Netherlands, 🇳🇴 Norway, 🇵🇱 Poland, 🇵🇹 Portugal, 🇷🇴 Romania, 🇸🇰 Slovakia, 🇸🇮 Slovenia, 🇪🇸 Spain, 🇸🇪 Sweden, 🇨🇭 Switzerland, 🇬🇧 United Kingdom
 
 #### B. Homepage Updates (`frontend/src/pages/HomePage.tsx`)
@@ -36,13 +36,22 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 
 ### 3. Package Details
 
-**Europe Sprint Package:**
-- **Name:** "15 GB - 30 days"
-- **Country:** "Europe Sprint" 
-- **Data:** 15GB for 30 days
-- **Price:** €14.99
-- **ID:** `esim-europe-sprint-30days-15gb-all`
-- **Status:** ✅ Active in most-popular section
+**Europe Sprint Packages:**
+1. **1GB Package:**
+   - **Name:** "1 GB - 30 days"
+   - **Country:** "Europe Sprint" 
+   - **Data:** 1GB for 30 days
+   - **Price:** €2.49
+   - **ID:** `esim-europe-sprint-30days-1gb-all`
+   - **Status:** ✅ Active in most-popular section
+
+2. **15GB Package:**
+   - **Name:** "15 GB - 30 days"
+   - **Country:** "Europe Sprint" 
+   - **Data:** 15GB for 30 days
+   - **Price:** €14.99
+   - **ID:** `esim-europe-sprint-30days-15gb-all`
+   - **Status:** ✅ Active in most-popular section
 
 ### 4. User Experience Changes
 
@@ -52,10 +61,11 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 - Modal showed mixed Europe/US coverage
 
 **After:**
-- Package shows "Europe Sprint" ✅
+- Packages show "Europe Sprint" ✅
 - Coverage button shows "**Mbulim 32 Vende**" (clean, no subtitle) ✅
-- Modal shows exactly 31 European countries ✅
+- Modal shows exactly 32 European countries ✅
 - Clicking coverage opens modal with precise European coverage ✅
+- **Both 1GB and 15GB Europe Sprint packages** in most-popular section ✅
 
 ## Files Modified
 
@@ -76,10 +86,11 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 
 ## Result
 
-The Europe Sprint package now correctly displays:
+The Europe Sprint packages now correctly display:
 - **Title:** "Europe Sprint" (not "Europe & United States")
 - **Coverage Button:** "Mbulim 32 Vende" (clean, no subtitle)
-- **Coverage Modal:** Precise list of 31 European countries when clicked
+- **Coverage Modal:** Precise list of 32 European countries when clicked
 - **Targeting:** Only affects Europe Sprint packages, other packages unchanged
+- **Most Popular:** Both 1GB (€2.49) and 15GB (€14.99) Europe Sprint packages included
 
 All changes are **production-ready** and **deployed**! 🎉 
