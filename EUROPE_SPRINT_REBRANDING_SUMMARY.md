@@ -25,10 +25,9 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
    - Removed hardcoded "Europe & United States" override
    - Now displays "Europe Sprint" from database
 
-2. **Coverage Button Customization:**
-   - **Europe Sprint packages:** Shows "**Mbulim 31 Vende**"
-   - **Other packages:** Shows original text
-   - Added Albanian subtitle: "Shqipëria dhe SHBA përfshirë!"
+ 2. **Coverage Button Customization:**
+    - **Europe Sprint packages:** Shows "**Mbulim 31 Vende**" (clean, no subtitle)
+    - **Other packages:** Shows original text with subtitle
 
 3. **Dynamic Coverage Modal:**
    - Europe Sprint packages: Shows 31 European countries
@@ -54,7 +53,7 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 
 **After:**
 - Package shows "Europe Sprint" ✅
-- Coverage button shows "**Mbulim 31 Vende**" ✅
+- Coverage button shows "**Mbulim 31 Vende**" (clean, no subtitle) ✅
 - Modal shows exactly 31 European countries ✅
 - Clicking coverage opens modal with precise European coverage ✅
 
@@ -79,7 +78,7 @@ Successfully updated the Europe Sprint package (ID: `esim-europe-sprint-30days-1
 
 The Europe Sprint package now correctly displays:
 - **Title:** "Europe Sprint" (not "Europe & United States")
-- **Coverage Button:** "Mbulim 31 Vende" with Albanian subtitle
+- **Coverage Button:** "Mbulim 31 Vende" (clean, no subtitle)
 - **Coverage Modal:** Precise list of 31 European countries when clicked
 - **Targeting:** Only affects Europe Sprint packages, other packages unchanged
 
