@@ -206,7 +206,7 @@ app.get('/api/frontend-packages', async (req: Request, res: Response, next: Next
   try {
     const { data, error } = await supabaseAdmin
       .from('my_packages')
-      .select('id, name, country_name, data_amount, days, sale_price, reseller_id')
+      .select('id, name, country_name, country_code, data_amount, days, sale_price, reseller_id, slug, features, location_slug')
       .eq('visible', true)
       .eq('show_on_frontend', true)
       .order('data_amount', { ascending: true });
@@ -218,6 +218,7 @@ app.get('/api/frontend-packages', async (req: Request, res: Response, next: Next
     res.json(data || []);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch packages' });
+    return;
   }
 });
 
