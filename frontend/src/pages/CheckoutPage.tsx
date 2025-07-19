@@ -103,6 +103,7 @@ const CheckoutPage: React.FC = () => {
   const [storedPackageId, setStoredPackageId] = useState<string | null>(null);
   const paymentFormRef = useRef<PaymentFormRef>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   // Accept both ?packageId=... and ?package=...
   const packageId = searchParams.get('packageId') || searchParams.get('package');
@@ -194,9 +195,11 @@ const CheckoutPage: React.FC = () => {
       setFormError(result.error.errors[0].message);
       return;
     }
+    setIsPaying(true);
     if (paymentFormRef.current) {
       await paymentFormRef.current.submit();
     }
+    setIsPaying(false);
   };
 
   // Cleanup localStorage on unmount
@@ -370,8 +373,22 @@ const CheckoutPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-bold text-lg border-2 border-blue-600 hover:border-purple-700 shadow-lg transition-all duration-200 transform hover:scale-105">
-                  Pay now
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 rounded-xl font-bold text-lg border-2 border-blue-600 hover:border-purple-700 shadow-lg transition-all duration-200 transform hover:scale-105 flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={isPaying}
+                >
+                  {isPaying ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                      </svg>
+                      {t('processing') || 'Processing...'}
+                    </span>
+                  ) : (
+                    t('pay_now') || 'Pay now'
+                  )}
                 </button>
               </form>
             </div>
