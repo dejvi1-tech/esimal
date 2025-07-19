@@ -227,7 +227,7 @@ const HomePage = () => {
                             className="text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg bg-white/10 p-2"
                           >
                             {pkg.country_code === 'EUS' ? (
-                              <span className="text-white font-medium">Mbulim 31 Vende</span>
+                              <span className="text-white font-medium">Mbulim 32 Vende</span>
                             ) : (
                               <>
                                 <span className="text-white font-medium">{t('coverage_39_countries')}</span>
