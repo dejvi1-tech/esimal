@@ -49,7 +49,7 @@ export const cancelOrderSchema = z.object({}); // No body expected, but keep for
 export const savePackageSchema = z.object({
   name: z.string().min(1),
   country_name: z.string().min(1),
-  country_code: z.string().length(2),
+  country_code: z.string().min(2).max(4), // Allow 2-4 chars for ISO codes and regional codes like "EUUS"
   data_amount: z.coerce.number().positive(),
   days: z.coerce.number().positive(),
   base_price: z.coerce.number().positive(),
