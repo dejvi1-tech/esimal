@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle } from 'lucide-react';
 
@@ -6,6 +6,26 @@ const CheckoutSuccessPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('session_id');
+
+  useEffect(() => {
+    const alreadyTracked = localStorage.getItem('purchase-tracked');
+    const orderDetailsRaw = localStorage.getItem('purchase-order-details');
+    if (!alreadyTracked && typeof fbq !== 'undefined' && orderDetailsRaw) {
+      try {
+        const order = JSON.parse(orderDetailsRaw);
+        fbq('track', 'Purchase', {
+          value: order.total,
+          currency: order.currency || 'EUR',
+          content_ids: [order.packageId],
+          content_type: 'product'
+        });
+        localStorage.setItem('purchase-tracked', 'true');
+        localStorage.removeItem('purchase-order-details');
+      } catch (e) {
+        // If parsing fails, do nothing
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center bg-[#4B0082] text-white">

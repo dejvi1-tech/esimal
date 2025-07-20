@@ -160,6 +160,14 @@ const CheckoutPage: React.FC = () => {
 
   const handlePaymentSuccess = (paymentIntentId: string) => {
     console.log('[DEBUG] Payment successful, cleaning up localStorage');
+    // Store order details for Facebook Pixel tracking
+    if (packageData) {
+      localStorage.setItem('purchase-order-details', JSON.stringify({
+        total: Math.max(0, packageData.sale_price - discount),
+        currency: 'EUR',
+        packageId: packageData.id
+      }));
+    }
     localStorage.removeItem('checkout_package_id');
     navigate('/checkout/success?payment_intent_id=' + paymentIntentId);
   };
