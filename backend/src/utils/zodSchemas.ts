@@ -16,8 +16,8 @@ export const createPackageSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   price: z.number().positive(),
-  dataAmount: z.number().positive(),
-  days: z.number().positive(),
+  dataAmount: z.number().min(0), // Allow 0 for unlimited
+  days: z.number().min(0), // Allow 0 for unlimited duration
   country: z.string().min(1),
   operator: z.string().min(1),
   type: z.string().min(1),
@@ -28,8 +28,8 @@ export const updatePackageSchema = z.object({
   name: z.string().min(1).optional(),
   description: z.string().optional(),
   price: z.number().positive().optional(),
-  dataAmount: z.number().positive().optional(),
-  days: z.number().positive().optional(),
+  dataAmount: z.number().min(0).optional(), // Allow 0 for unlimited
+  days: z.number().min(0).optional(), // Allow 0 for unlimited duration
   country: z.string().min(1).optional(),
   operator: z.string().min(1).optional(),
   type: z.string().min(1).optional(),
@@ -50,8 +50,8 @@ export const savePackageSchema = z.object({
   name: z.string().min(1),
   country_name: z.string().min(1),
   country_code: z.string().min(2).max(4), // Allow 2-4 chars for ISO codes and regional codes like "EUUS"
-  data_amount: z.coerce.number().positive(),
-  days: z.coerce.number().positive(),
+  data_amount: z.coerce.number().min(0), // Allow 0 for unlimited packages
+  days: z.coerce.number().min(0), // Allow 0 for unlimited duration packages
   base_price: z.coerce.number().positive(),
   sale_price: z.coerce.number().positive().optional(),
   profit: z.coerce.number().optional(),

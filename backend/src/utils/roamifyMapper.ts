@@ -111,8 +111,8 @@ export function validateMyPackageData(data: Partial<MyPackageData>): string[] {
   if (!data.name) errors.push('name is required');
   if (!data.country_name) errors.push('country_name is required');
   if (!data.country_code) errors.push('country_code is required');
-  if (!data.data_amount || data.data_amount <= 0) errors.push('data_amount must be greater than 0');
-  if (!data.days || data.days <= 0) errors.push('days must be greater than 0');
+  if (data.data_amount === undefined || data.data_amount < 0) errors.push('data_amount must be 0 or greater (0 = unlimited)');
+  if (data.days === undefined || data.days < 0) errors.push('days must be 0 or greater (0 = unlimited duration)');
   if (data.base_price === undefined || data.base_price < 0) errors.push('base_price must be 0 or greater');
   if (data.sale_price === undefined || data.sale_price < 0) errors.push('sale_price must be 0 or greater');
   

@@ -1315,7 +1315,10 @@ export const savePackage = async (req: Request, res: Response) => {
     }
 
     // ✅ CRITICAL FIX: Generate Greece-style slug automatically
-    const autoSlug = generateGreeceStyleSlug(country_code, parseInt(days), parseFloat(data_amount));
+    const dataAmountFloat = parseFloat(data_amount);
+    const autoSlug = dataAmountFloat === 0 ? 
+      `esim-${country_code.toLowerCase()}-${parseInt(days)}days-unlimited-all` :
+      generateGreeceStyleSlug(country_code, parseInt(days), dataAmountFloat);
     console.log('✅ Auto-generated Greece-style slug:', autoSlug);
 
     // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
@@ -1339,14 +1342,17 @@ export const savePackage = async (req: Request, res: Response) => {
       console.log('✅ Using auto-generated slug as Roamify package ID:', roamifyPackageId);
     }
 
-    // Create package data
+    // Create package data  
+    const dataAmountFloat = parseFloat(data_amount);
+    const daysInt = parseInt(days);
+    
     const packageData = {
       id: uuidv4(), // Generate a UUID for the package
       name,
       country_name,
       country_code: country_code.toUpperCase(),
-      data_amount: parseFloat(data_amount),
-      days: parseInt(days),
+      data_amount: dataAmountFloat, // Allow 0 for unlimited
+      days: daysInt,
       base_price: parseFloat(base_price),
       sale_price: parseFloat(sale_price) || parseFloat(base_price),
       profit: parseFloat(profit) || 0,
@@ -1360,11 +1366,12 @@ export const savePackage = async (req: Request, res: Response) => {
       features: {
         ...features,
         packageId: roamifyPackageId, // Use the real Roamify package ID
-        dataAmount: parseFloat(data_amount),
-        days: parseInt(days),
+        dataAmount: dataAmountFloat,
+        days: daysInt,
         currency: 'EUR',
         plan: 'data-only',
         activation: 'first-use',
+        isUnlimited: dataAmountFloat === 0, // Set unlimited flag for 0 data amount
         realRoamifyPackageId: roamifyPackageId
       }
     };
