@@ -11,7 +11,7 @@ function determineLocationSlug(dataAmountFloat, providedLocationSlug, countryCod
 }
 
 function determineHomepageOrder(dataAmountFloat, providedOrder) {
-  return dataAmountFloat === 0 ? 1 : (parseInt(providedOrder) || 999);
+  return dataAmountFloat === 0 ? 998 : (parseInt(providedOrder) || 999);
 }
 
 const testCases = [
@@ -25,7 +25,7 @@ const testCases = [
     },
     expected: {
       location_slug: 'most-popular',
-      homepage_order: 1
+      homepage_order: 998
     }
   },
   {
@@ -38,7 +38,7 @@ const testCases = [
     },
     expected: {
       location_slug: 'most-popular', // Should override provided slug
-      homepage_order: 1 // Should override provided order
+      homepage_order: 998 // Should override provided order
     }
   },
   {
@@ -77,7 +77,7 @@ const testCases = [
     },
     expected: {
       location_slug: 'most-popular',
-      homepage_order: 1
+      homepage_order: 998
     }
   }
 ];
@@ -134,7 +134,7 @@ console.log(`Success Rate: ${((passed / testCases.length) * 100).toFixed(1)}%`);
 if (failed === 0) {
   console.log(`\n🎉 ALL TESTS PASSED!`);
   console.log(`✅ Unlimited packages (data_amount = 0) → location_slug = "most-popular"`);
-  console.log(`✅ Unlimited packages (data_amount = 0) → homepage_order = 1`);
+  console.log(`✅ Unlimited packages (data_amount = 0) → homepage_order = 998 (last position)`);
   console.log(`✅ Normal packages → use provided or country-based location_slug`);
   console.log(`✅ Normal packages → use provided or default homepage_order`);
 } else {

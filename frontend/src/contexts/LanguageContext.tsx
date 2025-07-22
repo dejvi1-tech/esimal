@@ -241,7 +241,7 @@ const translations: Translations = {
   most_popular_title: { al: "Paketa Më e Popullarizuar e Europës", en: "Most Popular Package Europe" },
   most_popular_description: { al: "Thjesht kliko mbi një paketë dhe shijo internetin 4G/5G kudo në Europë dhe Amerike!", en: "Simply click on a package and enjoy 4G/5G internet anywhere in Europe and America!" },
   europe: { al: "Europa", en: "Europe" },
-  unlimited_data: { al: "TË DHËNA TË PAKUFSHUARA", en: "UNLIMITED DATA" },
+  unlimited_data: { al: "PA LIMIT", en: "UNLIMITED DATA" },
   gb_internet: { al: "GB Internet", en: "GB Internet" },
   days: { al: "Ditë", en: "Days" },
   coverage_39_countries: { al: "Mbulim 39 Vende", en: "Coverage 39 Countries" },
