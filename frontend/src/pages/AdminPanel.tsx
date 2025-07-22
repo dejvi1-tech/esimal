@@ -493,8 +493,8 @@ const AdminPanel: React.FC = () => {
       const reseller_id = pkg.id || pkg.packageId || '';
       const region = pkg.region || '';
 
-      // Frontend validation
-      if (!name || !country_name || !country_code || !data_amount || !days || !base_price) {
+      // Frontend validation (allow 0 for unlimited packages)
+      if (!name || !country_name || !country_code || data_amount === undefined || data_amount === null || days === undefined || days === null || !base_price) {
         toast.error('Cannot save: Missing required fields.', { style: { color: 'black' } });
         setError('Cannot save: Missing required fields.');
         setUpdating(null);
