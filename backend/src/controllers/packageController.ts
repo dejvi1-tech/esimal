@@ -1316,9 +1316,10 @@ export const savePackage = async (req: Request, res: Response) => {
 
     // ✅ CRITICAL FIX: Generate Greece-style slug automatically
     const dataAmountFloat = parseFloat(data_amount);
+    const daysInt = parseInt(days);
     const autoSlug = dataAmountFloat === 0 ? 
-      `esim-${country_code.toLowerCase()}-${parseInt(days)}days-unlimited-all` :
-      generateGreeceStyleSlug(country_code, parseInt(days), dataAmountFloat);
+      `esim-${country_code.toLowerCase()}-${daysInt}days-unlimited-all` :
+      generateGreeceStyleSlug(country_code, daysInt, dataAmountFloat);
     console.log('✅ Auto-generated Greece-style slug:', autoSlug);
 
     // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
@@ -1342,9 +1343,7 @@ export const savePackage = async (req: Request, res: Response) => {
       console.log('✅ Using auto-generated slug as Roamify package ID:', roamifyPackageId);
     }
 
-    // Create package data  
-    const dataAmountFloat = parseFloat(data_amount);
-    const daysInt = parseInt(days);
+    // Create package data
     
     const packageData = {
       id: uuidv4(), // Generate a UUID for the package
