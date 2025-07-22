@@ -17,8 +17,8 @@ exports.createPackageSchema = zod_1.z.object({
     name: zod_1.z.string().min(1),
     description: zod_1.z.string().optional(),
     price: zod_1.z.number().positive(),
-    dataAmount: zod_1.z.number().positive(),
-    days: zod_1.z.number().positive(),
+    dataAmount: zod_1.z.number().min(0), // Allow 0 for unlimited
+    days: zod_1.z.number().min(0), // Allow 0 for unlimited duration
     country: zod_1.z.string().min(1),
     operator: zod_1.z.string().min(1),
     type: zod_1.z.string().min(1),
@@ -28,8 +28,8 @@ exports.updatePackageSchema = zod_1.z.object({
     name: zod_1.z.string().min(1).optional(),
     description: zod_1.z.string().optional(),
     price: zod_1.z.number().positive().optional(),
-    dataAmount: zod_1.z.number().positive().optional(),
-    days: zod_1.z.number().positive().optional(),
+    dataAmount: zod_1.z.number().min(0).optional(), // Allow 0 for unlimited
+    days: zod_1.z.number().min(0).optional(), // Allow 0 for unlimited duration
     country: zod_1.z.string().min(1).optional(),
     operator: zod_1.z.string().min(1).optional(),
     type: zod_1.z.string().min(1).optional(),
@@ -47,8 +47,8 @@ exports.savePackageSchema = zod_1.z.object({
     name: zod_1.z.string().min(1),
     country_name: zod_1.z.string().min(1),
     country_code: zod_1.z.string().min(2).max(4), // Allow 2-4 chars for ISO codes and regional codes like "EUUS"
-    data_amount: zod_1.z.coerce.number().positive(),
-    days: zod_1.z.coerce.number().positive(),
+    data_amount: zod_1.z.coerce.number().min(0), // Allow 0 for unlimited packages
+    days: zod_1.z.coerce.number().min(0), // Allow 0 for unlimited duration packages
     base_price: zod_1.z.coerce.number().positive(),
     sale_price: zod_1.z.coerce.number().positive().optional(),
     profit: zod_1.z.coerce.number().optional(),

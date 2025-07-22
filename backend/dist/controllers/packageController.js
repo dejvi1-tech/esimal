@@ -16,18 +16,18 @@ console.log('updatePackage controller loaded');
 const createPackage = async (req, res, next) => {
     try {
         const { name, description, price, dataAmount, days, country, operator, type, } = req.body;
-        // Validate required fields
-        if (!name || !price || !dataAmount || !days || !country || !operator || !type) {
+        // Validate required fields (allow 0 for unlimited packages)
+        if (!name || !price || dataAmount === undefined || dataAmount === null || days === undefined || days === null || !country || !operator || !type) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.required('All package fields'));
         }
         if (price <= 0) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Price'));
         }
-        if (dataAmount <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Data amount'));
+        if (dataAmount < 0) {
+            throw new errors_1.ValidationError('Data amount must be 0 or greater (0 = unlimited)');
         }
-        if (days <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Days'));
+        if (days < 0) {
+            throw new errors_1.ValidationError('Days must be 0 or greater (0 = unlimited duration)');
         }
         // Check if package with same name exists
         const { data: existingPackage } = await supabase_1.supabase
@@ -47,7 +47,7 @@ const createPackage = async (req, res, next) => {
         else if (typeof validityStr === 'number') {
             parsedDays = validityStr;
         }
-        if (parsedDays === null || parsedDays <= 0) {
+        if (parsedDays === null || parsedDays < 0) {
             logger_1.logger.warn(`Could not parse days string '${validityStr}' for package create name=${name}`);
             return res.status(400).json({ status: 'error', message: 'Invalid or missing days field' });
         }
@@ -168,11 +168,11 @@ const updatePackage = async (req, res, next) => {
         if (updateData.price !== undefined && updateData.price <= 0) {
             throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Price'));
         }
-        if (updateData.dataAmount !== undefined && updateData.dataAmount <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Data amount'));
+        if (updateData.dataAmount !== undefined && updateData.dataAmount < 0) {
+            throw new errors_1.ValidationError('Data amount must be 0 or greater (0 = unlimited)');
         }
-        if (updateData.days !== undefined && updateData.days <= 0) {
-            throw new errors_1.ValidationError(errors_1.ErrorMessages.validation.positive('Days'));
+        if (updateData.days !== undefined && updateData.days < 0) {
+            throw new errors_1.ValidationError('Days must be 0 or greater (0 = unlimited duration)');
         }
         // Parse validity string to integer days
         let validityStr = updateData.validity || updateData.days || '';
@@ -1116,14 +1116,18 @@ function generateGreeceStyleSlug(countryCode, days, dataAmount) {
 const savePackage = async (req, res) => {
     try {
         const { name, country_name, country_code, data_amount, days, base_price, sale_price, profit, reseller_id, region, visible, show_on_frontend, location_slug, homepage_order, features = {} } = req.body;
-        // Validate required fields
-        if (!name || !country_name || !country_code || !data_amount || !days) {
+        // Validate required fields (allow 0 for unlimited packages)
+        if (!name || !country_name || !country_code || data_amount === undefined || data_amount === null || days === undefined || days === null) {
             return res.status(400).json({
                 error: 'Missing required fields: name, country_name, country_code, data_amount, days'
             });
         }
         // ✅ CRITICAL FIX: Generate Greece-style slug automatically
-        const autoSlug = generateGreeceStyleSlug(country_code, parseInt(days), parseFloat(data_amount));
+        const dataAmountFloat = parseFloat(data_amount);
+        const daysInt = parseInt(days);
+        const autoSlug = dataAmountFloat === 0 ?
+            `esim-${country_code.toLowerCase()}-${daysInt}days-unlimited-all` :
+            generateGreeceStyleSlug(country_code, daysInt, dataAmountFloat);
         console.log('✅ Auto-generated Greece-style slug:', autoSlug);
         // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
         // Allow null reseller_id since it's now a UUID foreign key
@@ -1150,8 +1154,8 @@ const savePackage = async (req, res) => {
             name,
             country_name,
             country_code: country_code.toUpperCase(),
-            data_amount: parseFloat(data_amount),
-            days: parseInt(days),
+            data_amount: dataAmountFloat, // Allow 0 for unlimited
+            days: daysInt,
             base_price: parseFloat(base_price),
             sale_price: parseFloat(sale_price) || parseFloat(base_price),
             profit: parseFloat(profit) || 0,
@@ -1165,11 +1169,12 @@ const savePackage = async (req, res) => {
             features: {
                 ...features,
                 packageId: roamifyPackageId, // Use the real Roamify package ID
-                dataAmount: parseFloat(data_amount),
-                days: parseInt(days),
+                dataAmount: dataAmountFloat,
+                days: daysInt,
                 currency: 'EUR',
                 plan: 'data-only',
                 activation: 'first-use',
+                isUnlimited: dataAmountFloat === 0, // Set unlimited flag for 0 data amount
                 realRoamifyPackageId: roamifyPackageId
             }
         };

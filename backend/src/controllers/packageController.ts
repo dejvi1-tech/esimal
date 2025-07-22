@@ -57,8 +57,8 @@ export const createPackage = async (
       type,
     } = req.body;
 
-    // Validate required fields
-    if (!name || !price || !dataAmount || !days || !country || !operator || !type) {
+    // Validate required fields (allow 0 for unlimited packages)
+    if (!name || !price || dataAmount === undefined || dataAmount === null || days === undefined || days === null || !country || !operator || !type) {
       throw new ValidationError(ErrorMessages.validation.required('All package fields'));
     }
 
@@ -66,12 +66,12 @@ export const createPackage = async (
       throw new ValidationError(ErrorMessages.validation.positive('Price'));
     }
 
-    if (dataAmount <= 0) {
-      throw new ValidationError(ErrorMessages.validation.positive('Data amount'));
+    if (dataAmount < 0) {
+      throw new ValidationError('Data amount must be 0 or greater (0 = unlimited)');
     }
 
-    if (days <= 0) {
-      throw new ValidationError(ErrorMessages.validation.positive('Days'));
+    if (days < 0) {
+      throw new ValidationError('Days must be 0 or greater (0 = unlimited duration)');
     }
 
     // Check if package with same name exists
@@ -93,7 +93,7 @@ export const createPackage = async (
     } else if (typeof validityStr === 'number') {
       parsedDays = validityStr;
     }
-    if (parsedDays === null || parsedDays <= 0) {
+    if (parsedDays === null || parsedDays < 0) {
       logger.warn(`Could not parse days string '${validityStr}' for package create name=${name}`);
       return res.status(400).json({ status: 'error', message: 'Invalid or missing days field' });
     }
@@ -237,12 +237,12 @@ export const updatePackage = async (
       throw new ValidationError(ErrorMessages.validation.positive('Price'));
     }
 
-    if (updateData.dataAmount !== undefined && updateData.dataAmount <= 0) {
-      throw new ValidationError(ErrorMessages.validation.positive('Data amount'));
+    if (updateData.dataAmount !== undefined && updateData.dataAmount < 0) {
+      throw new ValidationError('Data amount must be 0 or greater (0 = unlimited)');
     }
 
-    if (updateData.days !== undefined && updateData.days <= 0) {
-      throw new ValidationError(ErrorMessages.validation.positive('Days'));
+    if (updateData.days !== undefined && updateData.days < 0) {
+      throw new ValidationError('Days must be 0 or greater (0 = unlimited duration)');
     }
 
     // Parse validity string to integer days
@@ -1307,8 +1307,8 @@ export const savePackage = async (req: Request, res: Response) => {
       features = {}
     } = req.body;
 
-    // Validate required fields
-    if (!name || !country_name || !country_code || !data_amount || !days) {
+    // Validate required fields (allow 0 for unlimited packages)
+    if (!name || !country_name || !country_code || data_amount === undefined || data_amount === null || days === undefined || days === null) {
       return res.status(400).json({ 
         error: 'Missing required fields: name, country_name, country_code, data_amount, days' 
       });

@@ -183,7 +183,7 @@ const syncRoamifyPackages = async (req, res, next) => {
                 const packageId = (0, uuid_1.v4)();
                 // Parse data amount properly using the utility
                 const dataAmountGB = pkg.isUnlimited ? 0 : (0, dataAmountUtils_1.parseDataAmountToGB)(pkg.dataUnit === 'GB' ? `${pkg.dataAmount}GB` : `${pkg.dataAmount}MB`);
-                // Format for display
+                // Format for display - handle unlimited packages correctly
                 const dataAmountDisplay = pkg.isUnlimited ? 'Unlimited' : (0, dataAmountUtils_1.formatDataAmountForDisplay)(dataAmountGB);
                 // Parse validity days
                 const days = parseValidityToDays(pkg.day);
@@ -355,16 +355,20 @@ const copyToMyPackages = async (req, res, next) => {
             const countryCodeLower = pkg.country_code?.toLowerCase() || 'global';
             const dataAmountInt = Math.floor(dataAmountGB);
             const days = pkg.days || 30;
-            const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${dataAmountInt}gb-all`;
-            // ✅ CRITICAL FIX: Generate Greece-style slug automatically
-            const autoSlug = generateGreeceStyleSlug(pkg.country_code || 'XX', days, dataAmountGB);
-            console.log('✅ Auto-generated Greece-style slug for package:', pkg.name, '→', autoSlug);
+            // Handle unlimited packages in slug generation
+            const slugDataPart = dataAmountGB === 0 ? 'unlimited' : `${dataAmountInt}gb`;
+            const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${slugDataPart}-all`;
+            // ✅ CRITICAL FIX: Generate Greece-style slug automatically  
+            const autoSlug = dataAmountGB === 0 ?
+                `esim-${pkg.country_code?.toLowerCase() || 'xx'}-${days}days-unlimited-all` :
+                generateGreeceStyleSlug(pkg.country_code || 'XX', days, dataAmountGB);
+            console.log('✅ Auto-generated slug for package:', pkg.name, '→', autoSlug);
             return {
                 id: (0, uuid_1.v4)(), // Generate new UUID for my_packages
                 name: pkg.name,
                 country_name: pkg.country_name,
                 country_code: pkg.country_code,
-                data_amount: dataAmountGB, // Store properly converted GB value
+                data_amount: dataAmountGB, // Store properly converted GB value (0 for unlimited)
                 days: pkg.days,
                 base_price: pkg.price,
                 sale_price: pkg.price * 1.5, // Add 50% markup by default
@@ -378,7 +382,8 @@ const copyToMyPackages = async (req, res, next) => {
                 slug: autoSlug, // ✅ ADD THE SLUG FIELD FOR WEBHOOK
                 // PRESERVE OR AUTO-GENERATE FEATURES
                 features: pkg.features ? {
-                    ...pkg.features // Preserve existing features if they exist
+                    ...pkg.features, // Preserve existing features if they exist
+                    isUnlimited: dataAmountGB === 0 || pkg.features.isUnlimited || false // Ensure unlimited flag is set
                 } : {
                     // Auto-generate features if not present
                     packageId: autoRoamifyPackageId,
@@ -388,7 +393,7 @@ const copyToMyPackages = async (req, res, next) => {
                     currency: 'EUR',
                     plan: 'data-only',
                     activation: 'first-use',
-                    isUnlimited: false,
+                    isUnlimited: dataAmountGB === 0, // Set unlimited flag based on data amount
                     withSMS: false,
                     withCall: false,
                     withHotspot: true,
