@@ -356,8 +356,12 @@ const createOrder = async (req, res, next) => {
             // Don't fail the order creation if email fails
         }
         res.status(201).json({
-            status: 'success',
-            message: 'Order created successfully',
+            success: true,
+            order: {
+                total: packageData.sale_price,
+                currency: packageData.currency || 'EUR',
+                packageId: packageData.id
+            },
             data: {
                 orderId: order.id,
                 esimCode: esimCode,
@@ -571,8 +575,12 @@ const createMyPackageOrder = async (req, res, next) => {
             // Don't fail the order creation if email fails
         }
         res.status(201).json({
-            status: 'success',
-            message: 'Order created successfully with real Roamify eSIM and QR code',
+            success: true,
+            order: {
+                total: packageData.sale_price,
+                currency: packageData.currency || 'EUR',
+                packageId: packageData.id
+            },
             data: {
                 orderId: order.id,
                 esimCode: esimCode,
