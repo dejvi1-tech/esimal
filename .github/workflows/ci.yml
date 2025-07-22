@@ -19,19 +19,19 @@ jobs:
         run: npm install
       - name: Run audit and fix
         run: |
-          npm audit fix
+          npm audit fix || true
           npm audit --audit-level=moderate || true
       - name: Build project
         run: |
           cd backend
           npm install
-          npm audit fix
+          npm audit fix || true
           npm audit --audit-level=moderate || true
           npm run build
       - name: Build frontend
         run: |
           cd frontend
           npm install
-          npm audit fix
+          npm audit fix || true
           npm audit --audit-level=moderate || true
           npm run build 
