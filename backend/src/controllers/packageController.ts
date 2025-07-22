@@ -1359,8 +1359,8 @@ export const savePackage = async (req: Request, res: Response) => {
       region: region || 'Unknown',
       visible: visible !== false,
       show_on_frontend: show_on_frontend !== false,
-      location_slug: location_slug || country_code.toLowerCase(),
-      homepage_order: parseInt(homepage_order) || 999,
+      location_slug: dataAmountFloat === 0 ? "most-popular" : (location_slug || country_code.toLowerCase()),
+      homepage_order: dataAmountFloat === 0 ? 1 : (parseInt(homepage_order) || 999),
       slug: autoSlug, // ✅ ADD THE SLUG FIELD FOR WEBHOOK
       features: {
         ...features,
