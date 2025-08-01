@@ -376,6 +376,47 @@ const translations: Translations = {
   how_it_works_android_step_2: { al: "Zgjidhni <strong>SIM card manager</strong> ose <strong>SIMs</strong>", en: "Select <strong>SIM card manager</strong> or <strong>SIMs</strong>" },
   how_it_works_android_step_3: { al: "Klikoni <strong>Add mobile plan</strong>", en: "Click <strong>Add mobile plan</strong>" },
   how_it_works_android_step_4: { al: "Skanoni <strong>QR Code</strong> nga operatori", en: "Scan the <strong>QR Code</strong> from the carrier" },
+
+  // Country Benefits
+  country_benefit_1: { al: "Mos u shqetëso nëse ke ndonjë problem me aktivizimin – ose e rregullojmë menjëherë, ose të kthejmë paratë. Pa stres, rimbursim i plotë! 😊", en: "Don't worry if you have any activation problems – we'll either fix it immediately or give you your money back. No stress, full refund! 😊" },
+  country_benefit_2: { al: "Zgjidh planin që të shkon më shumë dhe aktivizoje kur të duash – nuk ka afat skadimi, ai të pret derisa të jesh gati.", en: "Choose the plan that suits you best and activate it whenever you want – there's no expiration date, it waits for you until you're ready." },
+  country_benefit_3: { al: "Pagesa është super e lehtë dhe e sigurt – përdorim vetëm platformat më të besueshme, kështu që je gjithmonë i mbrojtur.", en: "Payment is super easy and secure – we only use the most trusted platforms, so you're always protected." },
+  country_benefit_4: { al: "Dhe po, jemi këtu për ty 24/7! Na shkruaj kur të kesh pyetje apo ndonjë problem – përgjigjemi shpejt dhe me kënaqësi.", en: "And yes, we're here for you 24/7! Write to us when you have questions or any problems – we respond quickly and happily." },
+
+  // Footer
+  footer_description: { al: "Duke lidhur udhëtarët në mbarë botën me zgjidhje eSIM të besueshme dhe të përballueshme. Qëndroni të lidhur, vazhdoni të eksploroni.", en: "Connecting travelers worldwide with reliable and affordable eSIM solutions. Stay connected, keep exploring." },
+  footer_product: { al: "Produkti", en: "Product" },
+  footer_esim_plans: { al: "Planet eSIM", en: "eSIM Plans" },
+  footer_how_it_works: { al: "Si lidhemi?", en: "How It Works?" },
+  footer_esim_devices: { al: "Lista Celulareve Esim", en: "eSIM Device List" },
+  footer_company_section: { al: "e-SimFly", en: "e-SimFly" },
+  footer_privacy_cookies: { al: "Privatësia & Cookies", en: "Privacy & Cookies" },
+  footer_terms_conditions: { al: "Termat & Kushtet", en: "Terms & Conditions" },
+  footer_company: { al: "Kompania", en: "Company" },
+  footer_about_us: { al: "Rreth Nesh", en: "About Us" },
+  footer_help_center: { al: "Help Center", en: "Help Center" },
+  footer_follow_us: { al: "Na Ndiqni", en: "Follow Us" },
+  footer_copyright: { al: "Të gjitha të drejtat e rezervuara.", en: "All rights reserved." },
+
+  // Support Page
+  support_whatsapp_title: { al: "Na kontaktoni 24/7 në WhatsApp", en: "Contact us 24/7 on WhatsApp" },
+  support_whatsapp_description: { al: "Merrni mbështetje të menjëhershme për të gjitha pyetjet dhe problemet tuaja të eSIM", en: "Get instant support for all your eSIM questions and problems" },
+  support_chat_now: { al: "Bisedo Tani", en: "Chat Now" },
+
+  // How It Works Component
+  how_it_works_iphone_title: { al: "📱 Si të lidheni me eSIM në iPhone", en: "📱 How to Connect to eSIM on iPhone" },
+  how_it_works_android_title: { al: "🤖 Si të lidheni me eSIM në Android", en: "🤖 How to Connect to eSIM on Android" },
+  iphone_step_1: { al: "Hapni Settings në iPhone-in tuaj", en: "Open Settings on your iPhone" },
+  iphone_step_2: { al: "Zgjidhni Mobile Data ose Cellular", en: "Select Mobile Data or Cellular" },
+  iphone_step_3: { al: "Shtoni një eSIM", en: "Add an eSIM" },
+  iphone_step_4: { al: "Skanoni QR Code nga operatori", en: "Scan QR Code from operator" },
+  android_step_1: { al: "Hapni Settings në Android-in tuaj", en: "Open Settings on your Android" },
+  android_step_2: { al: "Zgjidhni SIM card manager ose SIMs", en: "Select SIM card manager or SIMs" },
+  android_step_3: { al: "Klikoni Add mobile plan", en: "Click Add mobile plan" },
+  android_step_4: { al: "Skanoni QR Code nga operatori", en: "Scan QR Code from operator" },
+
+  // Checkout
+  package_label: { al: "Paketa:", en: "Package:" },
 };
 
 interface LanguageContextType {
