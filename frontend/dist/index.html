@@ -9,7 +9,7 @@
   <title>E-eSimFly</title>
 
   <!-- Preload critical resources -->
-  <link rel="preload" href="data:application/octet-stream;base64,aW1wb3J0IHsgY3JlYXRlUm9vdCB9IGZyb20gJ3JlYWN0LWRvbS9jbGllbnQnOwppbXBvcnQgQXBwIGZyb20gJy4vQXBwLnRzeCc7CmltcG9ydCAnLi9pbmRleC5jc3MnOwppbXBvcnQgeyBpbml0UGVyZm9ybWFuY2VNb25pdG9yaW5nIH0gZnJvbSAnLi91dGlscy9wZXJmb3JtYW5jZSc7CgovLyBJbml0aWFsaXplIHBlcmZvcm1hbmNlIG1vbml0b3JpbmcgaW4gZGV2ZWxvcG1lbnQKaWYgKGltcG9ydC5tZXRhLmVudi5ERVYpIHsKICBpbml0UGVyZm9ybWFuY2VNb25pdG9yaW5nKCk7Cn0KCmNyZWF0ZVJvb3QoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoInJvb3QiKSEpLnJlbmRlcig8QXBwIGRhdGEtaWQ9ImFwb2Rud2cwbSIgZGF0YS1wYXRoPSJzcmMvbWFpbi50c3giIC8+KTs=" as="script" type="module">
+  <link rel="preload" href="data:application/octet-stream;base64,aW1wb3J0IHsgY3JlYXRlUm9vdCB9IGZyb20gJ3JlYWN0LWRvbS9jbGllbnQnOw0KaW1wb3J0IEFwcCBmcm9tICcuL0FwcC50c3gnOw0KaW1wb3J0ICcuL2luZGV4LmNzcyc7DQppbXBvcnQgeyBpbml0UGVyZm9ybWFuY2VNb25pdG9yaW5nIH0gZnJvbSAnLi91dGlscy9wZXJmb3JtYW5jZSc7DQoNCi8vIEluaXRpYWxpemUgcGVyZm9ybWFuY2UgbW9uaXRvcmluZyBpbiBkZXZlbG9wbWVudA0KaWYgKGltcG9ydC5tZXRhLmVudi5ERVYpIHsNCiAgaW5pdFBlcmZvcm1hbmNlTW9uaXRvcmluZygpOw0KfQ0KDQpjcmVhdGVSb290KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCJyb290IikhKS5yZW5kZXIoPEFwcCBkYXRhLWlkPSJhcG9kbndnMG0iIGRhdGEtcGF0aD0ic3JjL21haW4udHN4IiAvPik7" as="script" type="module">
   
   <!-- Preload critical fonts if using custom fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +22,22 @@
   <!-- Favicon -->
   <link rel="icon" href="/esimflylogo.png" type="image/png">
   
-  <!-- Critical CSS inline or preload -->
-  <script type="module" crossorigin src="/assets/index-enCYVUS_.js"></script>
+  <!-- Critical CSS inline or preload -->
+
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window,document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+   fbq('init', '1966989254117858'); 
+  fbq('track', 'PageView');
+  </script>
+  <script type="module" crossorigin src="/assets/index-B9lVnXED.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/vendor-DEQ385Nk.js">
   <link rel="modulepreload" crossorigin href="/assets/router-DECodpxX.js">
   <link rel="modulepreload" crossorigin href="/assets/ui-B6UisXh3.js">
@@ -34,8 +48,12 @@
 </head>
 
 <body>
+  <noscript>
+   <img height="1" width="1" 
+  src="https://www.facebook.com/tr?id=1966989254117858&ev=PageView&noscript=1"/>
+  </noscript>
   <div id="root"></div>
-  <div id="modal-root"></div>
+  <div id="modal-root"></div>
 </body>
 
 </html>

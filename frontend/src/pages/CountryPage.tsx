@@ -391,10 +391,10 @@ const CountryPage: React.FC = () => {
               </button>
               <div className="bg-slate-100/30 dark:bg-slate-900/50 backdrop-blur-sm border border-white/20 rounded-xl p-5 text-gray-800 dark:text-gray-200 text-base shadow-lg">
                 <ul className="list-disc pl-5 space-y-2">
-                  <li>Mos u shqetëso nëse ke ndonjë problem me aktivizimin – ose e rregullojmë menjëherë, ose të kthejmë paratë. Pa stres, rimbursim i plotë! 😊</li>
-                  <li>Zgjidh planin që të shkon më shumë dhe aktivizoje kur të duash – nuk ka afat skadimi, ai të pret derisa të jesh gati.</li>
-                  <li>Pagesa është super e lehtë dhe e sigurt – përdorim vetëm platformat më të besueshme, kështu që je gjithmonë i mbrojtur.</li>
-                  <li>Dhe po, jemi këtu për ty 24/7! Na shkruaj kur të kesh pyetje apo ndonjë problem – përgjigjemi shpejt dhe me kënaqësi.</li>
+                  <li>{t('country_benefit_1')}</li>
+                  <li>{t('country_benefit_2')}</li>
+                  <li>{t('country_benefit_3')}</li>
+                  <li>{t('country_benefit_4')}</li>
                 </ul>
               </div>
             </div>

@@ -358,9 +358,11 @@ const copyToMyPackages = async (req, res, next) => {
             // Handle unlimited packages in slug generation
             const slugDataPart = dataAmountGB === 0 ? 'unlimited' : `${dataAmountInt}gb`;
             const autoRoamifyPackageId = `esim-${countryCodeLower}-${days}days-${slugDataPart}-all`;
-            // ✅ CRITICAL FIX: Generate Greece-style slug automatically  
+            // ✅ CRITICAL FIX: Generate correct slug for Roamify API
             const autoSlug = dataAmountGB === 0 ?
-                `esim-${pkg.country_code?.toLowerCase() || 'xx'}-${days}days-unlimited-all` :
+                (pkg.country_code?.toUpperCase() === 'EUUS' || pkg.country_code?.toUpperCase() === 'EUS' ?
+                    `esim-europe-us-${days}days-ungb-all` :
+                    `esim-${pkg.country_code?.toLowerCase() || 'xx'}-${days}days-ungb-all`) :
                 generateGreeceStyleSlug(pkg.country_code || 'XX', days, dataAmountGB);
             console.log('✅ Auto-generated slug for package:', pkg.name, '→', autoSlug);
             return {

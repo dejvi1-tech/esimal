@@ -1,6 +1,7 @@
 import { Smartphone, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
 import { Link } from 'react-router-dom';
 import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Define a type for footer links
 // Either a normal link or a social link with an icon
@@ -10,32 +11,34 @@ type FooterLink =
   | { icon: React.ElementType; href: string; name: string };
 
 const Footer = () => {
+  const { t } = useLanguage();
+  
   const footerSections: { title: string; links: FooterLink[] }[] = [
     {
-      title: "Produkti",
+      title: t('footer_product'),
       links: [
-        { name: "Planet eSIM", href: "https://esimfly.al/packages" },
-        { name: "Si lidhemi?", href: "https://esimfly.al/how-it-works" },
-        { name: "Lista Celulareve Esim", href: "/esim-devices", target: "_blank", rel: "noopener noreferrer" }
+        { name: t('footer_esim_plans'), href: "https://esimfly.al/packages" },
+        { name: t('footer_how_it_works'), href: "https://esimfly.al/how-it-works" },
+        { name: t('footer_esim_devices'), href: "/esim-devices", target: "_blank", rel: "noopener noreferrer" }
         
       ]
     },
     {
-      title: "e-SimFly",
+      title: t('footer_company_section'),
       links: [
-        { name: "Privatësia & Cookies", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
-        { name: "Termat & Kushtet", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
+        { name: t('footer_privacy_cookies'), href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
+        { name: t('footer_terms_conditions'), href: "/terms", target: "_blank", rel: "noopener noreferrer" },
       ]
     },
     {
-      title: "Kompania",
+      title: t('footer_company'),
       links: [
-        { name: "Rreth Nesh", href: "https://esimfly.al/about" },
-        { name: "Help Center", href: "https://esimfly.al/support" },
+        { name: t('footer_about_us'), href: "https://esimfly.al/about" },
+        { name: t('footer_help_center'), href: "https://esimfly.al/support" },
       ]
     },
     {
-      title: "Na Ndiqni",
+      title: t('footer_follow_us'),
       links: [
         { icon: Facebook, href: "#", name: "Facebook" },
         { icon: Twitter, href: "#", name: "Twitter" },
@@ -56,8 +59,7 @@ const Footer = () => {
               <span className="text-2xl font-bold text-white align-middle">e-SimFly</span>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
-              Duke lidhur udhëtarët në mbarë botën me zgjidhje eSIM të besueshme dhe të përballueshme. 
-              Qëndroni të lidhur, vazhdoni të eksploroni.
+              {t('footer_description')}
             </p>
             {/* Contact Info */}
             <div className="space-y-3">
@@ -113,7 +115,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-300 text-sm mb-4 md:mb-0">
-            © {new Date().getFullYear()} e-SimFly. Të gjitha të drejtat e rezervuara.
+            © {new Date().getFullYear()} e-SimFly. {t('footer_copyright')}
           </div>
         </div>
       </div>

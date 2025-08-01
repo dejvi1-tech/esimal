@@ -1,33 +1,36 @@
 import { Smartphone } from "lucide-react";
-
-// Move static data outside the component for better performance
-const iphoneSteps = [
-  "Hapni Settings në iPhone-in tuaj",
-  "Zgjidhni Mobile Data ose Cellular",
-  "Shtoni një eSIM",
-  "Skanoni QR Code nga operatori"
-];
-
-const androidSteps = [
-  "Hapni Settings në Android-in tuaj",
-  "Zgjidhni SIM card manager ose SIMs",
-  "Klikoni Add mobile plan",
-  "Skanoni QR Code nga operatori"
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Deep purple glassmorphism card style
 const glassClass =
   "bg-gradient-to-br from-purple-500 via-purple-600 to-purple-700 bg-opacity-80 border border-purple-700 rounded-2xl p-8 shadow-xl backdrop-blur text-white";
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
+
+  // Dynamic steps based on translation
+  const iphoneSteps = [
+    t('iphone_step_1'),
+    t('iphone_step_2'),
+    t('iphone_step_3'),
+    t('iphone_step_4')
+  ];
+
+  const androidSteps = [
+    t('android_step_1'),
+    t('android_step_2'),
+    t('android_step_3'),
+    t('android_step_4')
+  ];
+
   return (
     <section className="max-w-5xl mx-auto px-4 py-16">
       <div className="text-center mb-10">
         <h2 className="text-4xl md:text-5xl font-extrabold mb-3 text-purple-800">
-          Si të lidheni me eSIM në iPhone dhe Android
+          {t('how_it_works_title')}
         </h2>
         <p className="text-lg md:text-xl text-purple-900">
-          Ndiqni këto hapa të thjeshtë për të aktivizuar eSIM-in tuaj në çdo pajisje
+          {t('how_it_works_subtitle')}
         </p>
       </div>
 
@@ -49,7 +52,7 @@ const HowItWorks = () => {
             <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-400/70 text-white mr-3">
               <Smartphone className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold text-white">📱 Si të lidheni me eSIM në iPhone</span>
+            <span className="text-xl font-bold text-white">{t('how_it_works_iphone_title')}</span>
           </div>
           <ol className="list-decimal list-inside space-y-2 text-white font-medium">
             {iphoneSteps.map((step, idx) => (
@@ -64,7 +67,7 @@ const HowItWorks = () => {
             <div className="w-12 h-12 flex items-center justify-center rounded-xl bg-purple-400/70 text-white mr-3">
               <Smartphone className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold text-white">🤖 Si të lidheni me eSIM në Android</span>
+            <span className="text-xl font-bold text-white">{t('how_it_works_android_title')}</span>
           </div>
           <ol className="list-decimal list-inside space-y-2 text-white font-medium">
             {androidSteps.map((step, idx) => (
@@ -77,9 +80,9 @@ const HowItWorks = () => {
       {/* Tip Box - deep purple glassmorphism */}
       <div className="mt-12 flex justify-center">
         <div className={glassClass + " text-center max-w-xl"}>
-          <div className="text-2xl mb-2 text-white">💡 Këshillë e Shpejtë</div>
+          <div className="text-2xl mb-2 text-white">{t('how_it_works_tip_title')}</div>
           <div className="text-white font-medium">
-            Sigurohuni që pajisja juaj të mbështesë eSIM-in para blerjes. Shumica e iPhone-ve të rinj dhe Android-eve të fundit e mbështesin këtë teknologji.
+            {t('how_it_works_tip_description')}
           </div>
         </div>
       </div>

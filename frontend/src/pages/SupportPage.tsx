@@ -1,11 +1,14 @@
 import FAQSection from "@/components/FAQSection";
 import { Helmet } from 'react-helmet-async';
 import { MessageCircle } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const SupportPage = () => {
+  const { t } = useLanguage();
+  
   // WhatsApp info
   const phoneNumber = '355698365533'; // Updated WhatsApp number
-  const message = encodeURIComponent("Përshëndetje! Kam nevojë për ndihmë me eSIM.");
+  const message = encodeURIComponent(t('whatsapp_message'));
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
   return (
@@ -24,8 +27,8 @@ const SupportPage = () => {
               </svg>
             </div>
             <div className="min-w-0">
-              <div className="text-lg md:text-xl font-bold text-white mb-1">Na kontaktoni 24/7 në WhatsApp</div>
-              <div className="text-gray-200 text-base md:text-lg font-medium truncate">Merrni mbështetje të menjëhershme për të gjitha pyetjet dhe problemet tuaja të eSIM</div>
+              <div className="text-lg md:text-xl font-bold text-white mb-1">{t('support_whatsapp_title')}</div>
+              <div className="text-gray-200 text-base md:text-lg font-medium truncate">{t('support_whatsapp_description')}</div>
             </div>
           </div>
           <div className="flex-shrink-0 w-full md:w-auto mt-4 md:mt-0">
@@ -36,7 +39,7 @@ const SupportPage = () => {
               className="inline-flex items-center justify-center px-7 py-3 rounded-full bg-green-500 hover:bg-green-600 text-white font-semibold text-lg shadow-lg transition-none w-full md:w-auto"
               style={{ minWidth: 170 }}
             >
-              Bisedo Tani
+              {t('support_chat_now')}
               <span className="ml-2 text-xl">→</span>
             </a>
           </div>

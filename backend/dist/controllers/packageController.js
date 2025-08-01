@@ -312,7 +312,7 @@ const getSectionPackages = async (req, res, next) => {
                 .eq('visible', true)
                 .eq('show_on_frontend', true)
                 .eq('location_slug', 'most-popular')
-                .order('data_amount', { ascending: true }));
+                .order('homepage_order', { ascending: true }));
             if (error)
                 throw error;
             console.log(`[API] /api/packages/get-section-packages returning ${packages?.length || 0} admin-approved most popular packages`);
@@ -1122,11 +1122,13 @@ const savePackage = async (req, res) => {
                 error: 'Missing required fields: name, country_name, country_code, data_amount, days'
             });
         }
-        // ✅ CRITICAL FIX: Generate Greece-style slug automatically
+        // ✅ CRITICAL FIX: Generate correct slug for Roamify API
         const dataAmountFloat = parseFloat(data_amount);
         const daysInt = parseInt(days);
         const autoSlug = dataAmountFloat === 0 ?
-            `esim-${country_code.toLowerCase()}-${daysInt}days-unlimited-all` :
+            (country_code.toUpperCase() === 'EUUS' || country_code.toUpperCase() === 'EUS' ?
+                `esim-europe-us-${daysInt}days-ungb-all` :
+                `esim-${country_code.toLowerCase()}-${daysInt}days-ungb-all`) :
             generateGreeceStyleSlug(country_code, daysInt, dataAmountFloat);
         console.log('✅ Auto-generated Greece-style slug:', autoSlug);
         // ✅ CRITICAL FIX: Use real Roamify package ID from features.packageId or reseller_id
