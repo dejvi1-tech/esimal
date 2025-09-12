@@ -169,7 +169,18 @@ const CheckoutPage: React.FC = () => {
       }));
     }
     localStorage.removeItem('checkout_package_id');
-    navigate('/checkout/success?payment_intent_id=' + paymentIntentId);
+
+    // Router navigation attempt
+    const target = '/checkout/success?payment_intent_id=' + encodeURIComponent(paymentIntentId);
+    navigate(target);
+
+    // Hard redirect fallback to avoid being stuck if SPA navigation fails on some browsers
+    setTimeout(() => {
+      if (!window.location.pathname.includes('/checkout/success')) {
+        console.warn('[DEBUG] Router navigation did not occur, forcing hard redirect to success page');
+        window.location.href = target;
+      }
+    }, 300);
   };
 
   const handlePaymentError = (error: string) => {

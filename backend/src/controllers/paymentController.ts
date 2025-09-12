@@ -101,10 +101,10 @@ export const createPaymentIntent = async (
       throw new PaymentError('Failed to create customer');
     }
 
-    // Prepare idempotency key (prefer header, then body, then deterministic fallback)
+    // Prepare idempotency key (prefer header, then body; otherwise generate unique to avoid reusing stale PIs)
     const headerIdem = (req.headers['x-idempotency-key'] as string) || '';
     const bodyIdem = typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey : '';
-    const idempotencyKey = headerIdem || bodyIdem || `${email}:${actualPackageId}:${Math.round(canonicalAmount * 100)}`;
+    const idempotencyKey = headerIdem || bodyIdem || `${Date.now()}:${Math.random().toString(36).slice(2)}`;
 
     // Create payment intent (amount/currency derived server-side)
     const paymentIntent = await stripe.paymentIntents.create(
