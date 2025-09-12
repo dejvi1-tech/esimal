@@ -8,8 +8,8 @@ import {
   PaymentError,
 } from '../utils/errors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { 
-  apiVersion: '2025-05-28.basil' 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2025-05-28.basil'
 });
 
 /**
@@ -23,13 +23,7 @@ export const createPaymentIntent = async (
   try {
     const { amount, currency, email, packageId, name, surname, phone, country } = req.body;
 
-    // Validate required fields
-    if (!amount || amount <= 0) {
-      throw new ValidationError('Valid amount is required');
-    }
-    if (!currency) {
-      throw new ValidationError('Currency is required');
-    }
+    // Validate required fields (server-side pricing ignores client amount/currency)
     if (!email) {
       throw new ValidationError('Email is required');
     }
@@ -37,7 +31,7 @@ export const createPaymentIntent = async (
       throw new ValidationError('Package ID is required');
     }
 
-    logger.info(`Creating payment intent for package ${packageId}, amount: ${amount} ${currency}, email: ${email}`);
+    logger.info(`Creating payment intent for package ${packageId}, email: ${email}`);
 
     // First, try to find package by UUID (id field)
     let { data: packageData, error: packageError } = await supabase
@@ -49,7 +43,7 @@ export const createPaymentIntent = async (
     // If not found by UUID, try to find by location_slug (slug)
     if (packageError || !packageData) {
       logger.info(`Package not found by UUID ${packageId}, trying location_slug...`);
-      
+
       const { data: packageBySlug, error: slugError } = await supabase
         .from('my_packages')
         .select('*')
@@ -69,6 +63,18 @@ export const createPaymentIntent = async (
 
     // Use the actual UUID from the package data
     const actualPackageId = packageData.id;
+
+    // Determine canonical amount and currency (server-side pricing)
+    const DEFAULT_CURRENCY = (process.env.DEFAULT_CURRENCY || 'eur').toLowerCase();
+    const useServerPricing = (process.env.ENFORCE_SERVER_PRICE || 'true').toLowerCase() !== 'false';
+    const expectedAmount = Number(packageData.sale_price);
+    const expectedCurrency = (packageData.currency || DEFAULT_CURRENCY).toLowerCase();
+    const canonicalAmount = useServerPricing ? expectedAmount : (Number(amount) || expectedAmount);
+    const canonicalCurrency = useServerPricing ? expectedCurrency : ((currency || expectedCurrency).toLowerCase());
+
+    logger.info(
+      `Using ${useServerPricing ? 'server-side' : 'client-provided'} pricing for package ${actualPackageId}: ${canonicalAmount} ${canonicalCurrency}`
+    );
 
     // Create or retrieve Stripe customer
     let customer;
@@ -95,28 +101,40 @@ export const createPaymentIntent = async (
       throw new PaymentError('Failed to create customer');
     }
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: currency.toLowerCase(),
-      customer: customer.id,
-      metadata: {
-        email: email,
-        packageId: actualPackageId,
-        packageSlug: packageId,
-        packageName: packageData.name,
-        packageDataAmount: packageData.data_amount.toString(),
-        packageDays: packageData.days.toString(),
-        name: name || '',
-        surname: surname || '',
-        phone: phone || '',
-        country: country || '',
+    // Prepare idempotency key (prefer header, then body, then deterministic fallback)
+    const headerIdem = (req.headers['x-idempotency-key'] as string) || '';
+    const bodyIdem = typeof req.body?.idempotencyKey === 'string' ? req.body.idempotencyKey : '';
+    const idempotencyKey = headerIdem || bodyIdem || `${email}:${actualPackageId}:${Math.round(canonicalAmount * 100)}`;
+
+    // Create payment intent (amount/currency derived server-side)
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: Math.round(canonicalAmount * 100), // Convert to cents
+        currency: canonicalCurrency,
+        customer: customer.id,
+        metadata: {
+          email: email,
+          packageId: actualPackageId,
+          packageSlug: packageId,
+          packageName: packageData.name,
+          packageDataAmount: packageData.data_amount?.toString?.() || String(packageData.data_amount),
+          packageDays: packageData.days?.toString?.() || String(packageData.days),
+          name: name || '',
+          surname: surname || '',
+          phone: phone || '',
+          country: country || '',
+          expectedAmountCents: Math.round(canonicalAmount * 100).toString(),
+          expectedCurrency: canonicalCurrency,
+          priceSource: useServerPricing ? 'server' : 'client',
+          orderIdempotencyKey: idempotencyKey,
+        },
+        description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.days} days`,
+        automatic_payment_methods: {
+          enabled: true,
+        },
       },
-      description: `eSIM Package: ${packageData.name} - ${packageData.data_amount}GB for ${packageData.days} days`,
-      automatic_payment_methods: {
-        enabled: true,
-      },
-    });
+      { idempotencyKey }
+    );
 
     logger.info(`Payment intent created successfully: ${paymentIntent.id} for customer: ${customer.id}`);
 
@@ -124,10 +142,16 @@ export const createPaymentIntent = async (
     const orderData = {
       package_id: actualPackageId,
       guest_email: email,
-      amount: amount,
+      amount: canonicalAmount,
       status: 'pending',
       payment_intent_id: paymentIntent.id,
       created_at: new Date().toISOString(),
+      metadata: {
+        expected_amount: canonicalAmount,
+        expected_currency: canonicalCurrency,
+        price_source: useServerPricing ? 'server' : 'client',
+        idempotency_key: idempotencyKey,
+      },
     };
 
     const { data: order, error: orderError } = await supabase
@@ -139,9 +163,9 @@ export const createPaymentIntent = async (
     if (orderError) {
       logger.error('Error creating order:', orderError);
       // Don't fail the payment intent creation, but log the error
-      logger.warn('Payment intent created but order creation failed', { 
-        paymentIntentId: paymentIntent.id, 
-        error: orderError.message 
+      logger.warn('Payment intent created but order creation failed', {
+        paymentIntentId: paymentIntent.id,
+        error: orderError.message
       });
     } else {
       logger.info(`Order created successfully: ${order.id} for payment intent: ${paymentIntent.id}`);
@@ -162,4 +186,4 @@ export const createPaymentIntent = async (
     logger.error('Error creating payment intent:', error);
     next(error);
   }
-}; 
+};

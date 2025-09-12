@@ -120,17 +120,34 @@ app.use(cookieParser() as any);
 // Register CSRF protection globally (after cookieParser, cors, helmet, before routes)
 export const csrfProtection = csurf({ cookie: true });
 
-// TEMPORARY: Disable CSRF for /api/payments/create-intent for debugging
-app.use((req, res, next) => {
-  if (
-    req.method === 'POST' &&
-    req.path === '/api/payments/create-intent'
-  ) {
-    // Log that CSRF is skipped for this route
-    logger.warn('CSRF protection temporarily DISABLED for /api/payments/create-intent');
-    return next();
+// Enforce CSRF with strict Origin/Referer checks for /api/payments/create-intent
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const isCreateIntent =
+    req.method === 'POST' && req.path === '/api/payments/create-intent';
+
+  if (isCreateIntent) {
+    const origin = (req.headers.origin as string) || '';
+    const referer = (req.headers.referer as string) || '';
+
+    const allowedByOrigin = !!origin && allowedOrigins.includes(origin);
+    const allowedByReferer =
+      !!referer && allowedOrigins.some((o) => referer.startsWith(o));
+
+    if (!(allowedByOrigin || allowedByReferer)) {
+      logger.warn('Blocked /api/payments/create-intent due to invalid Origin/Referer', {
+        origin,
+        referer,
+      });
+      res.status(403).json({
+        status: 'error',
+        message: 'Forbidden: invalid origin',
+      });
+      return;
+    }
   }
-  return csrfProtection(req, res, next);
+
+  // Do not return the result of csrfProtection; invoke it and let Express handle next()
+  csrfProtection(req, res, next);
 });
 
 // Rate limiting for public API

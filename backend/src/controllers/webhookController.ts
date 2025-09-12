@@ -270,6 +270,79 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         return; // Don't proceed with eSIM delivery
       } else {
         logger.info(`Package validation passed: ${metadata.packageId} found in ${packageValidation.table} table`);
+
+        // Server-side price and currency validation before fulfillment
+        const DEFAULT_CURRENCY = (process.env.DEFAULT_CURRENCY || 'eur').toLowerCase();
+        const validationMode = (process.env.WEBHOOK_VALIDATION_MODE || 'enforce').toLowerCase(); // 'log' | 'enforce'
+        const enforceApproval = (process.env.ENFORCE_PACKAGE_APPROVAL || 'false').toLowerCase() === 'true';
+
+        const pkg = packageValidation.packageData || {};
+        const expectedAmountCents = Math.round(Number(pkg.sale_price) * 100);
+        const expectedCurrency = (pkg.currency || DEFAULT_CURRENCY).toLowerCase();
+
+        // Stripe amounts in cents. Prefer amount_received if present.
+        const receivedAmountCents =
+          typeof paymentIntent.amount_received === 'number' && paymentIntent.amount_received > 0
+            ? paymentIntent.amount_received
+            : paymentIntent.amount;
+        const receivedCurrency = (paymentIntent.currency || '').toLowerCase();
+
+        const isApproved = pkg?.visible === true;
+
+        const amountMismatch =
+          !Number.isFinite(expectedAmountCents) || receivedAmountCents !== expectedAmountCents;
+        const currencyMismatch = receivedCurrency !== expectedCurrency;
+        const approvalMismatch = enforceApproval && !isApproved;
+
+        const mismatch = amountMismatch || currencyMismatch || approvalMismatch;
+
+        if (mismatch) {
+          logger.error('Payment validation failed - blocking or logging per mode', {
+            paymentIntentId,
+            packageId: metadata.packageId,
+            expectedAmountCents,
+            expectedCurrency,
+            receivedAmountCents,
+            receivedCurrency,
+            isApproved,
+            validationMode,
+            amountMismatch,
+            currencyMismatch,
+            approvalMismatch,
+          });
+
+          // Mark order for admin review and do not fulfill (in enforce mode)
+          const { error: orderMismatchError } = await supabase
+            .from('orders')
+            .update({
+              status: 'payment_mismatch',
+              updated_at: new Date().toISOString(),
+              metadata: {
+                ...(typeof (pkg?.metadata) === 'object' ? pkg.metadata : {}),
+                validation_mode: validationMode,
+                expected_amount_cents: expectedAmountCents,
+                expected_currency: expectedCurrency,
+                received_amount_cents: receivedAmountCents,
+                received_currency: receivedCurrency,
+                approved_package: isApproved,
+                requires_admin_review: true,
+              },
+            })
+            .eq('payment_intent_id', paymentIntentId);
+
+          if (orderMismatchError) {
+            logger.error('Failed to update order with mismatch status', orderMismatchError, { paymentIntentId });
+          }
+
+          if (validationMode === 'enforce') {
+            // Do not proceed to update order as paid or deliver eSIM
+            return;
+          } else {
+            logger.warn('WEBHOOK_VALIDATION_MODE=log - proceeding despite mismatch for monitoring only', {
+              paymentIntentId,
+            });
+          }
+        }
       }
     }
 
