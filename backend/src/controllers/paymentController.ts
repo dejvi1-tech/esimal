@@ -138,7 +138,7 @@ export const createPaymentIntent = async (
 
     logger.info(`Payment intent created successfully: ${paymentIntent.id} for customer: ${customer.id}`);
 
-    // Create order in database
+    // Create order in database (no metadata column dependency)
     const orderData = {
       package_id: actualPackageId,
       guest_email: email,
@@ -146,12 +146,6 @@ export const createPaymentIntent = async (
       status: 'pending',
       payment_intent_id: paymentIntent.id,
       created_at: new Date().toISOString(),
-      metadata: {
-        expected_amount: canonicalAmount,
-        expected_currency: canonicalCurrency,
-        price_source: useServerPricing ? 'server' : 'client',
-        idempotency_key: idempotencyKey,
-      },
     };
 
     const { data: order, error: orderError } = await supabase

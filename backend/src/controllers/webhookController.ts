@@ -346,28 +346,69 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
       }
     }
 
-    // Update order status to paid
-    const { data: order, error: orderError } = await supabase
+    // Ensure an order exists and mark as paid (idempotent)
+    let order: any | null = null;
+
+    // Try to fetch existing order by payment_intent_id
+    const { data: existingOrder, error: fetchOrderError } = await supabaseAdmin
       .from('orders')
-      .update({ 
-        status: 'paid',
-        updated_at: new Date().toISOString(),
-      })
+      .select('id, guest_email')
       .eq('payment_intent_id', paymentIntentId)
-      .select()
       .single();
 
-    if (orderError) {
-      logger.error('Error updating order status:', orderError, { paymentIntentId });
-      return;
+    if (!existingOrder && fetchOrderError && fetchOrderError.code !== 'PGRST116') {
+      logger.error('Error fetching existing order by payment_intent_id', fetchOrderError, { paymentIntentId });
     }
 
-    if (!order) {
-      logger.error('Order not found for payment intent:', paymentIntentId);
-      return;
-    }
+    if (!existingOrder) {
+      // Create a minimal order record if it doesn't exist (original insert may have failed pre-payment)
+      const receivedAmountCents =
+        typeof paymentIntent.amount_received === 'number' && paymentIntent.amount_received > 0
+          ? paymentIntent.amount_received
+          : paymentIntent.amount;
 
-    logger.info(`Order updated successfully: ${order.id}`, { orderId: order.id, paymentIntentId });
+      const { data: createdOrder, error: createOrderError } = await supabaseAdmin
+        .from('orders')
+        .insert([{
+          package_id: metadata.packageId || null,
+          guest_email: metadata.email || null,
+          amount: (receivedAmountCents || 0) / 100,
+          status: 'paid',
+          payment_intent_id: paymentIntentId,
+          created_at: new Date().toISOString(),
+          paid_at: new Date().toISOString(),
+        }])
+        .select()
+        .single();
+
+      if (createOrderError) {
+        logger.error('Failed to create order record on webhook', createOrderError, { paymentIntentId });
+        return;
+      }
+
+      order = createdOrder;
+      logger.info(`Order created on webhook: ${order.id}`, { orderId: order.id, paymentIntentId });
+    } else {
+      // Update existing order to paid
+      const { data: updatedOrder, error: updateOrderError } = await supabaseAdmin
+        .from('orders')
+        .update({
+          status: 'paid',
+          updated_at: new Date().toISOString(),
+          paid_at: new Date().toISOString(),
+        })
+        .eq('id', existingOrder.id)
+        .select()
+        .single();
+
+      if (updateOrderError) {
+        logger.error('Error updating order status on webhook', updateOrderError, { paymentIntentId, orderId: existingOrder.id });
+        return;
+      }
+
+      order = updatedOrder;
+      logger.info(`Order updated successfully: ${order.id}`, { orderId: order.id, paymentIntentId });
+    }
 
         // Deliver eSIM with two-step email flow (thank you + QR code emails)
     if (metadata.packageId) {
