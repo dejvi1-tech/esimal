@@ -376,7 +376,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
           status: 'paid',
           payment_intent_id: paymentIntentId,
           created_at: new Date().toISOString(),
-          paid_at: new Date().toISOString(),
+          
         }])
         .select()
         .single();
@@ -395,7 +395,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: any) {
         .update({
           status: 'paid',
           updated_at: new Date().toISOString(),
-          paid_at: new Date().toISOString(),
+          
         })
         .eq('id', existingOrder.id)
         .select()
@@ -1499,7 +1499,7 @@ async function handleCheckoutSessionCompleted(session: any) {
       stripe_customer_id: session.customer,
       stripe_checkout_session_id: session.id,
       created_at: new Date().toISOString(),
-      paid_at: new Date().toISOString(),
+      
     };
 
     const { data: order, error: orderError } = await supabase
