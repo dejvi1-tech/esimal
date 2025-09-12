@@ -60,11 +60,16 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Origin',
+    'Referer',
     'X-Requested-With',
     'Content-Type',
     'Accept',
     'Authorization',
-    'X-API-Key'
+    'X-API-Key',
+    'X-CSRF-Token',
+    'X-Idempotency-Key',
+    'Idempotency-Key',
+    'Stripe-Version'
   ],
   credentials: true,
   optionsSuccessStatus: 200
@@ -144,9 +149,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       });
       return;
     }
+
+    // Exempt CSRF for cross-origin JSON payment intent creation.
+    // Reason: Frontend is on a different origin (https://esimfly.al) and modern
+    // browsers (e.g., iOS Safari) block third‑party cookies, which csurf relies on.
+    // Mitigation: strict Origin/Referer validation above + global rate limiting.
+    return next();
   }
 
-  // Do not return the result of csrfProtection; invoke it and let Express handle next()
+  // Enforce CSRF for all other state-changing routes
   csrfProtection(req, res, next);
 });
 
